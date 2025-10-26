@@ -1,0 +1,38 @@
+@import "./fonts.scss";
+@import "./mixin.scss";
+@import "./variables.scss";
+
+@import '~bootstrap/scss/bootstrap';
+
+@include fog-glow-keyframes(fog_secondary, $secondary);
+@include fog-glow-keyframes(fog_pink, $pink);
+
+a {
+  text-decoration: none;
+  color: $secondary;
+  position: relative;
+
+  &:hover {
+    color: white;
+    animation: fog_secondary 6s ease-in-out infinite;
+  }
+}
+
+a.navbar-brand {
+    animation: fog_secondary 6s ease-in-out infinite;
+}
+
+a.nav-link:hover {
+    text-shadow: #fff 0px 0px 6px !important;
+}
+
+a.link-pink {
+  text-decoration: none;
+  color: $pink;
+  position: relative;
+
+  &:hover {
+    color: white;
+    animation: fog_pink 6s ease-in-out infinite;
+  }
+}
