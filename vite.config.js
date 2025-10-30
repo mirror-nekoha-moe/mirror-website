@@ -26,7 +26,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:30727',
+      '/api4': 'http://localhost:30727',
     },
   }
 })
