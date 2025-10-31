@@ -31,6 +31,11 @@ function Index() {
           <h1 className="h3">Another osu! Beatmap Mirror</h1>
           <h2 className="h5">Ranked, Approved, Loved for now only</h2>
         </div>
+        <div className="text-center">
+          <a href="https://github.com/mirror-nekoha-moe/mirror-server/blob/master/README.MD" target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+            API Documentation
+          </a>
+        </div>
 
         <div className="row g-3 py-4">
           {loading ? (
