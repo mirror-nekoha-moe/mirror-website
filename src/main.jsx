@@ -9,6 +9,8 @@ import Footer from './components/footer.jsx'
 
 // Pages
 import Index from './pages/index.jsx'
+import Monitor from './pages/monitor.jsx'
+import Error from './pages/error.jsx'
 
 // Bootstrap
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -21,7 +23,9 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Navbar />
       <Routes>
+          <Route path="*" element={<Error />} />
           <Route path="/" element={<Index />} />
+          <Route path="/monitor" element={<Monitor />} />
       </Routes>
       <Footer />
     </BrowserRouter>
