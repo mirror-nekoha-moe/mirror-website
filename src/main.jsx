@@ -23,9 +23,9 @@ createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       <Navbar />
       <Routes>
-          <Route path="*" element={<Error />} />
           <Route path="/" element={<Index />} />
           <Route path="/monitor" element={<Monitor />} />
+          <Route path="*" element={<Error />} />
       </Routes>
       <Footer />
     </BrowserRouter>
