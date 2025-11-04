@@ -24,6 +24,9 @@ const Navbar = () => {
               <a href="/" className="nav-link" onClick={(e) => handleLinkClick(e, "/")}>Home</a>
             </li>
             <li className="nav-item">
+              <a href="/search" className="nav-link" onClick={(e) => handleLinkClick(e, "/search")}>Beatmaps</a>
+            </li>
+            <li className="nav-item">
               <a href="/monitor" className="nav-link" onClick={(e) => handleLinkClick(e, "/monitor")}>Monitor</a>
             </li>
           </ul>

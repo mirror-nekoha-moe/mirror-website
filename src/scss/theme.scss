@@ -8,7 +8,17 @@
 @include fog-glow-keyframes(fog_secondary, $secondary);
 @include fog-glow-keyframes(fog_pink, $pink);
 
-a {
+.navbar-brand {
+  text-decoration: none;
+  color: inherit;
+  animation: fog_secondary 6s ease-in-out infinite;
+}
+
+.nav-link:hover {
+  text-shadow: #fff 0px 0px 6px;
+}
+
+.link-blue {
   text-decoration: none;
   color: $secondary;
   position: relative;
@@ -19,15 +29,7 @@ a {
   }
 }
 
-a.navbar-brand {
-    animation: fog_secondary 6s ease-in-out infinite;
-}
-
-a.nav-link:hover {
-    text-shadow: #fff 0px 0px 6px !important;
-}
-
-a.link-pink {
+.link-pink {
   text-decoration: none;
   color: $pink;
   position: relative;
@@ -36,4 +38,11 @@ a.link-pink {
     color: white;
     animation: fog_pink 6s ease-in-out infinite;
   }
+}
+
+// Beatmapset Cards
+.beatmapset-card-bg {
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
