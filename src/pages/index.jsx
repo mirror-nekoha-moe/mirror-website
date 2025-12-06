@@ -174,7 +174,7 @@ function Index() {
               {[
                 { id: 'osu', label: 'osu' },
                 { id: 'taiko', label: 'taiko' },
-                { id: 'fruits', label: 'fruits' },
+                { id: 'fruits', label: 'catch' },
                 { id: 'mania', label: 'mania' }
               ].map(mode => (
                 <div key={mode.id} className="col-12 col-md-6 col-lg-3">

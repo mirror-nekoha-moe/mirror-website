@@ -105,12 +105,21 @@ export default function BeatmapsetSearch() {
                     background: `linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://assets.ppy.sh/beatmaps/${set.id}/covers/cover.jpg')`
                 }}
               >
-                <div class="fw-bold">{set.title}</div>
+                <div class="fw-bold">
+                  <a class="text-decoration-none" href={`https://osu.ppy.sh/beatmapsets/${set.id}`} target="_blank">
+                    <span class="text-white link-blue">{set.title}</span>
+                  </a>
+                  </div>
                 <div class="small d-flex align-items-center">
                   <div>by: <span class="text-secondary">{set.artist}</span></div>
                 </div>
                 <div class="small d-flex align-items-center">
-                  <div>mapped by: <span class="text-secondary">{set.creator}</span></div>
+                  <div>
+                    <span>mapped by: </span>
+                      <a class="text-decoration-none" href={`https://osu.ppy.sh/users/${set.user_id}`} target="_blank">
+                        <span class="fw-bold text-white link-blue">{set.creator}</span>
+                      </a>
+                  </div>
                 </div>
                 <div class="small d-flex align-items-center gap-3">
                   <div>ID: <span class="text-secondary">{set.id}</span></div>
@@ -151,7 +160,7 @@ export default function BeatmapsetSearch() {
                     class="btn btn-sm btn-success d-flex align-items-center gap-2"
                     href={`/api4/download/${set.id}`}
                   >
-                    <span>Download</span>
+                    <span>Download {(set.file_size / (1024 ** 2)).toFixed(2)} MB</span>
                     <FaDownload color="white" />
                   </a>
                   <a
