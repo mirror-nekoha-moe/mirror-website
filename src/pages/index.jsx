@@ -171,33 +171,44 @@ function Index() {
                   </div>
                 </div>
               </div>
-              <div className="col-12">
-                <div className="card h-100">
-                  <div className="card-body">
-                    <h5 className="card-title">Beatmaps by Status</h5>
-                    <div className="row g-2 mt-2">
-                      {[
-                        { key: 'bm_ranked_count', label: 'Ranked', color: 'black' },
-                        { key: 'bm_approved_count', label: 'Approved', color: 'black' },
-                        { key: 'bm_loved_count', label: 'Loved', color: 'black' },
-                        { key: 'bm_pending_count', label: 'Pending', color: 'black' },
-                        { key: 'bm_graveyard_count', label: 'Graveyard', color: 'black' }
-                      ].map(status => (
-                        stats[status.key] !== undefined && (
-                          <div key={status.key} className="col">
-                            <div className="bg-secondary d-flex justify-content-between align-items-center p-2">
-                              <span className="text-black">{status.label}</span>
-                              <span className={`badge bg-${status.color} rounded-pill`}>
-                                {stats[status.key].toLocaleString()}
-                              </span>
-                            </div>
-                          </div>
-                        )
-                      ))}
+              {[
+                { id: 'osu', label: 'osu' },
+                { id: 'taiko', label: 'taiko' },
+                { id: 'fruits', label: 'fruits' },
+                { id: 'mania', label: 'mania' }
+              ].map(mode => (
+                <div key={mode.id} className="col-12 col-md-6 col-lg-3">
+                  <div className="card h-100">
+                    <div className="card-body">
+                      <h5 className="card-title">{mode.label} — Beatmaps by Status</h5>
+                      <div className="row g-2 mt-2">
+                        {[
+                          { suffix: 'ranked_count', label: 'Ranked' },
+                          { suffix: 'approved_count', label: 'Approved' },
+                          { suffix: 'loved_count', label: 'Loved' },
+                          { suffix: 'pending_count', label: 'Pending' },
+                          { suffix: 'graveyard_count', label: 'Graveyard' }
+                        ].map(s => {
+                          const key = `${mode.id}_bm_${s.suffix}`;
+                          const val = stats[key];
+                          return (
+                            val !== undefined && (
+                              <div key={key} className="col-12">
+                                <div className="bg-secondary d-flex justify-content-between align-items-center p-2">
+                                  <span className="text-black">{s.label}</span>
+                                  <span className={`badge bg-black rounded-pill`}>
+                                    {Number(val).toLocaleString()}
+                                  </span>
+                                </div>
+                              </div>
+                            )
+                          )
+                        })}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </>
           )}
         </div>

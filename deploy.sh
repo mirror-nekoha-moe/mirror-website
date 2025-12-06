@@ -3,6 +3,9 @@
 # Run build
 npm run build || { echo "Build failed"; exit 1; }
 
+# Generate sitemap in dist/
+node gen-sitemap.js || { echo "Sitemap generation failed"; exit 1; }
+
 # Copy files to target directory
 sudo cp -r dist/* /var/www/mirror.nekoha/ || { echo "Failed to copy files"; exit 1; }
 
