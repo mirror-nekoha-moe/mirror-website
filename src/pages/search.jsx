@@ -99,7 +99,7 @@ export default function BeatmapsetSearch() {
         <Pagination />
         <div class="row g-3 mb-3">
           {results.map(set => (
-            <div class="col-12 col-lg-6" key={set.id}>
+            <div className={`col-12 col-lg-6 ${!set.user_id ? 'missing-metadata' : ''}`} key={set.id}>
               <div class="border p-3 beatmapset-card-bg"
                 style={{ 
                     background: `linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://assets.ppy.sh/beatmaps/${set.id}/covers/cover.jpg')`
@@ -107,7 +107,7 @@ export default function BeatmapsetSearch() {
               >
                 <div class="fw-bold">
                   <a class="text-decoration-none" href={`https://osu.ppy.sh/beatmapsets/${set.id}`} target="_blank">
-                    <span class="text-white link-blue">{set.title}</span>
+                    <span class="text-white link-blue map-title">{!set.user_id ? 'Processing Metadata...' : set.title}</span>
                   </a>
                   </div>
                 <div class="small d-flex align-items-center">

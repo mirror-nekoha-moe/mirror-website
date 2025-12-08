@@ -46,3 +46,10 @@
   background-position: center;
   background-repeat: no-repeat;
 }
+
+.missing-metadata {
+  .map-title {
+    background-color: black;
+    color: $secondary;
+  }
+}
