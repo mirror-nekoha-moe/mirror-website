@@ -1,3 +1,5 @@
+import nekohaImage from '../images/nekoha.png';
+
 import { useState, useEffect } from 'react'
 import { FaDiscord, FaGithub } from 'react-icons/fa';
 
@@ -28,9 +30,14 @@ function Index() {
     <>
       <title>Home</title>
       <div class="container py-4 px-3 mx-auto">
-        <div class="text-center mb-4">
-          <h1 class="h3">Another osu! Beatmap Mirror</h1>
-          <h2 class="h5">Ranked, Approved, Loved for now only</h2>
+        <div className="row mb-4 d-flex justify-content-between">
+          <div className="col-12 col-lg-3 offset-lg-3 align-self-center">
+            <img src={nekohaImage} className="mx-auto d-block img-fluid" alt="nekoha" />
+          </div>
+          <div className="col-12 col-lg-6 align-self-center text-center text-lg-start">
+            <h1 class="h3">Nekoha Mirror</h1>
+            <h2 class="h5">Another osu! Beatmap Mirror</h2>
+          </div>
         </div>
         <div class="text-center mb-4">
           <div class="row g-2 justify-content-center">
