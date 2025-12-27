@@ -95,7 +95,7 @@ export default function BeatmapsetSearch() {
           </div>
         </form>
         {loading && <div class="alert alert-info">Loading...</div>}
-        {error && <div class="alert alert-danger">{error}</div>}
+        {error && <div class="alert bg-danger">{error}</div>}
         <Pagination />
         <div class="row g-3 mb-3">
           {results.map(set => (
