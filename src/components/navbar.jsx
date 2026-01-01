@@ -11,29 +11,34 @@ const Navbar = () => {
     }, 0); 
   };
 
-  return (
-    <nav className="navbar navbar-expand-md bg-black bg-gradient">
-      <div className="container-fluid">
-        <a href="/" className="navbar-brand">mirror.nekoha.moe</a>
-        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-content" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
-          <span className="navbar-toggler-icon"></span>
-        </button>
-        <div className="collapse navbar-collapse" id="navbar-content">
-          <ul className="navbar-nav">
-            <li className="nav-item">
-              <a href="/" className="nav-link" onClick={(e) => handleLinkClick(e, "/")}>Home</a>
-            </li>
-            <li className="nav-item">
-              <a href="/search" className="nav-link" onClick={(e) => handleLinkClick(e, "/search")}>Beatmaps</a>
-            </li>
-            <li className="nav-item">
-              <a href="/monitor" className="nav-link" onClick={(e) => handleLinkClick(e, "/monitor")}>Monitor</a>
-            </li>
-          </ul>
+    return (
+        <div class="top-container">
+            <nav className="navbar navbar-expand-md bg-black bg-gradient">
+                <div className="container-fluid">
+                    <a href="/" className="navbar-brand">mirror.nekoha.moe</a>
+                    <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-content" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
+                        <span className="navbar-toggler-icon"></span>
+                    </button>
+                    <div className="collapse navbar-collapse" id="navbar-content">
+                        <ul className="navbar-nav">
+                        <li className="nav-item">
+                            <a href="/" className="nav-link" onClick={(e) => handleLinkClick(e, "/")}>Home</a>
+                        </li>
+                        <li className="nav-item">
+                            <a href="/search" className="nav-link" onClick={(e) => handleLinkClick(e, "/search")}>Beatmaps</a>
+                        </li>
+                        <li className="nav-item">
+                            <a href="/monitor" className="nav-link" onClick={(e) => handleLinkClick(e, "/monitor")}>Monitor</a>
+                        </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+            <div className="bg-danger w-100 p-2 text-center d-none">
+                <a className="text-white fw-bold">API is temporarily offline due to maintenance</a>
+            </div>
         </div>
-      </div>
-    </nav>
-  );
+      );
 };
 
 export default Navbar;
