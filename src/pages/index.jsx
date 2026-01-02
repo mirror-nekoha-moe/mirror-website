@@ -138,18 +138,36 @@ function Index() {
               <div className="col-12">
                 <div className="card h-100">
                   <div className="card-body">
-                    <h5 className="card-title">Missing Beatmapsets</h5>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div>
-                        <p className="h3 mb-0 text-warning">
-                          {stats.missing_beatmapsets}
-                        </p>
-                        <small className="text-muted">Missing Beatmapsets due to disabled download</small>
-                      </div>
+                    <h5 className="card-title">Missing Beatmapsets by Status</h5>
+                    <div className="row g-2 mt-2">
+                      {[
+                        { key: 'missing_beatmapsets_ranked', label: 'Ranked', color: 'bg-info' },
+                        { key: 'missing_beatmapsets_approved', label: 'Approved', color: 'bg-success' },
+                        { key: 'missing_beatmapsets_qualified', label: 'Qualified', color: 'bg-success' },
+                        { key: 'missing_beatmapsets_loved', label: 'Loved', color: 'cbg-pink-2' },
+                        { key: 'missing_beatmapsets_pending', label: 'Pending', color: 'cbg-dark-grey' },
+                        { key: 'missing_beatmapsets_wip', label: 'WIP', color: 'cbg-dark-grey' },
+                        { key: 'missing_beatmapsets_graveyard', label: 'Graveyard', color: 'cbg-dark-grey' }
+                      ].map(status => (
+                        stats[status.key] !== undefined && (
+                          <div key={status.key} className="col">
+                            <div className={`counter-item ${status.color} d-flex justify-content-between align-items-center p-2`}>
+                              <span className="card-property-title">{status.label}</span>
+                              <span className={`badge cbg-black-t40 rounded-pill`}>
+                                {stats[status.key].toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      ))}
+                      <small className="text-muted">Missing Beatmapsets due to disabled download, DMCA or ratelimit (KEKW)</small>
+                      <br/>
+                      <small className="text-warning mt-0">Total: {stats.missing_beatmapsets}</small>
                     </div>
                   </div>
                 </div>
               </div>
+
 
               <div className="col-12">
                 <div className="card h-100">
@@ -157,17 +175,19 @@ function Index() {
                     <h5 className="card-title">Beatmapsets by Status</h5>
                     <div className="row g-2 mt-2">
                       {[
-                        { key: 'ranked_count', label: 'Ranked', color: 'black' },
-                        { key: 'approved_count', label: 'Approved', color: 'black' },
-                        { key: 'loved_count', label: 'Loved', color: 'black' },
-                        { key: 'pending_count', label: 'Pending', color: 'black' },
-                        { key: 'graveyard_count', label: 'Graveyard', color: 'black' }
+                        { key: 'ranked_count', label: 'Ranked', color: 'bg-info' },
+                        { key: 'approved_count', label: 'Approved', color: 'bg-success' },
+                        { key: 'qualified_count', label: 'Qualified', color: 'bg-success' },
+                        { key: 'loved_count', label: 'Loved', color: 'cbg-pink-2' },
+                        { key: 'pending_count', label: 'Pending', color: 'cbg-dark-grey' },
+                        { key: 'wip_count', label: 'WIP', color: 'cbg-dark-grey' },
+                        { key: 'graveyard_count', label: 'Graveyard', color: 'cbg-dark-grey' }
                       ].map(status => (
                         stats[status.key] !== undefined && (
                           <div key={status.key} className="col">
-                            <div className="bg-secondary d-flex justify-content-between align-items-center p-2">
-                              <span className="text-black">{status.label}</span>
-                              <span className={`badge bg-${status.color} rounded-pill`}>
+                            <div className={`counter-item ${status.color} d-flex justify-content-between align-items-center p-2`}>
+                              <span className="card-property-title">{status.label}</span>
+                              <span className={`badge cbg-black-t40 rounded-pill`}>
                                 {stats[status.key].toLocaleString()}
                               </span>
                             </div>
@@ -190,20 +210,22 @@ function Index() {
                       <h5 className="card-title">{mode.label} — Beatmaps by Status</h5>
                       <div className="row g-2 mt-2">
                         {[
-                          { suffix: 'ranked_count', label: 'Ranked' },
-                          { suffix: 'approved_count', label: 'Approved' },
-                          { suffix: 'loved_count', label: 'Loved' },
-                          { suffix: 'pending_count', label: 'Pending' },
-                          { suffix: 'graveyard_count', label: 'Graveyard' }
+                          { suffix: 'ranked_count', label: 'Ranked', color: 'bg-info' },
+                          { suffix: 'approved_count', label: 'Approved', color: 'bg-success' },
+                          { suffix: 'qualified_count', label: 'Qualified', color: 'bg-success' },
+                          { suffix: 'loved_count', label: 'Loved', color: 'cbg-pink-2' },
+                          { suffix: 'pending_count', label: 'Pending', color: 'cbg-dark-grey' },
+                          { suffix: 'wip_count', label: 'WIP', color: 'cbg-dark-grey' },
+                          { suffix: 'graveyard_count', label: 'Graveyard', color: 'cbg-dark-grey' }
                         ].map(s => {
                           const key = `${mode.id}_bm_${s.suffix}`;
                           const val = stats[key];
                           return (
                             val !== undefined && (
                               <div key={key} className="col-12">
-                                <div className="bg-secondary d-flex justify-content-between align-items-center p-2">
-                                  <span className="text-black">{s.label}</span>
-                                  <span className={`badge bg-black rounded-pill`}>
+                                <div className={`counter-item ${s.color} d-flex justify-content-between align-items-center p-2`}>
+                                  <span className="card-property-title">{s.label}</span>
+                                  <span className={`badge cbg-black-t40 rounded-pill`}>
                                     {Number(val).toLocaleString()}
                                   </span>
                                 </div>

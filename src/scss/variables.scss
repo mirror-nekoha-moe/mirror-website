@@ -2,17 +2,18 @@ $body-color: white;
 $font-family-base: 'Chakra Petch', sans-serif;
 
 // Background
-$primary: rgb(12, 12, 12);
+$primary: rgb(12, 12, 20);
 $secondary: rgb(0, 206, 255);
 $info: rgb(0, 110, 255);
-$grey: rgb(99,99,99);
-$dark-grey: rgb(37, 37, 41);
+$grey: rgb(99,99,120);
+$dark-grey: rgb(37, 37, 51);
 $pink: rgb(255, 127, 127);
 
 // Cards
-$card-bg: $primary;
+$card-bg: rgb(20, 20, 30);
 $card-border-color: #fff;
-$card-border-radius: 0;
+$card-border-radius: 10px;
+$card-border-width: 0px;
 $card-title-color: #fff;
 $card-text-color: rgba(255, 255, 255, 0.9);
 
@@ -22,9 +23,9 @@ $secondary-text-emphasis: $secondary;
 $light-text-emphasis: $grey;
 
 // Custom
-$dark: rgb(20, 20, 20);
-$darker: rgb(16, 16, 16);
-$darkest: rgb(8, 8, 8);
+$dark: rgb(20, 20, 30);
+$darker: rgb(16, 16, 28);
+$darkest: rgb(8, 8, 16);
 
 // Navbar
 $navbar-light-brand-color: white;
@@ -48,4 +49,21 @@ $list-group-bg: $primary;
 }
 .cbg-darkest {
     background-color: $darkest !important;
+}
+.cbg-grey {
+    background-color: $grey !important;
+}
+.cbg-dark-grey {
+    background-color: $dark-grey !important;
+}
+.cbg-pink {
+    background-color: $pink !important;
+}
+
+.cbg-pink-2 {
+    background-color: #ff66ab !important;
+}
+
+.cbg-black-t40 {
+    background-color: rgba(0, 0, 0, 0.4) !important;
 }

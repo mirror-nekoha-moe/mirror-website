@@ -1,13 +1,17 @@
 // Cards
 .card {
-  background-color: rgb(12, 12, 12);
+  background-color: rgb(28, 28, 28);
   border: 1px solid #fff;
   border-radius: 0;
 
   .card-title {
     color: #fff;
-    text-shadow: #fff 0px 0px 6px;
+    text-shadow: #000 0px 0px 6px;
     font-weight: 300;
+  }
+
+  .card-property-title {
+    text-shadow: #000 0px 0px 6px;
   }
 
   .card-body {
