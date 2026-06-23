@@ -12,6 +12,7 @@ import Index from './pages/index.jsx'
 import Search from './pages/search.jsx'
 import Monitor from './pages/monitor.jsx'
 import Error from './pages/error.jsx'
+import BeatmapSet from './pages/beatmapset.jsx';
 
 // Bootstrap
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -20,16 +21,17 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './scss/theme.scss'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <BrowserRouter>
-      <Navbar />
-      <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/monitor" element={<Monitor />} />
-          <Route path="*" element={<Error />} />
-      </Routes>
-      <Footer />
-    </BrowserRouter>
-  </StrictMode>,
+    <StrictMode>
+        <BrowserRouter>
+            <Navbar />
+            <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/search" element={<Search />} />
+                <Route path="/monitor" element={<Monitor />} />
+                <Route path="/beatmapset/:id" element={<BeatmapSet />} />
+                <Route path="*" element={<Error />} />
+            </Routes>
+            <Footer />
+        </BrowserRouter>
+    </StrictMode>,
 )
