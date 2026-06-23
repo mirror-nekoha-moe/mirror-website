@@ -13,7 +13,7 @@ const Navbar = () => {
 
     return (
         <div class="top-container">
-            <nav className="navbar navbar-expand-md bg-black bg-gradient">
+            <nav className="navbar navbar-expand-md bg-card">
                 <div className="container-fluid">
                     <a href="/" className="navbar-brand">mirror.nekoha.moe</a>
                     <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-content" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
