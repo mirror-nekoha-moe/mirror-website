@@ -25,7 +25,7 @@ response=$(curl -s -X POST "https://api.cloudflare.com/client/v4/zones/$CF_ZONE_
   -H "Content-Type: application/json" \
   --data '{"purge_everything": true }')
 
-if echo "$response" | grep -q '"success": true'; then
+if echo "$response" | grep -q '"success":true'; then
     echo "Cloudflare cache purged"
     echo "Done Deploying Page"
 else
