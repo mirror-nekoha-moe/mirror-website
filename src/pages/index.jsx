@@ -2,28 +2,34 @@ import nekohaImage from '../images/nekoha.png';
 
 import { useState, useEffect } from 'react'
 import { FaDiscord, FaGithub } from 'react-icons/fa';
+import DownloadChart from '../components/DownloadChart.jsx';
+import ApiCallChart from '../components/ApiCallChart.jsx';
 
 function Index() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloadStats, setDownloadStats] = useState([]);
+  const [apiCallStats, setApiCallStats] = useState(null);
 
   useEffect(() => {
     fetch('/api4/stats')
       .then(response => {
-        if (!response.ok) {
-          throw new Error('Failed to fetch stats');
-        }
+        if (!response.ok) throw new Error('Failed to fetch stats');
         return response.json();
       })
-      .then(data => {
-        setStats(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError(err.message);
-        setLoading(false);
-      });
+      .then(data => { setStats(data); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+
+    fetch('/api4/download-stats?days=30')
+      .then(r => r.json())
+      .then(data => setDownloadStats(data))
+      .catch(() => {});
+
+    fetch('/api4/api-call-stats')
+      .then(r => r.json())
+      .then(data => setApiCallStats(data))
+      .catch(() => {});
   }, []);
 
   return (
@@ -77,7 +83,7 @@ function Index() {
               <div className="col-md-6 col-lg-3">
                 <div className="card h-100">
                   <div className="card-body">
-                    <h5 className="card-title">Total Beatmaps</h5>
+                    <p className="h5 card-title">Total Beatmaps</p>
                     <div className="d-flex justify-content-between align-items-center">
                       <div>
                         <p className="h3 mb-0 text-secondary">{stats.beatmap_count?.toLocaleString() || 0}</p>
@@ -91,7 +97,7 @@ function Index() {
               <div className="col-md-6 col-lg-3">
                 <div className="card h-100">
                   <div className="card-body">
-                    <h5 className="card-title">Total Beatmapsets</h5>
+                    <p className="h5 card-title">Total Beatmapsets</p>
                     <div className="d-flex justify-content-between align-items-center">
                       <div>
                         <p className="h3 mb-0 text-secondary">{stats.beatmapset_count?.toLocaleString() || 0}</p>
@@ -105,7 +111,7 @@ function Index() {
               <div className="col-md-6 col-lg-3">
                 <div className="card h-100">
                   <div className="card-body">
-                    <h5 className="card-title">Latest Set ID</h5>
+                    <p className="h5 card-title">Latest Set ID</p>
                     <div className="d-flex justify-content-between align-items-center">
                       <div>
                         <p className="h3 mb-0 text-secondary">{stats.last_beatmapset_id?.toLocaleString() || 0}</p>
@@ -119,7 +125,7 @@ function Index() {
               <div className="col-md-6 col-lg-3">
                 <div className="card h-100">
                   <div className="card-body">
-                    <h5 className="card-title">Total Size</h5>
+                    <p className="h5 card-title">Total Size</p>
                     <div className="d-flex justify-content-between align-items-center">
                       <div>
                         <p className="h3 mb-0 text-secondary">
@@ -138,7 +144,7 @@ function Index() {
               <div className="col-12">
                 <div className="card h-100">
                   <div className="card-body">
-                    <h5 className="card-title">Missing Beatmapsets by Status</h5>
+                    <p className="h5 card-title">Missing Beatmapsets by Status</p>
                     <div className="row g-2 mt-2">
                       {[
                         { key: 'missing_beatmapsets_ranked', label: 'Ranked', color: 'bg-info' },
@@ -172,29 +178,70 @@ function Index() {
               <div className="col-12">
                 <div className="card h-100">
                   <div className="card-body">
-                    <h5 className="card-title">Beatmapsets by Status</h5>
+                    <p className="h5 card-title">Beatmapsets by Status</p>
                     <div className="row g-2 mt-2">
                       {[
-                        { key: 'ranked_count', label: 'Ranked', color: 'bg-info' },
-                        { key: 'approved_count', label: 'Approved', color: 'bg-success' },
-                        { key: 'qualified_count', label: 'Qualified', color: 'bg-success' },
-                        { key: 'loved_count', label: 'Loved', color: 'cbg-pink-2' },
-                        { key: 'pending_count', label: 'Pending', color: 'cbg-dark-grey' },
-                        { key: 'wip_count', label: 'WIP', color: 'cbg-dark-grey' },
-                        { key: 'graveyard_count', label: 'Graveyard', color: 'cbg-dark-grey' }
-                      ].map(status => (
-                        stats[status.key] !== undefined && (
-                          <div key={status.key} className="col">
-                            <div className={`counter-item ${status.color} d-flex justify-content-between align-items-center p-2`}>
-                              <span className="card-property-title">{status.label}</span>
-                              <span className={`badge cbg-black-t40 rounded-pill`}>
-                                {stats[status.key].toLocaleString()}
-                              </span>
+                        { key: 'ranked_count',    missingKey: 'missing_beatmapsets_ranked',     label: 'Ranked',    color: 'bg-info' },
+                        { key: 'approved_count',  missingKey: 'missing_beatmapsets_approved',   label: 'Approved',  color: 'bg-success' },
+                        { key: 'qualified_count', missingKey: 'missing_beatmapsets_qualified',  label: 'Qualified', color: 'bg-success' },
+                        { key: 'loved_count',     missingKey: 'missing_beatmapsets_loved',      label: 'Loved',     color: 'cbg-pink-2' },
+                        { key: 'pending_count',   missingKey: 'missing_beatmapsets_pending',    label: 'Pending',   color: 'cbg-dark-grey' },
+                        { key: 'wip_count',       missingKey: 'missing_beatmapsets_wip',        label: 'WIP',       color: 'cbg-dark-grey' },
+                        { key: 'graveyard_count', missingKey: 'missing_beatmapsets_graveyard',  label: 'Graveyard', color: 'cbg-dark-grey' }
+                      ].map(status => {
+                        const total = stats[status.key];
+                        const missing = stats[status.missingKey] ?? 0;
+                        const available = (Number(total) - Number(missing));
+                        return (
+                          total !== undefined && (
+                            <div key={status.key} className="col">
+                              <div className={`counter-item ${status.color} d-flex justify-content-between align-items-center p-2`}>
+                                <span className="card-property-title">{status.label}</span>
+                                <span className={`badge cbg-black-t40 rounded-pill`}>
+                                  {available.toLocaleString()}
+                                </span>
+                              </div>
                             </div>
-                          </div>
-                        )
-                      ))}
+                          )
+                        );
+                      })}
                     </div>
+                    <small className="text-muted mt-2 d-block">Missing beatmapsets excluded</small>
+                  </div>
+                </div>
+              </div>
+
+              <div className="col-12">
+                <div className="card h-100">
+                  <div className="card-body">
+                    <p className="h5 card-title">Size by Status</p>
+                    <div className="row g-2 mt-2">
+                      {[
+                        { key: 'size_ranked',    label: 'Ranked',    color: 'bg-info' },
+                        { key: 'size_approved',  label: 'Approved',  color: 'bg-success' },
+                        { key: 'size_qualified', label: 'Qualified', color: 'bg-success' },
+                        { key: 'size_loved',     label: 'Loved',     color: 'cbg-pink-2' },
+                        { key: 'size_pending',   label: 'Pending',   color: 'cbg-dark-grey' },
+                        { key: 'size_wip',       label: 'WIP',       color: 'cbg-dark-grey' },
+                        { key: 'size_graveyard', label: 'Graveyard', color: 'cbg-dark-grey' }
+                      ].map(status => {
+                        const bytes = Number(stats[status.key] ?? 0);
+                        const gb = (bytes / (1024 ** 3)).toFixed(2);
+                        return (
+                          stats[status.key] !== undefined && (
+                            <div key={status.key} className="col">
+                              <div className={`counter-item ${status.color} d-flex justify-content-between align-items-center p-2`}>
+                                <span className="card-property-title">{status.label}</span>
+                                <span className={`badge cbg-black-t40 rounded-pill`}>
+                                  {gb} GB
+                                </span>
+                              </div>
+                            </div>
+                          )
+                        );
+                      })}
+                    </div>
+                    <small className="text-muted mt-2 d-block">Downloaded files only</small>
                   </div>
                 </div>
               </div>
@@ -207,7 +254,7 @@ function Index() {
                 <div key={mode.id} className="col-12 col-md-6 col-lg-3">
                   <div className="card h-100">
                     <div className="card-body">
-                      <h5 className="card-title">{mode.label} — Beatmaps by Status</h5>
+                      <p className="h5 card-title">{mode.label} - Beatmaps by Status</p>
                       <div className="row g-2 mt-2">
                         {[
                           { suffix: 'ranked_count', label: 'Ranked', color: 'bg-info' },
@@ -241,7 +288,25 @@ function Index() {
             </>
           )}
         </div>
-        
+
+        {downloadStats.length > 0 && (
+          <div className="card mt-2 mb-4">
+            <div className="card-body">
+              <p className="h5 card-title">Downloads (last 30 days)</p>
+              <DownloadChart data={downloadStats} />
+            </div>
+          </div>
+        )}
+
+        {apiCallStats && (
+          <div className="card mt-2 mb-4">
+            <div className="card-body">
+              <p className="h5 card-title">osu! API calls (last 6h)</p>
+              <ApiCallChart data={apiCallStats} />
+            </div>
+          </div>
+        )}
+
       </div>
     </>
   )
