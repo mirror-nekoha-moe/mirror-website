@@ -67,3 +67,46 @@ $list-group-bg: $primary;
 .cbg-black-t40 {
     background-color: rgba(0, 0, 0, 0.4) !important;
 }
+
+.bg-card {
+    background-color: $card-bg !important;
+}
+
+.border-beatmapcard {
+    border: solid;
+    border-color: #2c2c3c !important;
+}
+
+.btn-outline-dark-c1 {
+  --bs-btn-color: #14141e;
+  --bs-btn-border-color: #14141e;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #14141e;
+  --bs-btn-hover-border-color: #14141e;
+  --bs-btn-focus-shadow-rgb: 20,20,30;
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: #14141e;
+  --bs-btn-active-border-color: #14141e;
+  --bs-btn-active-shadow: inset 0 3px 5px rgba(0,0,0,.125);
+  --bs-btn-disabled-color: #14141e;
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: #14141e;
+  --bs-gradient: none;
+}
+
+.btn-dark-c1 {
+  --bs-btn-color: #fff !important;
+  --bs-btn-hover-color: #fff !important;
+  --bs-btn-active-color: #fff !important;
+  --bs-btn-hover-bg: #2c2c3c !important;
+  --bs-btn-active-bg: #2c2c3c !important;
+  --bs-btn-active-shadow: inset 0 3px 5px rgba(0,0,0,.125) !important;
+  --bs-btn-focus-shadow-rgb: 20,20,30 !important;
+  --bs-btn-border-color: #2c2c3c !important;
+  --bs-btn-hover-border-color: #2c2c3c !important;
+  --bs-btn-active-border-color: #2c2c3c !important;
+  --bs-btn-disabled-color: #2c2c3c !important;
+  --bs-btn-disabled-bg: transparent !important;
+  --bs-btn-disabled-border-color: #2c2c3c !important;
+  --bs-gradient: none !important;
+}
