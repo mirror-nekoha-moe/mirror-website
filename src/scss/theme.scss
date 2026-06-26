@@ -1,59 +1,35 @@
-@import "./fonts.scss";
-@import "./mixin.scss";
-@import "./variables.scss";
-@import "./cards.scss";
+@import "./fonts";
+@import "./mixin";
+@import "./variables";
+@import "./cards";
+@import "./style";
 
-@import '~bootstrap/scss/bootstrap';
+// Bootstrap, this is kinda silly
+@import '~bootstrap/scss/functions';
+@import '~bootstrap/scss/variables';
+@import '~bootstrap/scss/variables-dark';
+@import '~bootstrap/scss/maps';
+@import '~bootstrap/scss/mixins';
+@import '~bootstrap/scss/utilities';
+@import '~bootstrap/scss/root';
+@import '~bootstrap/scss/reboot';
+@import '~bootstrap/scss/type';
+@import '~bootstrap/scss/images';
+@import '~bootstrap/scss/containers';
+@import '~bootstrap/scss/grid';
+@import '~bootstrap/scss/forms/labels';
+@import '~bootstrap/scss/forms/form-text';
+@import '~bootstrap/scss/forms/form-control';
+@import '~bootstrap/scss/forms/form-select';
+@import '~bootstrap/scss/forms/input-group';
+@import '~bootstrap/scss/buttons';
+@import '~bootstrap/scss/transitions';
+@import '~bootstrap/scss/nav';
+@import '~bootstrap/scss/navbar';
+@import '~bootstrap/scss/card';
+@import '~bootstrap/scss/badge';
+@import '~bootstrap/scss/alert';
+@import '~bootstrap/scss/spinners';
+@import '~bootstrap/scss/helpers';
+@import '~bootstrap/scss/utilities/api';
 
-@include fog-glow-keyframes(fog_secondary, $secondary);
-@include fog-glow-keyframes(fog_pink, $pink);
-
-.navbar-brand {
-  text-decoration: none;
-  color: inherit;
-  animation: fog_secondary 6s ease-in-out infinite;
-}
-
-.nav-link:hover {
-  text-shadow: #fff 0px 0px 6px;
-}
-
-.link-blue {
-  text-decoration: none;
-  color: $secondary;
-  position: relative;
-
-  &:hover {
-    color: white;
-    animation: fog_secondary 6s ease-in-out infinite;
-  }
-}
-
-.link-pink {
-  text-decoration: none;
-  color: $pink;
-  position: relative;
-
-  &:hover {
-    color: white;
-    animation: fog_pink 6s ease-in-out infinite;
-  }
-}
-
-// Beatmapset Cards
-.beatmapset-card-bg {
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-
-.missing-metadata {
-  .map-title {
-    background-color: black;
-    color: $secondary;
-  }
-}
-
-.counter-item {
-  border-radius: 10px;
-}
