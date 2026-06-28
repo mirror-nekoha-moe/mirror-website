@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function BeatmapRequestPage() {
+    const navigate = useNavigate();
     const [requests, setRequests] = useState([{ id: crypto.randomUUID() }]);
 
     function addRequest() {
