@@ -34,15 +34,19 @@ function Index() {
 
   return (
     <>
-      <title>Home</title>
+      <title>osu! Beatmap Mirror | Nekoha</title>
       <div class="container py-4 px-3 mx-auto">
         <div className="row mb-4 d-flex justify-content-between">
-          <div className="col-12 col-lg-3 offset-lg-3 align-self-center">
+          <div className="col-12 col-lg-3 offset-lg-2 align-self-center">
             <img src={nekohaImage} className="mx-auto d-block img-fluid" alt="nekoha" />
           </div>
-          <div className="col-12 col-lg-6 align-self-center text-center text-lg-start">
-            <h1 class="h3">Nekoha Mirror</h1>
-            <h2 class="h5">Another osu! Beatmap Mirror</h2>
+          <div className="col-12 col-lg-7 align-self-center text-center text-lg-start">
+            <h1 class="h3">osu! Beatmap Mirror</h1>
+            <h2 class="h5">Nekoha</h2>
+            <p>
+                Nekoha is an osu! beatmap mirror that stores all osu! Beatmaps, though not all yet, but it's growing.
+                Download Beatmaps or fetch their data with <span class="text-secondary">no ratelimit</span>.
+            </p>            
           </div>
         </div>
         <div class="text-center mb-4">
@@ -53,13 +57,13 @@ function Index() {
               </a>
             </div>
             <div class="col-12 col-md-auto">
-                <a class="btn btn-info w-100 d-flex align-items-center justify-content-center gap-2" href="https://discord.gg/QNCmZBqwBQ" target="_blank">
+                <a class="btn btn-info w-100 d-flex align-items-center justify-content-center gap-2" href="https://discord.gg/QNCmZBqwBQ" target="_blank" rel="noopener noreferrer">
                   <FaDiscord color="#fff" />
                   <span class="text-white">Join Discord</span>
                 </a>
             </div>
             <div class="col-12 col-md-auto">
-              <a class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2" href="https://github.com/mirror-nekoha-moe/mirror-server/blob/master/README.MD" target="_blank">
+              <a class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2" href="https://github.com/mirror-nekoha-moe/mirror-server/blob/master/README.MD" target="_blank" rel="noopener noreferrer">
                 <FaGithub />
                 <span>API Documentation</span>
               </a>
