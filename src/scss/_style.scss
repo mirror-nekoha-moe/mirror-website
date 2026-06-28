@@ -1,4 +1,4 @@
-@include fog-glow-keyframes(fog_secondary, $secondary);
+@include fog-glow-keyframes(fog_secondary, white);
 
 .navbar-brand {
   text-decoration: none;
@@ -59,8 +59,8 @@
 
 // Infinite-scroll loading bar (indeterminate)
 @keyframes indeterminateAnimation {
-  0%   { transform: translateX(0) scaleX(0); }
-  40%  { transform: translateX(0) scaleX(0.4); }
+  0% { transform: translateX(0) scaleX(0); }
+  40% { transform: translateX(0) scaleX(0.4); }
   100% { transform: translateX(100%) scaleX(0.5); }
 }
 
@@ -82,4 +82,14 @@
 
 .download-chart-container, .api-call-stats-chart-container {
     height: 300px;
+}
+
+ul.dropdown-menu {
+    background-color: $dark-grey;
+    a.nav-link {
+        color: white;
+    }
+    .dropdown-item:hover  {
+        background-color: $dark;
+    }
 }
