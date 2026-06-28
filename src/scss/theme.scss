@@ -4,32 +4,5 @@
 @import "./cards";
 @import "./style";
 
-// Bootstrap, this is kinda silly
-@import '~bootstrap/scss/functions';
-@import '~bootstrap/scss/variables';
-@import '~bootstrap/scss/variables-dark';
-@import '~bootstrap/scss/maps';
-@import '~bootstrap/scss/mixins';
-@import '~bootstrap/scss/utilities';
-@import '~bootstrap/scss/root';
-@import '~bootstrap/scss/reboot';
-@import '~bootstrap/scss/type';
-@import '~bootstrap/scss/images';
-@import '~bootstrap/scss/containers';
-@import '~bootstrap/scss/grid';
-@import '~bootstrap/scss/forms/labels';
-@import '~bootstrap/scss/forms/form-text';
-@import '~bootstrap/scss/forms/form-control';
-@import '~bootstrap/scss/forms/form-select';
-@import '~bootstrap/scss/forms/input-group';
-@import '~bootstrap/scss/buttons';
-@import '~bootstrap/scss/transitions';
-@import '~bootstrap/scss/nav';
-@import '~bootstrap/scss/navbar';
-@import '~bootstrap/scss/card';
-@import '~bootstrap/scss/badge';
-@import '~bootstrap/scss/alert';
-@import '~bootstrap/scss/spinners';
-@import '~bootstrap/scss/helpers';
-@import '~bootstrap/scss/utilities/api';
+@import '~bootstrap';
 
