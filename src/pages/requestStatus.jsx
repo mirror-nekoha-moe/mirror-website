@@ -6,7 +6,7 @@ export default function RequestStatusPage() {
     const [data, setData] = useState(null);
     
     useEffect(() => {
-        fetch(`/api4/request/${id}`)
+        fetch(`/api/request/${id}`)
             .then(async (r) => {
                 if (!r.ok) {
                     const err = await r.json().catch(() => ({}));

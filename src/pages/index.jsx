@@ -13,7 +13,7 @@ function Index() {
   const [apiCallStats, setApiCallStats] = useState(null);
 
   useEffect(() => {
-    fetch('/api4/stats')
+    fetch('/api/stats')
       .then(response => {
         if (!response.ok) throw new Error('Failed to fetch stats');
         return response.json();
@@ -21,12 +21,12 @@ function Index() {
       .then(data => { setStats(data); setLoading(false); })
       .catch(err => { setError(err.message); setLoading(false); });
 
-    fetch('/api4/download-stats?days=30')
+    fetch('/api/download-stats?days=30')
       .then(r => r.json())
       .then(data => setDownloadStats(data))
       .catch(() => {});
 
-    fetch('/api4/api-call-stats')
+    fetch('/api/api-call-stats')
       .then(r => r.json())
       .then(data => setApiCallStats(data))
       .catch(() => {});

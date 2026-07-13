@@ -68,7 +68,7 @@ export default function BeatmapSet() {
             setError('');
             try {
                 if (!/^\d+$/.test(id)) { setError('Invalid beatmapset ID'); return; }
-                const res = await axios.get(`/api4/beatmapsetFull/${id}`);
+                const res = await axios.get(`/api/beatmapsetFull/${id}`);
                 const beatmaps = res.data.beatmaps.slice().sort((a, b) => b.difficulty_rating - a.difficulty_rating);
                 setData({ ...res.data, beatmaps });
                 setSelectedDiff(beatmaps[0]);
@@ -175,11 +175,11 @@ export default function BeatmapSet() {
                                 <span>{playing ? 'Pause' : 'Preview'}</span>
                             </button>
                         )}
-                        <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api4/download/${data.id}`}>
+                        <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${data.id}`}>
                             <FaDownload /> Download {(data.file_size / (1024 ** 2)).toFixed(2)} MB
                         </a>
                         {data.video && (
-                            <a className="btn btn-sm btn-outline-success d-flex align-items-center gap-2" href={`/api4/download/${data.id}?noVideo=1`} title="Download without video">
+                            <a className="btn btn-sm btn-outline-success d-flex align-items-center gap-2" href={`/api/download/${data.id}?noVideo=1`} title="Download without video">
                                 <FaDownload /> No Video
                             </a>
                         )}

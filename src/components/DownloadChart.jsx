@@ -27,28 +27,28 @@ export default function DownloadChart({ data }) {
             data: {
                 labels,
                 datasets: [
-                {
-                    label: 'Downloads',
-                    data: downloads,
-                    borderColor: '#00CEFF',
-                    backgroundColor: 'rgba(0, 206, 255, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 3,
-                    fill: true,
-                    tension: 0.3,
-                    yAxisID: 'y',
-                },
-                {
-                    label: 'GB Sent',
-                    data: bytes,
-                    borderColor: '#ff7f7f',
-                    backgroundColor: 'rgba(255, 127, 127, 0.1)',
-                    borderWidth: 2,
-                    pointRadius: 3,
-                    fill: true,
-                    tension: 0.3,
-                    yAxisID: 'y2',
-                }
+                    {
+                        label: 'Downloads',
+                        data: downloads,
+                        borderColor: '#00CEFF',
+                        backgroundColor: 'rgba(0, 206, 255, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.3,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'GB Sent',
+                        data: bytes,
+                        borderColor: '#ff7f7f',
+                        backgroundColor: 'rgba(255, 127, 127, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.3,
+                        yAxisID: 'y2',
+                    }
                 ]
             },
             options: {
@@ -63,34 +63,34 @@ export default function DownloadChart({ data }) {
                     mode: 'index',
                     intersect: false,
                     callbacks: {
-                    label: (ctx) => {
-                        if (ctx.datasetIndex === 1)
-                        return `GB Sent: ${ctx.parsed.y} GB`;
-                        return `Downloads: ${ctx.parsed.y.toLocaleString()}`;
-                    }
+                        label: (ctx) => {
+                            if (ctx.datasetIndex === 1)
+                            return `GB Sent: ${ctx.parsed.y} GB`;
+                            return `Downloads: ${ctx.parsed.y.toLocaleString()}`;
+                        }
                     }
                 }
                 },
                 interaction: { mode: 'index', intersect: false },
                 scales: {
-                y: {
-                    beginAtZero: true,
-                    position: 'left',
-                    ticks: { color: '#00CEFF' },
-                    grid: { color: '#222' },
-                    title: { display: true, text: 'Downloads', color: '#00CEFF' }
-                },
-                y2: {
-                    beginAtZero: true,
-                    position: 'right',
-                    ticks: { color: '#ff7f7f', callback: v => `${v} GB` },
-                    grid: { drawOnChartArea: false },
-                    title: { display: true, text: 'GB Sent', color: '#ff7f7f' }
-                },
-                x: {
-                    ticks: { color: '#eee' },
-                    grid: { color: '#222' }
-                }
+                    y: {
+                        beginAtZero: true,
+                        position: 'left',
+                        ticks: { color: '#00CEFF' },
+                        grid: { color: '#222' },
+                        title: { display: true, text: 'Downloads', color: '#00CEFF' }
+                    },
+                    y2: {
+                        beginAtZero: true,
+                        position: 'right',
+                        ticks: { color: '#ff7f7f', callback: v => `${v} GB` },
+                        grid: { drawOnChartArea: false },
+                        title: { display: true, text: 'GB Sent', color: '#ff7f7f' }
+                    },
+                    x: {
+                        ticks: { color: '#eee' },
+                        grid: { color: '#222' }
+                    }
                 }
             }
         });

@@ -112,7 +112,7 @@ export default function BeatmapsetSearch() {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.get('/api4/search', { params: buildParams(pageNum, q, f) });
+      const res = await axios.get('/api/search', { params: buildParams(pageNum, q, f) });
       // Discard if a newer search was started while this was in-flight
       if (gen !== genRef.current) return;
       const data = res.data;
@@ -394,12 +394,12 @@ export default function BeatmapsetSearch() {
                       {playingId === set.id ? <FaPause size={11} /> : <FaPlay size={11} />}
                     </button>
                   )}
-                  <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api4/download/${set.id}`}>
+                  <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}`}>
                     <span>Download {(set.file_size / (1024 ** 2)).toFixed(2)} MB</span>
                     <FaDownload color="white" />
                   </a>
                   {set.video && (
-                    <a className="btn btn-sm btn-outline-success d-flex align-items-center gap-2" href={`/api4/download/${set.id}?noVideo=1`} title="Download without video">
+                    <a className="btn btn-sm btn-outline-success d-flex align-items-center gap-2" href={`/api/download/${set.id}?noVideo=1`} title="Download without video">
                       <span>No Video</span>
                       <FaDownload color="white" />
                     </a>

@@ -8,7 +8,7 @@ export default function RequestListPage() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetch("/api4/request")
+        fetch("/api/request")
             .then(res => res.json())
             .then(data => {
                 setRequests(data);
