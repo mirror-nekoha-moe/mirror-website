@@ -275,7 +275,7 @@ export default function BeatmapSet() {
                                     <span className="text-secondary">Favourites</span><span>{data.favourite_count?.toLocaleString() ?? '-'}</span>
                                 </div>
                                 <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">Play Count</span><span>{data.playcount?.toLocaleString() ?? '-'}</span>
+                                    <span className="text-secondary">Play Count</span><span>{data.play_count?.toLocaleString() ?? '-'}</span>
                                 </div>
                                 <div className="d-flex justify-content-between">
                                     <span className="text-secondary">Difficulties</span><span>{data.mirror?.beatmap_count}</span>
@@ -376,7 +376,7 @@ export default function BeatmapSet() {
                                     <div><span className="text-secondary">Circles </span>{parseInt(selectedDiff.count_circles)}</div>
                                     <div><span className="text-secondary">Sliders </span>{parseInt(selectedDiff.count_sliders)}</div>
                                     <div><span className="text-secondary">Spinners </span>{parseInt(selectedDiff.count_spinners)}</div>
-                                    <div><span className="text-secondary">Playcount </span>{selectedDiff.play_count?.toLocaleString()}</div>
+                                    <div><span className="text-secondary">Playcount </span>{selectedDiff.playcount?.toLocaleString()}</div>
                                     <div><span className="text-secondary">Passcount </span>{selectedDiff.passcount?.toLocaleString()}</div>
                                 </div>
 
