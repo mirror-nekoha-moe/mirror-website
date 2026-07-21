@@ -38,9 +38,6 @@ const Navbar = () => {
                                         </li>
                                     </ul>
                                 </li>
-                                <li class="nav-item">
-                                    <a href="/monitor" class="nav-link" onClick={(e) => handleLinkClick(e, "/monitor")}>Monitor</a>
-                                </li>
                             </ul>
                     </div>
                 </div>
