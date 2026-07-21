@@ -389,31 +389,35 @@ export default function BeatmapsetSearch() {
                   <span title="osu!catch" className="d-flex align-items-center gap-1"><FaAppleWhole /><span className="small">{set.mirror?.mode_fruits_count ?? 0}</span></span>
                   <span title="osu!mania" className="d-flex align-items-center gap-1"><MdPiano /><span className="small">{set.mirror?.mode_mania_count ?? 0}</span></span>
                 </div>
-                <div className="d-flex align-items-center gap-2 position-relative" style={{ zIndex: 2 }}>
-                  <span className="badge border rounded-pill text-bg-dark">{STATUS_LABELS[set.status] ?? 'Unknown'}</span>
-                  {set.preview_url && (
-                    <button
-                      className="btn btn-sm btn-outline-secondary d-flex align-items-center"
-                      title={playingId === set.id ? 'Pause preview' : 'Play preview'}
-                      onClick={e => { e.preventDefault(); e.stopPropagation(); togglePreview(set); }}
-                    >
-                      {playingId === set.id ? <FaPause size={11} /> : <FaPlay size={11} />}
-                    </button>
-                  )}
-                  <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}`}>
-                    <span>Download {(set.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB</span>
-                    <FaDownload color="white" />
-                  </a>
-                  {set.video && (
-                    <a className="btn btn-sm btn-outline-success d-flex align-items-center gap-2" href={`/api/download/${set.id}?noVideo=1`} title="Download without video">
-                      <span>No Video</span>
-                      <FaDownload color="white" />
-                    </a>
-                  )}
-                  <a className="btn btn-sm btn-secondary d-flex align-items-center gap-2" href={`osu://s/${set.id}`}>
-                    <span>osu!direct</span>
-                    <FaDownload color="black" />
-                  </a>
+                <div className="d-flex flex-column flex-md-row align-items-left align-items-md-center gap-2 position-relative" style={{ zIndex: 2 }}>
+                    <div class="d-flex flex-row gap-2">
+                        <span className="badge border rounded-pill text-bg-dark flex-fill">{STATUS_LABELS[set.status] ?? 'Unknown'}</span>
+                        {set.preview_url && (
+                            <button
+                                className="btn btn-sm btn-outline-secondary d-flex align-items-center  flex-fill"
+                                title={playingId === set.id ? 'Pause preview' : 'Play preview'}
+                                onClick={e => { e.preventDefault(); e.stopPropagation(); togglePreview(set); }}
+                            >
+                                {playingId === set.id ? <FaPause className="flex-fill" size={11} /> : <FaPlay className="flex-fill" size={11} />}
+                            </button>
+                        )}
+                    </div>
+                    <div class="d-flex flex-column flex-md-row gap-2">
+                        <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}`}>
+                            <span>Download {(set.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB</span>
+                            <FaDownload color="white" />
+                        </a>
+                        {set.video && (
+                            <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}?noVideo=1`} title="Download without video">
+                            <span>No Video</span>
+                            <FaDownload color="white" />
+                            </a>
+                        )}
+                        <a className="btn btn-sm btn-secondary d-flex align-items-center gap-2" href={`osu://s/${set.id}`}>
+                            <span>osu!direct</span>
+                            <FaDownload color="black" />
+                        </a>
+                    </div>
                 </div>
               </div>
             </div>
