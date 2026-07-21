@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaDownload, FaRegDotCircle, FaDrum, FaFilter, FaChevronDown, FaChevronUp, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
-import axios from 'axios';
 
 const toHttps = url => url ? (url.startsWith('//') ? `https:${url}` : url) : null;
 
@@ -14,6 +13,7 @@ const MODES = [
   { key: 'fruits', label: 'Catch' },
   { key: 'mania',  label: 'Mania' },
 ];
+
 const SORT_OPTIONS = [
   { value: 'updated',    label: 'Last Updated' },
   { value: 'ranked',     label: 'Ranked Date' },
@@ -105,31 +105,37 @@ export default function BeatmapsetSearch() {
     return p;
   };
 
-  const fetchPage = useCallback(async (pageNum, q, f, replace = false) => {
-    if (loadingRef.current) return;
-    const gen = genRef.current;
-    loadingRef.current = true;
-    setLoading(true);
-    setError('');
-    try {
-      const res = await axios.get('/api/search', { params: buildParams(pageNum, q, f) });
-      // Discard if a newer search was started while this was in-flight
-      if (gen !== genRef.current) return;
-      const data = res.data;
-      setResults(prev => replace ? data : [...prev, ...data]);
-      const more = data.length >= 100;
-      setHasMore(more);
-      hasMoreRef.current = more;
-      pageRef.current = pageNum;
-    } catch {
-      if (gen === genRef.current) setError('Failed to fetch results');
-    }
-    setLoading(false);
-    loadingRef.current = false;
-  }, []);
+    const fetchPage = useCallback(async (pageNum, q, f, replace = false) => {
+        if (loadingRef.current) return;
+        const gen = genRef.current;
+        loadingRef.current = true;
+        setLoading(true);
+        setError('');
+        try {
+            const params = buildParams(pageNum, q, f);
+            const qs = new URLSearchParams(
+                Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+            ).toString();
+            const res = await fetch(`/api/search?${qs}`);
+            if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+            const data = await res.json();
+            // Discard if a newer search was started while this was in-flight
+            if (gen !== genRef.current) return;
+            const beatmapsets = data.beatmapsets;
+            setResults(prev => replace ? beatmapsets : [...prev, ...beatmapsets]);
+            const more = beatmapsets.length >= 100;
+            setHasMore(more);
+            hasMoreRef.current = more;
+            pageRef.current = pageNum;
+        } catch {
+            if (gen === genRef.current) setError('Failed to fetch results');
+        }
+        setLoading(false);
+        loadingRef.current = false;
+    }, []);
 
-  // Initial load
-  useEffect(() => { fetchPage(1, '', emptyFilters(), true); }, []);
+    // Initial load
+    useEffect(() => { fetchPage(1, '', emptyFilters(), true); }, []);
 
   // IntersectionObserver for infinite scroll
   useEffect(() => {
@@ -306,12 +312,12 @@ export default function BeatmapsetSearch() {
               <div className="small text-white mb-2">Ranges</div>
               <div className="row g-2">
                 <RangeRow label="Star Rating"  keyMin="stars_min"  keyMax="stars_max"  filters={filters} setFilters={setFilters} />
-                <RangeRow label="BPM"          keyMin="bpm_min"    keyMax="bpm_max"    filters={filters} setFilters={setFilters} step="1" />
+                <RangeRow label="BPM" keyMin="bpm_min" keyMax="bpm_max" filters={filters} setFilters={setFilters} step="1" />
                 <RangeRow label="Length (sec)" keyMin="length_min" keyMax="length_max" filters={filters} setFilters={setFilters} step="1" />
-                <RangeRow label="AR"           keyMin="ar_min"     keyMax="ar_max"     filters={filters} setFilters={setFilters} />
-                <RangeRow label="CS"           keyMin="cs_min"     keyMax="cs_max"     filters={filters} setFilters={setFilters} />
-                <RangeRow label="OD"           keyMin="od_min"     keyMax="od_max"     filters={filters} setFilters={setFilters} />
-                <RangeRow label="HP"           keyMin="hp_min"     keyMax="hp_max"     filters={filters} setFilters={setFilters} />
+                <RangeRow label="AR" keyMin="ar_min" keyMax="ar_max" filters={filters} setFilters={setFilters} />
+                <RangeRow label="CS" keyMin="cs_min" keyMax="cs_max" filters={filters} setFilters={setFilters} />
+                <RangeRow label="OD" keyMin="od_min" keyMax="od_max" filters={filters} setFilters={setFilters} />
+                <RangeRow label="HP" keyMin="hp_min" keyMax="hp_max" filters={filters} setFilters={setFilters} />
               </div>
             </div>
 
@@ -370,18 +376,18 @@ export default function BeatmapsetSearch() {
                   <div className="d-flex align-items-center gap-2">
                     <FaCircleCheck />
                     <span className="small">
-                      {set.updated ? (() => {
-                        const d = new Date(set.updated);
+                      {set.last_updated ? (() => {
+                        const d = new Date(set.last_updated);
                         return `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
                       })() : ''}
                     </span>
                   </div>
                 </div>
                 <div className="d-flex align-items-center gap-3 mb-2">
-                  <span title="osu!standard" className="d-flex align-items-center gap-1"><FaRegDotCircle /><span className="small">{set.mode_osu_count ?? 0}</span></span>
-                  <span title="osu!taiko"    className="d-flex align-items-center gap-1"><FaDrum /><span className="small">{set.mode_taiko_count ?? 0}</span></span>
-                  <span title="osu!catch"    className="d-flex align-items-center gap-1"><FaAppleWhole /><span className="small">{set.mode_fruits_count ?? 0}</span></span>
-                  <span title="osu!mania"    className="d-flex align-items-center gap-1"><MdPiano /><span className="small">{set.mode_mania_count ?? 0}</span></span>
+                  <span title="osu!standard" className="d-flex align-items-center gap-1"><FaRegDotCircle /><span className="small">{set.mirror?.mode_osu_count ?? 0}</span></span>
+                  <span title="osu!taiko" className="d-flex align-items-center gap-1"><FaDrum /><span className="small">{set.mirror?.mode_taiko_count ?? 0}</span></span>
+                  <span title="osu!catch" className="d-flex align-items-center gap-1"><FaAppleWhole /><span className="small">{set.mirror?.mode_fruits_count ?? 0}</span></span>
+                  <span title="osu!mania" className="d-flex align-items-center gap-1"><MdPiano /><span className="small">{set.mirror?.mode_mania_count ?? 0}</span></span>
                 </div>
                 <div className="d-flex align-items-center gap-2 position-relative" style={{ zIndex: 2 }}>
                   <span className="badge border rounded-pill text-bg-dark">{STATUS_LABELS[set.status] ?? 'Unknown'}</span>
@@ -395,7 +401,7 @@ export default function BeatmapsetSearch() {
                     </button>
                   )}
                   <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}`}>
-                    <span>Download {(set.file_size / (1024 ** 2)).toFixed(2)} MB</span>
+                    <span>Download {(set.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB</span>
                     <FaDownload color="white" />
                   </a>
                   {set.video && (
