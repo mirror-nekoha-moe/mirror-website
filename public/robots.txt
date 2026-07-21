@@ -1,9 +1,4 @@
 User-agent: *
 Disallow: /api/
-Disallow: /monitor
-Disallow: /request
-Disallow: /requests
-Disallow: /request/status/
-Disallow: /beatmapset/
 
 Sitemap: https://mirror.nekoha.moe/sitemap.xml

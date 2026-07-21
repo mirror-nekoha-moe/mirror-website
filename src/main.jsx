@@ -10,7 +10,7 @@ import Footer from './components/footer.jsx'
 // Pages
 import Index from './pages/index.jsx'
 import Search from './pages/search.jsx'
-import Monitor from './pages/monitor.jsx'
+// import Monitor from './pages/monitor.jsx'
 import Error from './pages/error.jsx'
 import BeatmapSet from './pages/beatmapset.jsx';
 import Request from './pages/request.jsx';
@@ -30,7 +30,7 @@ createRoot(document.getElementById('root')).render(
             <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/search" element={<Search />} />
-                <Route path="/monitor" element={<Monitor />} />
+                {/* <Route path="/monitor" element={<Monitor />} /> */}
                 <Route path="/beatmapset/:id" element={<BeatmapSet />} />
                 <Route path="/request" element={<Request />} />
                 <Route path="/requests" element={<RequestList />} />
