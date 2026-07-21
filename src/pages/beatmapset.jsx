@@ -68,7 +68,7 @@ export default function BeatmapSet() {
             setError('');
             try {
                 if (!/^\d+$/.test(id)) { setError('Invalid beatmapset ID'); return; }
-                const res = await axios.get(`/api/beatmapsetFull/${id}`);
+                const res = await axios.get(`/api/beatmapset/${id}`);
                 const beatmaps = res.data.beatmaps.slice().sort((a, b) => b.difficulty_rating - a.difficulty_rating);
                 setData({ ...res.data, beatmaps });
                 setSelectedDiff(beatmaps[0]);
@@ -159,7 +159,7 @@ export default function BeatmapSet() {
                             </div>
                             {/* mode counts */}
                             <div className="d-flex align-items-center gap-3 mt-2">
-                                {data.mode_osu_count > 0    && <span title="osu!" className="d-flex align-items-center gap-1 small"><FaRegDotCircle />{data.mode_osu_count}</span>}
+                                {data.mode_osu_count > 0 && <span title="osu!" className="d-flex align-items-center gap-1 small"><FaRegDotCircle />{data.mode_osu_count}</span>}
                                 {data.mode_taiko_count > 0  && <span title="Taiko" className="d-flex align-items-center gap-1 small"><FaDrum />{data.mode_taiko_count}</span>}
                                 {data.mode_fruits_count > 0 && <span title="Catch" className="d-flex align-items-center gap-1 small"><FaAppleWhole />{data.mode_fruits_count}</span>}
                                 {data.mode_mania_count > 0  && <span title="Mania" className="d-flex align-items-center gap-1 small"><MdPiano />{data.mode_mania_count}</span>}
@@ -209,7 +209,7 @@ export default function BeatmapSet() {
                                     ref={descRef}
                                     className="bbcode-content overflow-auto"
                                     style={{ maxHeight: 320 }}
-                                    dangerouslySetInnerHTML={{ __html: JSON.parse(data.description).description }}
+                                    dangerouslySetInnerHTML={{ __html: JSON.parse(data.description?.description).description }}
                                 />
                             ) : (
                                 <p className="text-muted small mb-0">No description provided.</p>
@@ -278,10 +278,10 @@ export default function BeatmapSet() {
                                     <span className="text-secondary">Play Count</span><span>{data.playcount?.toLocaleString() ?? '-'}</span>
                                 </div>
                                 <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">Difficulties</span><span>{data.beatmap_count}</span>
+                                    <span className="text-secondary">Difficulties</span><span>{data.mirror?.beatmap_count}</span>
                                 </div>
                                 <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">File Size</span><span>{(data.file_size / (1024 ** 2)).toFixed(2)} MB</span>
+                                    <span className="text-secondary">File Size</span><span>{(data.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB</span>
                                 </div>
                                 {data.bpm && (
                                     <div className="d-flex justify-content-between">
@@ -376,7 +376,7 @@ export default function BeatmapSet() {
                                     <div><span className="text-secondary">Circles </span>{parseInt(selectedDiff.count_circles)}</div>
                                     <div><span className="text-secondary">Sliders </span>{parseInt(selectedDiff.count_sliders)}</div>
                                     <div><span className="text-secondary">Spinners </span>{parseInt(selectedDiff.count_spinners)}</div>
-                                    <div><span className="text-secondary">Playcount </span>{selectedDiff.playcount?.toLocaleString()}</div>
+                                    <div><span className="text-secondary">Playcount </span>{selectedDiff.play_count?.toLocaleString()}</div>
                                     <div><span className="text-secondary">Passcount </span>{selectedDiff.passcount?.toLocaleString()}</div>
                                 </div>
 
