@@ -176,7 +176,7 @@ export default function BeatmapSet() {
                             </button>
                         )}
                         <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${data.id}`}>
-                            <FaDownload /> Download {(data.file_size / (1024 ** 2)).toFixed(2)} MB
+                            <FaDownload /> Download {(data.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB
                         </a>
                         {data.video && (
                             <a className="btn btn-sm btn-outline-success d-flex align-items-center gap-2" href={`/api/download/${data.id}?noVideo=1`} title="Download without video">
@@ -322,10 +322,7 @@ export default function BeatmapSet() {
                                         <div className="text-secondary mb-1">Tags</div>
                                         <div className="text-white text-break">
                                             {data.tags.split(' ').filter(Boolean).map((tag, i) => (
-                                                <span key={i} className="badge me-1 mb-1"
-                                                    style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)', fontWeight: 400 }}>
-                                                    {tag}
-                                                </span>
+                                                <span key={i} className="badge me-1 mb-1 bg-secondary text-black">{tag}</span>
                                             ))}
                                         </div>
                                     </div>
