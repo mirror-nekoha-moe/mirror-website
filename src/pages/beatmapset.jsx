@@ -7,48 +7,90 @@ import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
 
 const STATUS_COLORS = {
-  ranked:    '#b3ff66',
-  approved:  '#b3ff66',
-  qualified: '#66ccff',
-  loved:     '#ff66ab',
-  pending:   '#aaaaaa',
-  wip:       '#aaaaaa',
-  graveyard: '#666666',
+    ranked: '#b3ff66',
+    approved: '#b3ff66',
+    qualified: '#66ccff',
+    loved: '#ff66ab',
+    pending: '#aaaaaa',
+    wip: '#aaaaaa',
+    graveyard: '#666666',
 };
 
 const STATUS_LABELS = {
-  ranked: 'Ranked', approved: 'Approved', qualified: 'Qualified',
-  loved: 'Loved', pending: 'Pending', wip: 'WIP', graveyard: 'Graveyard',
+    ranked: 'Ranked',
+    approved: 'Approved',
+    qualified: 'Qualified',
+    loved: 'Loved',
+    pending: 'Pending',
+    wip: 'WIP',
+    graveyard: 'Graveyard',
 };
 
-const MODE_LABELS = { osu: 'osu!', taiko: 'Taiko', fruits: 'Catch', mania: 'Mania' };
+const MODE_LABELS = {
+    osu: 'osu!',
+    taiko: 'Taiko',
+    fruits: 'Catch',
+    mania: 'Mania'
+};
 
-const GENRE_LABELS = { 0: 'Any', 1: 'Unspecified', 2: 'Video Game', 3: 'Anime', 4: 'Rock', 5: 'Pop', 6: 'Other', 7: 'Novelty', 9: 'Hip Hop', 10: 'Electronic', 11: 'Metal', 12: 'Classical', 13: 'Folk', 14: 'Jazz' };
-const LANGUAGE_LABELS = { 0: 'Any', 1: 'Unspecified', 2: 'English', 3: 'Japanese', 4: 'Chinese', 5: 'Instrumental', 6: 'Korean', 7: 'French', 8: 'German', 9: 'Swedish', 10: 'Spanish', 11: 'Italian', 12: 'Russian', 13: 'Polish', 14: 'Other' };
+const GENRE_LABELS = {
+    0: 'Any',
+    1: 'Unspecified',
+    2: 'Video Game',
+    3: 'Anime',
+    4: 'Rock',
+    5: 'Pop',
+    6: 'Other',
+    7: 'Novelty',
+    9: 'Hip Hop',
+    10: 'Electronic',
+    11: 'Metal',
+    12: 'Classical',
+    13: 'Folk',
+    14: 'Jazz'
+};
 
-function StatBar({ label, value, max = 10 }) {
-  const pct = Math.min(100, (parseFloat(value) / max) * 100);
-  return (
-    <div className="d-flex align-items-center gap-2 mb-2">
-      <div className="text-secondary small text-end flex-shrink-0" style={{ width: 32 }}>{label}</div>
-      <div className="flex-grow-1 rounded" style={{ height: 8, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-        <div className="rounded" style={{ width: `${pct}%`, height: '100%', background: 'rgb(0,206,255)', transition: 'width 0.3s ease' }} />
-      </div>
-      <div className="small text-white flex-shrink-0" style={{ width: 36 }}>{parseFloat(value).toFixed(1)}</div>
-    </div>
-  );
+const LANGUAGE_LABELS = {
+    0: 'Any',
+    1: 'Unspecified',
+    2: 'English',
+    3: 'Japanese',
+    4: 'Chinese',
+    5: 'Instrumental',
+    6: 'Korean',
+    7: 'French',
+    8: 'German',
+    9: 'Swedish',
+    10: 'Spanish',
+    11: 'Italian',
+    12: 'Russian',
+    13: 'Polish',
+    14: 'Other'
+};
+
+function statBar({ label, value, max = 10 }) {
+    const pct = Math.min(100, (parseFloat(value) / max) * 100);
+    return (
+        <div className="d-flex align-items-center gap-2 mb-2">
+            <div className="text-secondary small text-end flex-shrink-0" style={{ width: 32 }}>{label}</div>
+            <div className="flex-grow-1 rounded" style={{ height: 8, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
+                <div className="rounded" style={{ width: `${pct}%`, height: '100%', background: 'rgb(0,206,255)', transition: 'width 0.3s ease' }} />
+            </div>
+            <div className="small text-white flex-shrink-0" style={{ width: 36 }}>{parseFloat(value).toFixed(1)}</div>
+        </div>
+    );
 }
 
 function fmtTime(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${String(s).padStart(2, '0')}`;
 }
 
 function fmtDate(str) {
-  if (!str) return 'N/A';
-  const d = new Date(str);
-  return `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
+    if (!str) return 'N/A';
+    const d = new Date(str);
+    return `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
 }
 
 export default function BeatmapSet() {
@@ -81,11 +123,12 @@ export default function BeatmapSet() {
         fetchBeatmapset();
     }, [id]);
 
-    // Wire spoilerboxes whenever description renders
     useEffect(() => {
-        if (!descRef.current) return;
+        if (!descRef.current) 
+            return;
         descRef.current.querySelectorAll('.js-spoilerbox__link').forEach(link => {
-            if (link._spoilerBound) return;
+            if (link._spoilerBound)
+                return;
             link._spoilerBound = true;
             link.addEventListener('click', e => {
                 e.preventDefault();
@@ -108,7 +151,7 @@ export default function BeatmapSet() {
     };
 
     if (loading) return (
-        <div className="search-loading-bar mt-0" style={{ borderRadius: 0 }}>
+        <div className="search-loading-bar mt-0 rounded-0">
             <div className="search-loading-bar-value" />
         </div>
     );
@@ -120,7 +163,7 @@ export default function BeatmapSet() {
 
     return (
         <>
-            <title>{data.title} - nekoha mirror</title>
+            <title>{data.title} - Nekoha Mirror</title>
             {data.preview_url && (
                 <audio
                     ref={audioRef}
@@ -130,12 +173,10 @@ export default function BeatmapSet() {
                 />
             )}
 
-            {/* ── HERO BANNER ── */}
             <div className="position-relative py-4"
                 style={{ background: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.82)), url('${coverUrl}') center/cover no-repeat`, minHeight: 220 }}>
                 <div className="container">
                     <div className="d-flex gap-4 align-items-end flex-wrap">
-                        {/* thumbnail */}
                         <img
                             src={`https://assets.ppy.sh/beatmaps/${data.id}/covers/list.jpg`}
                             alt="cover"
@@ -143,7 +184,6 @@ export default function BeatmapSet() {
                             style={{ width: 100, height: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.6)' }}
                         />
                         <div className="flex-grow-1 overflow-hidden">
-                            {/* status badge */}
                             <span className="badge rounded-pill mb-1 small fw-bold"
                                 style={{ background: statusColor, color: '#000' }}>
                                 {STATUS_LABELS[data.status] ?? data.status}
@@ -157,7 +197,6 @@ export default function BeatmapSet() {
                                     {data.creator}
                                 </a>
                             </div>
-                            {/* mode counts */}
                             <div className="d-flex align-items-center gap-3 mt-2">
                                 {data.mode_osu_count > 0 && <span title="osu!" className="d-flex align-items-center gap-1 small"><FaRegDotCircle />{data.mode_osu_count}</span>}
                                 {data.mode_taiko_count > 0  && <span title="Taiko" className="d-flex align-items-center gap-1 small"><FaDrum />{data.mode_taiko_count}</span>}
@@ -167,7 +206,6 @@ export default function BeatmapSet() {
                         </div>
                     </div>
 
-                    {/* action buttons */}
                     <div className="d-flex flex-wrap align-items-center gap-2 mt-3">
                         {data.preview_url && (
                             <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2" onClick={togglePreview}>
@@ -194,14 +232,11 @@ export default function BeatmapSet() {
                 </div>
             </div>
 
-            {/* ── BODY ── */}
             <div className="container mt-4">
                 <div className="row g-4">
 
-                    {/* ── LEFT: description + difficulty list ── */}
                     <div className="col-12 col-lg-7">
 
-                        {/* Description */}
                         <div className="cbg-dark rounded-3 p-3 mb-3">
                             <div className="small fw-bold mb-2">Description</div>
                             {data.description ? (
@@ -216,7 +251,6 @@ export default function BeatmapSet() {
                             )}
                         </div>
 
-                        {/* Difficulty list */}
                         <div className="cbg-dark rounded-3 p-3">
                             <div className="small fw-bold mb-2">Difficulties</div>
                             <div className="d-flex flex-column gap-1">
@@ -245,10 +279,8 @@ export default function BeatmapSet() {
                         </div>
                     </div>
 
-                    {/* ── RIGHT: beatmap info ── */}
                     <div className="col-12 col-lg-5">
 
-                        {/* Beatmapset metadata */}
                         <div className="cbg-dark rounded-3 p-3 mb-3">
                             <div className="small fw-bold mb-2">Info</div>
                             <div className="d-flex flex-column gap-1 small">
@@ -330,7 +362,6 @@ export default function BeatmapSet() {
                             </div>
                         </div>
 
-                        {/* Selected difficulty stats */}
                         {selectedDiff && (
                             <div className="cbg-dark rounded-3 p-3">
                                 <div className="small fw-bold mb-1">
@@ -340,7 +371,6 @@ export default function BeatmapSet() {
                                     ★ {parseFloat(selectedDiff.difficulty_rating).toFixed(2)} · {MODE_LABELS[selectedDiff.mode]} · ID {selectedDiff.id}
                                 </div>
 
-                                {/* Quick stats row */}
                                 <div className="d-flex flex-wrap gap-3 mb-3 small">
                                     <div className="d-flex align-items-center gap-1">
                                         <FaClock size={12} className="text-secondary" />
@@ -361,14 +391,12 @@ export default function BeatmapSet() {
                                     </div>
                                 </div>
 
-                                {/* osu!-style stat bars */}
-                                <StatBar label="CS"  value={selectedDiff.cs}       max={10} />
-                                <StatBar label="AR"  value={selectedDiff.ar}       max={10} />
-                                <StatBar label="OD"  value={selectedDiff.accuracy} max={10} />
-                                <StatBar label="HP"  value={selectedDiff.drain}    max={10} />
-                                <StatBar label="SR"  value={selectedDiff.difficulty_rating} max={10} />
+                                <statBar label="CS" value={selectedDiff.cs} max={10} />
+                                <statBar label="AR" value={selectedDiff.ar} max={10} />
+                                <statBar label="OD" value={selectedDiff.accuracy} max={10} />
+                                <statBar label="HP" value={selectedDiff.drain} max={10} />
+                                <statBar label="SR" value={selectedDiff.difficulty_rating} max={10} />
 
-                                {/* Object counts + extra info */}
                                 <div className="border-top border-secondary mt-3 pt-3 d-flex flex-wrap gap-3 small">
                                     <div><span className="text-secondary">Circles </span>{parseInt(selectedDiff.count_circles)}</div>
                                     <div><span className="text-secondary">Sliders </span>{parseInt(selectedDiff.count_sliders)}</div>
@@ -377,7 +405,6 @@ export default function BeatmapSet() {
                                     <div><span className="text-secondary">Passcount </span>{selectedDiff.passcount?.toLocaleString()}</div>
                                 </div>
 
-                                {/* Extra diff metadata */}
                                 <div className="border-top border-secondary mt-3 pt-3 d-flex flex-column gap-1 small">
                                     {selectedDiff.status && (
                                         <div className="d-flex justify-content-between">
@@ -424,7 +451,6 @@ export default function BeatmapSet() {
             </div>
             <div className="mb-5" />
 
-            {/* Floating audio player bar */}
             {playing && data?.preview_url && (
                 <div className="position-fixed bottom-0 start-0 end-0 bg-dark border-top border-secondary px-3 py-2 d-flex align-items-center gap-3" style={{ zIndex: 1050 }}>
                     <button
