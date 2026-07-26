@@ -1,4 +1,4 @@
-import nekohaImage from '../images/nekoha.png';
+import nekohaImage from '../img/nekoha.png';
 
 import { useState, useEffect } from 'react'
 import { FaDiscord, FaGithub } from 'react-icons/fa';
