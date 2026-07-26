@@ -1,0 +1,12 @@
+---
+export const prerender = false;
+
+import Layout from "../../layouts/Layout.astro";
+import Beatmapset from "../../react/pages/beatmapset.jsx";
+
+const { id } = Astro.params;
+---
+
+<Layout title={`Beatmapset ${id} | Nekoha`}>
+    <Beatmapset client:load id={id} />
+</Layout>
