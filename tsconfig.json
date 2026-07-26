@@ -11,6 +11,8 @@
     "types": [
       "astro/client",
       "vite/client"
-    ]
+    ],
+    "jsx": "react-jsx",
+    "jsxImportSource": "react"
   }
 }
