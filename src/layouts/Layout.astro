@@ -1,3 +1,8 @@
+---
+import Navbar from "../components/Navbar.astro";
+import Footer from "../components/Footer.astro";
+---
+
 <!doctype html>
 <html lang="en">
 	<head>
@@ -27,8 +32,10 @@
             g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
         })();
     </script>
-	<body>
-		<slot />
-	</body>
+    <body class="cbg-darkest">
+        <Navbar />
+        <slot />
+        <Footer />
+    </body>
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "0eeb9ad33f194d6082b5658cc85bf82c"}'></script>
 </html>
