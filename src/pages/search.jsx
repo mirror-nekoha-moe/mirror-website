@@ -61,7 +61,6 @@ export default function BeatmapsetSearch() {
   const [filters, setFilters]  = useState(emptyFilters());
   const [showFilters, setShow] = useState(false);
   const [results, setResults]  = useState([]);
-  const [page, setPage]        = useState(1);
   const [hasMore, setHasMore]  = useState(true);
   const [loading, setLoading]  = useState(false);
   const [error, setError]      = useState('');
@@ -135,7 +134,7 @@ export default function BeatmapsetSearch() {
     }, []);
 
     // Initial load
-    useEffect(() => { fetchPage(1, '', emptyFilters(), true); }, []);
+    useEffect(() => { fetchPage(1, '', emptyFilters(), true); }, [fetchPage]);
 
   // IntersectionObserver for infinite scroll
   useEffect(() => {
@@ -156,7 +155,6 @@ export default function BeatmapsetSearch() {
     pageRef.current    = 0;
     hasMoreRef.current = true;
     setHasMore(true);
-    setPage(1);
     setResults([]);
     fetchPage(1, query, filters, true);
   };

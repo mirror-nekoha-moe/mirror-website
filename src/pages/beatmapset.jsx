@@ -68,7 +68,7 @@ const LANGUAGE_LABELS = {
     14: 'Other'
 };
 
-function statBar({ label, value, max = 10 }) {
+function StatBar({ label, value, max = 10 }) {
     const pct = Math.min(100, (parseFloat(value) / max) * 100);
     return (
         <div className="d-flex align-items-center gap-2 mb-2">
@@ -163,7 +163,7 @@ export default function BeatmapSet() {
 
     return (
         <>
-            <title>{data.title} - Nekoha Mirror</title>
+            <title>{`${data.title} - Nekoha Mirror`}</title>
             {data.preview_url && (
                 <audio
                     ref={audioRef}
@@ -391,11 +391,11 @@ export default function BeatmapSet() {
                                     </div>
                                 </div>
 
-                                <statBar label="CS" value={selectedDiff.cs} max={10} />
-                                <statBar label="AR" value={selectedDiff.ar} max={10} />
-                                <statBar label="OD" value={selectedDiff.accuracy} max={10} />
-                                <statBar label="HP" value={selectedDiff.drain} max={10} />
-                                <statBar label="SR" value={selectedDiff.difficulty_rating} max={10} />
+                                <StatBar label="CS" value={selectedDiff.cs} max={10} />
+                                <StatBar label="AR" value={selectedDiff.ar} max={10} />
+                                <StatBar label="OD" value={selectedDiff.accuracy} max={10} />
+                                <StatBar label="HP" value={selectedDiff.drain} max={10} />
+                                <StatBar label="SR" value={selectedDiff.difficulty_rating} max={10} />
 
                                 <div className="border-top border-secondary mt-3 pt-3 d-flex flex-wrap gap-3 small">
                                     <div><span className="text-secondary">Circles </span>{parseInt(selectedDiff.count_circles)}</div>
