@@ -6,6 +6,8 @@ import PpRangeFilter from '../components/PpRangeFilter-collab-hinai.jsx';
 import GraveMist from '../components/GraveMist-collab-hinai.jsx';
 import Revenant from '../components/Revenant-collab-hinai.jsx';
 import Procession from '../components/Procession-collab-hinai.jsx';
+import { HINAI_URL, HinaiSource, NekohaSource } from '../components/CollabMark-collab-hinai.jsx';
+import { fetchMirrorHealth } from '../lib/mirror-collab-hinai.js';
 import useDebounced from '../lib/useDebounced-collab-hinai.js';
 import {
     PP_CAP,
@@ -56,6 +58,7 @@ export default function Graveyard() {
     const [error, setError] = useState('');
     const [retryKey, setRetryKey] = useState(0);
     const [stats, setStats] = useState(null);
+    const [mirrorHealth, setMirrorHealth] = useState(null);
     const [active, setActive] = useState(null);
 
     const genRef = useRef(0);
@@ -68,6 +71,7 @@ export default function Graveyard() {
     useEffect(() => {
         const controller = new AbortController();
         graveyardStats(controller.signal).then(setStats).catch(() => {});
+        fetchMirrorHealth().then(setMirrorHealth);
         return () => controller.abort();
     }, []);
 
@@ -201,25 +205,29 @@ export default function Graveyard() {
                     <div className="gv-hero__copy">
                         <p className="gv-hero__eyebrow">
                             <span className="gv-hero__mark" />
-                            Nekoha &#215; Hinai collab
+                            Nekoha &#215;{' '}
+                            <a className="nk-hinai-out" href={HINAI_URL} target="_blank" rel="noopener noreferrer">
+                                Hinai
+                            </a>{' '}
+                            collab
                         </p>
                         <h1 className="gv-hero__title">Graveyard <span>PP Lookup</span></h1>
                         <p className="gv-hero__lede">
                             <b>{stats ? formatCount(stats.by_status && stats.by_status.graveyard) : '118,866'}</b> beatmapsets
                             were submitted to osu! and never ranked. Through a collaboration with{' '}
-                            <span className="gv-hero__hinai">hinai</span>, an osu! data hub and beatmap parser, our
+                            <a className="gv-hero__hinai" href={HINAI_URL} target="_blank" rel="noopener noreferrer">hinai</a>, an osu! data hub and beatmap parser, our
                             graveyard collection has been scored across all 36 mod combinations.
                         </p>
                         <p className="gv-hero__sublede">
                             Built for private server nominators: pick a mod lens, see what an abandoned map is
                             actually worth, and nominate it.
                         </p>
-                        <a className="gv-hinai" href="https://hinamizawa.ai/osu/beatmaps" target="_blank" rel="noopener noreferrer">
+                        <a className="gv-hinai" href={HINAI_URL} target="_blank" rel="noopener noreferrer">
                             <span className="gv-hinai__halo">
                                 <img src="/assets/collab-hinai/hinai-logo.png" alt="" width="34" height="34" />
                             </span>
                             <span className="gv-hinai__txt">
-                                <span className="gv-hinai__main">Visit hinamizawa.ai</span>
+                                <span className="gv-hinai__main">Visit mirror.hinamizawa.ai</span>
                                 <span className="gv-hinai__sub">osu! data hub and beatmap parser</span>
                             </span>
                             <span className="gv-hinai__arrow" aria-hidden="true">&#8599;</span>
@@ -230,7 +238,10 @@ export default function Graveyard() {
                         <img src="/assets/collab-hinai/collab-hinai-nekoha.webp" alt="Hinai and Nekoha" className="gv-collab__art" />
                         <div className="gv-collab__plate">
                             <span className="gv-collab__kicker">Collaboration</span>
-                            <span className="gv-collab__names">Hinai &#215; Nekoha</span>
+                            <span className="gv-collab__names">
+                                <a className="nk-hinai-out" href={HINAI_URL} target="_blank" rel="noopener noreferrer">Hinai</a>
+                                {' '}&#215; Nekoha
+                            </span>
                         </div>
                     </aside>
                 </div>
@@ -248,7 +259,16 @@ export default function Graveyard() {
                         <span className="gv-prov__sep" />
                         <span><span className="gv-prov__k">Engine</span> rosu-pp {stats.provenance.rosu_pp_version || '-'}</span>
                         <span className="gv-prov__sep" />
-                        <span><span className="gv-prov__k">Source</span> nekoha.moe</span>
+                        <span className="gv-prov__src">
+                            <span className="gv-prov__k">Source</span>
+                            <NekohaSource
+                                label="nekoha.moe"
+                                size={13}
+                                version={stats.provenance.source_version || undefined}
+                            />
+                            <span className="gv-prov__amp" aria-hidden="true">&amp;</span>
+                            <HinaiSource size={13} version={mirrorHealth && mirrorHealth.version} />
+                        </span>
                     </div>
                 )}
 
