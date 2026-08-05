@@ -27,6 +27,9 @@ const Navbar = () => {
                                 <li class="nav-item">
                                     <a href="/search" class="nav-link" onClick={(e) => handleLinkClick(e, "/search")}>Beatmaps</a>
                                 </li>
+                                <li class="nav-item">
+                                    <a href="/packs" class="nav-link" onClick={(e) => handleLinkClick(e, "/packs")}>Packs</a>
+                                </li>
                                 <li class="nav-item dropdown">
                                     <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">Request</a>
                                     <ul class="dropdown-menu">
