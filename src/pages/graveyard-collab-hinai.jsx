@@ -205,18 +205,24 @@ export default function Graveyard() {
                         </p>
                         <h1 className="gv-hero__title">Graveyard <span>PP Lookup</span></h1>
                         <p className="gv-hero__lede">
-                            Every graveyard beatmap in <b>{stats ? formatCount(stats.by_status && stats.by_status.graveyard) : '118,866'}</b> sets,
-                            with performance points computed for all 36 mod combinations. The collection is
-                            ours; the PP engine is <span className="gv-hero__hinai">Hinai</span>.
+                            <b>{stats ? formatCount(stats.by_status && stats.by_status.graveyard) : '118,866'}</b> beatmapsets
+                            were submitted to osu! and never ranked. Through a collaboration with{' '}
+                            <span className="gv-hero__hinai">hinai</span>, an osu! data hub and beatmap parser, our
+                            graveyard collection has been scored across all 36 mod combinations.
+                        </p>
+                        <p className="gv-hero__sublede">
+                            Built for private server nominators: pick a mod lens, see what an abandoned map is
+                            actually worth, and nominate it.
                         </p>
                         <a className="gv-hinai" href="https://hinamizawa.ai/osu/beatmaps" target="_blank" rel="noopener noreferrer">
-                            <span className="gv-hinai__ring" aria-hidden="true" />
-                            <img src="/assets/collab-hinai/hinai-logo.png" alt="" className="gv-hinai__logo" />
-                            <span className="gv-hinai__text">
-                                <span className="gv-hinai__kicker">PP engine</span>
-                                <span className="gv-hinai__name">hinamizawa.ai/osu/beatmaps</span>
+                            <span className="gv-hinai__halo">
+                                <img src="/assets/collab-hinai/hinai-logo.png" alt="" width="34" height="34" />
                             </span>
-                            <span className="gv-hinai__arrow">&#8594;</span>
+                            <span className="gv-hinai__txt">
+                                <span className="gv-hinai__main">Visit hinamizawa.ai</span>
+                                <span className="gv-hinai__sub">osu! data hub and beatmap parser</span>
+                            </span>
+                            <span className="gv-hinai__arrow" aria-hidden="true">&#8599;</span>
                         </a>
                     </div>
                     <aside className="gv-collab">
