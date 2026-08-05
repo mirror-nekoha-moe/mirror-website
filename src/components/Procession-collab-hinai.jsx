@@ -4,8 +4,8 @@ const SKULL_K = 0.43;
 const SKULL_TX = 57;
 const SKULL_TY = 40;
 const SOCKETS = [
-  { x: SKULL_TX + 70 * SKULL_K, y: SKULL_TY + 93 * SKULL_K },
-  { x: SKULL_TX + 130 * SKULL_K, y: SKULL_TY + 93 * SKULL_K }
+  { x: SKULL_TX + 70.7 * SKULL_K, y: SKULL_TY + 92.9 * SKULL_K },
+  { x: SKULL_TX + 129.3 * SKULL_K, y: SKULL_TY + 92.9 * SKULL_K }
 ];
 const RIBS = [
   { y: 158, hw: 30, dip: 7 },
