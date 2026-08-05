@@ -7,6 +7,28 @@ export const cover = (setId, size) => proxyImage(beatmapCoverUrl(setId, size));
 export const mapperUrl = name => `${ESTATE}/osu/mappers/${encodeURIComponent(name || '')}`;
 export const setDownloadUrl = id => `${MIRROR}/api/v1/hinai/d/${id}`;
 
+let healthCache = null;
+let healthInFlight = null;
+
+export function fetchMirrorHealth() {
+    if (healthCache) return Promise.resolve(healthCache);
+    if (healthInFlight) return healthInFlight;
+
+    healthInFlight = fetch(`${MIRROR}/health`, { headers: { accept: 'application/json' } })
+        .then(res => res.json())
+        .then(payload => {
+            healthCache = payload && payload.service ? payload : null;
+            healthInFlight = null;
+            return healthCache;
+        })
+        .catch(() => {
+            healthInFlight = null;
+            return null;
+        });
+
+    return healthInFlight;
+}
+
 const avatarCache = new Map();
 const avatarInFlight = new Map();
 

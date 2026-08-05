@@ -14,7 +14,7 @@ export default defineConfig([
         ],
         languageOptions: {
             ecmaVersion: 2020,
-            globals: { ...globals.browser, __BUILD_DATE__: 'readonly' },
+            globals: { ...globals.browser, __BUILD_DATE__: 'readonly', __NEKOHA_API_VERSION__: 'readonly' },
             parserOptions: {
                 ecmaVersion: 'latest',
                 ecmaFeatures: { jsx: true },
