@@ -6,6 +6,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 // Components
 import Navbar from './components/navbar.jsx'
 import Footer from './components/footer.jsx'
+import Snowfall, { SnowfallFront } from './components/Snowfall-collab-hinai.jsx'
 
 // Pages
 import Index from './pages/index.jsx'
@@ -28,6 +29,7 @@ import './scss/theme.scss'
 createRoot(document.getElementById('root')).render(
     <StrictMode>
         <BrowserRouter>
+            <Snowfall />
             <Navbar />
             <Routes>
                 <Route path="/" element={<Index />} />
@@ -42,6 +44,7 @@ createRoot(document.getElementById('root')).render(
                 <Route path="*" element={<Error />} />
             </Routes>
             <Footer />
+            <SnowfallFront />
         </BrowserRouter>
     </StrictMode>,
 )
