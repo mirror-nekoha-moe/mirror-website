@@ -12,7 +12,7 @@ import {
     formatLength,
     formatCount,
     graveyardDownloadUrl,
-} from '../lib/graveyard.js';
+} from '../lib/graveyard-collab-hinai.js';
 
 export default function GraveyardCard({ map, onOpen }) {
     const [coverFailed, setCoverFailed] = useState(false);

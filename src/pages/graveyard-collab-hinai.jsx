@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaSearch, FaTimes, FaChevronDown, FaChevronUp } from 'react-icons/fa';
-import GraveyardCard from '../components/GraveyardCard.jsx';
-import GraveyardModal from '../components/GraveyardModal.jsx';
+import GraveyardCard from '../components/GraveyardCard-collab-hinai.jsx';
+import GraveyardModal from '../components/GraveyardModal-collab-hinai.jsx';
 import PpRangeFilter from '../components/PpRangeFilter.jsx';
+import GraveMist from '../components/GraveMist-collab-hinai.jsx';
+import Revenant from '../components/Revenant-collab-hinai.jsx';
+import Procession from '../components/Procession-collab-hinai.jsx';
 import useDebounced from '../lib/useDebounced.js';
 import {
     PP_CAP,
@@ -18,9 +21,18 @@ import {
     graveyardStats,
     modColor,
     formatCount,
-} from '../lib/graveyard.js';
+} from '../lib/graveyard-collab-hinai.js';
 
 const SKELETONS = 12;
+
+const MOTES = [
+    { x: 12, sz: 3, dur: 15, delay: -2, sway: 16 },
+    { x: 27, sz: 2, dur: 19, delay: -7, sway: -12 },
+    { x: 41, sz: 4, dur: 13, delay: -11, sway: 22 },
+    { x: 58, sz: 2, dur: 21, delay: -4, sway: -18 },
+    { x: 73, sz: 3, dur: 17, delay: -14, sway: 14 },
+    { x: 88, sz: 2, dur: 23, delay: -9, sway: -20 },
+];
 
 export default function Graveyard() {
     const [activeMod, setActiveMod] = useState('NM');
@@ -164,9 +176,27 @@ export default function Graveyard() {
         <div className="gv-page" style={{ '--gv-lens': lens }}>
             <title>Graveyard PP Lookup | Nekoha</title>
 
+            <GraveMist id="gv-ground" className="gv-ground" fade="up" />
+            <Procession id="gv-proc-l" side="left" />
+            <Procession id="gv-proc-r" side="right" phase={15} />
+
             <section className="gv-hero">
                 <div className="gv-hero__art" />
                 <div className="gv-hero__scrim" />
+                <GraveMist id="gv-hero-mist" className="gv-mist--hero" />
+                <Revenant id="gv-hero-rev" variant="ambient" className="gv-hero__revenant" />
+                <div className="gv-hero__motes" aria-hidden="true">
+                    {MOTES.map(mote => (
+                        <span key={mote.x} className="gv-mote" style={{
+                            '--x': `${mote.x}%`,
+                            '--sz': `${mote.sz}px`,
+                            '--dur': `${mote.dur}s`,
+                            '--delay': `${mote.delay}s`,
+                            '--sway': `${mote.sway}px`,
+                        }} />
+                    ))}
+                </div>
+
                 <div className="container gv-hero__inner">
                     <div className="gv-hero__copy">
                         <p className="gv-hero__eyebrow">
@@ -177,15 +207,20 @@ export default function Graveyard() {
                         <p className="gv-hero__lede">
                             Every graveyard beatmap in <b>{stats ? formatCount(stats.by_status && stats.by_status.graveyard) : '118,866'}</b> sets,
                             with performance points computed for all 36 mod combinations. The collection is
-                            Nekoha&#39;s; the PP engine is <span className="gv-hero__hinai">Hinai</span>.
+                            ours; the PP engine is <span className="gv-hero__hinai">Hinai</span>.
                         </p>
-                        <a className="gv-hinai" href="https://mirror.hinamizawa.ai" target="_blank" rel="noopener noreferrer">
+                        <a className="gv-hinai" href="https://hinamizawa.ai/osu/beatmaps" target="_blank" rel="noopener noreferrer">
+                            <span className="gv-hinai__ring" aria-hidden="true" />
                             <img src="/assets/graveyard/hinai-logo.png" alt="" className="gv-hinai__logo" />
-                            <span className="gv-hinai__label">mirror.hinamizawa.ai</span>
+                            <span className="gv-hinai__text">
+                                <span className="gv-hinai__kicker">PP engine</span>
+                                <span className="gv-hinai__name">hinamizawa.ai/osu/beatmaps</span>
+                            </span>
                             <span className="gv-hinai__arrow">&#8594;</span>
                         </a>
                     </div>
                     <aside className="gv-collab">
+                        <span className="gv-collab__halo" aria-hidden="true" />
                         <img src="/assets/graveyard/collab-hinai-nekoha.webp" alt="Hinai and Nekoha" className="gv-collab__art" />
                         <div className="gv-collab__plate">
                             <span className="gv-collab__kicker">Collaboration</span>
@@ -364,6 +399,7 @@ export default function Graveyard() {
 
                 {!loading && !error && maps.length === 0 && (
                     <div className="gv-empty text-center py-5">
+                        <Revenant id="gv-empty-rev" variant="emblem" className="gv-empty__emblem" />
                         <p className="gv-empty__verdict mb-1">Nothing is buried here.</p>
                         <p className="text-muted small mb-0">
                             No graveyard maps match these filters. Try widening the PP or star range.

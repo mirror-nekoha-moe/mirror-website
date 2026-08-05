@@ -13,7 +13,7 @@ import {
     formatStars,
     formatLength,
     formatCount,
-} from '../lib/graveyard.js';
+} from '../lib/graveyard-collab-hinai.js';
 
 function formatBytes(bytes) {
     const value = Number(bytes);

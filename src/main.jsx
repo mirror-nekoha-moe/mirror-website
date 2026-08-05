@@ -11,7 +11,7 @@ import Footer from './components/footer.jsx'
 import Index from './pages/index.jsx'
 import Search from './pages/search.jsx'
 import Packs from './pages/packs.jsx'
-import Graveyard from './pages/graveyard.jsx'
+import Graveyard from './pages/graveyard-collab-hinai.jsx'
 // import Monitor from './pages/monitor.jsx'
 import Error from './pages/error.jsx'
 import BeatmapSet from './pages/beatmapset.jsx';

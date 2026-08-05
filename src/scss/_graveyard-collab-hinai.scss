@@ -6,30 +6,54 @@
 
 .gv-page {
     --gv-lens: #66ccff;
+    --gv-abyss: #14100f;
+    --gv-fog: #aaa195;
+    --gv-bone: #e3dad1;
+    --gv-tide: #aed3c0;
+    position: relative;
+    isolation: isolate;
 }
 
 .gv-hero {
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    min-height: 320px;
+    min-height: clamp(360px, 58vh, 620px);
     display: flex;
     align-items: center;
     border-bottom: 1px solid #2c2c3c;
 
     &__art {
         position: absolute;
-        inset: 0;
-        background: url('/assets/graveyard/graveyard-hero.webp') center 52% / cover no-repeat;
-        filter: saturate(0.85) brightness(0.72);
+        inset: -4% -6%;
+        background: url('/assets/graveyard/graveyard-hero.webp') center 54% / cover no-repeat;
+        filter: saturate(0.92) brightness(0.94) contrast(1.03);
+        animation: gv-art-drift 46s ease-in-out infinite alternate;
+        will-change: transform;
     }
 
     &__scrim {
         position: absolute;
         inset: 0;
         background:
-            linear-gradient(90deg, rgba(8, 8, 16, 0.94) 0%, rgba(8, 8, 16, 0.78) 46%, rgba(8, 8, 16, 0.42) 100%),
-            linear-gradient(180deg, rgba(8, 8, 16, 0.55), rgba(8, 8, 16, 0.9));
+            linear-gradient(102deg,
+                rgba(10, 9, 12, 0.93) 0%,
+                rgba(10, 9, 12, 0.78) 30%,
+                rgba(10, 9, 12, 0.42) 56%,
+                rgba(10, 9, 12, 0.12) 78%,
+                rgba(10, 9, 12, 0.02) 100%),
+            linear-gradient(180deg, rgba(10, 9, 12, 0.42) 0%, transparent 26%, rgba(8, 8, 16, 0.62) 100%);
+    }
+
+    &__revenant {
+        position: absolute;
+        top: 6%;
+        right: 30%;
+        width: clamp(200px, 20vw, 320px);
+        height: auto;
+        z-index: 2;
+
+        @media (max-width: 1199.98px) { display: none; }
     }
 
     &__inner {
@@ -114,38 +138,129 @@
 }
 
 .gv-hinai {
+    position: relative;
+    isolation: isolate;
     display: inline-flex;
     align-items: center;
-    gap: 9px;
-    padding: 7px 14px;
-    border-radius: 999px;
+    gap: 11px;
+    padding: 9px 18px 9px 12px;
+    border-radius: 14px;
     text-decoration: none;
     color: #fff;
-    background-color: rgba(12, 12, 20, 0.72);
-    border: 1px solid color-mix(in srgb, var(--gv-lens) 45%, transparent);
-    transition: border-color 450ms ease, background-color 0.2s ease;
+    background: linear-gradient(135deg, rgba(10, 9, 12, 0.86), rgba(20, 20, 30, 0.74));
+    backdrop-filter: blur(6px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    &__ring {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(115deg,
+            color-mix(in srgb, var(--gv-lens) 85%, transparent),
+            rgba(255, 255, 255, 0.12) 38%,
+            color-mix(in srgb, var(--gv-lens) 55%, transparent) 68%,
+            rgba(255, 255, 255, 0.08));
+        background-size: 220% 100%;
+        -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        animation: gv-aurora 9s ease-in-out infinite;
+        pointer-events: none;
+    }
 
     &:hover {
-        background-color: rgba(12, 12, 20, 0.9);
-        border-color: var(--gv-lens);
         color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5),
+                    0 0 22px color-mix(in srgb, var(--gv-lens) 26%, transparent);
     }
 
     &__logo {
-        width: 22px;
-        height: 22px;
-        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        border-radius: 9px;
         background-color: #fff;
+        padding: 2px;
+        flex-shrink: 0;
     }
 
-    &__label {
-        font-size: 0.86rem;
+    &__text {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.2;
+    }
+
+    &__kicker {
+        font-size: 0.62rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: $grey;
+    }
+
+    &__name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: var(--gv-lens);
+        transition: color 450ms ease;
     }
 
     &__arrow {
         color: var(--gv-lens);
-        transition: color 450ms ease;
+        transition: color 450ms ease, transform 0.2s ease;
     }
+
+    &:hover &__arrow { transform: translateX(3px); }
+}
+
+@keyframes gv-aurora {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+}
+
+@keyframes gv-art-drift {
+    from { transform: translate3d(0, 0, 0) scale(1.02); }
+    to   { transform: translate3d(-2.5%, 1.2%, 0) scale(1.06); }
+}
+
+@keyframes gv-float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-14px); }
+}
+
+@keyframes gv-halo {
+    0%, 100% { opacity: 0.35; transform: translate(-50%, -50%) scale(1); }
+    50%      { opacity: 0.6;  transform: translate(-50%, -50%) scale(1.12); }
+}
+
+@keyframes gv-mote-rise {
+    from { transform: translate3d(0, 0, 0); opacity: 0; }
+    12%  { opacity: 0.9; }
+    82%  { opacity: 0.55; }
+    to   { transform: translate3d(var(--sway), -320px, 0); opacity: 0; }
+}
+
+.gv-hero__motes {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.gv-mote {
+    position: absolute;
+    bottom: -12px;
+    left: var(--x);
+    width: var(--sz);
+    height: var(--sz);
+    border-radius: 50%;
+    background-color: rgba(222, 214, 198, 0.85);
+    filter: blur(0.4px);
+    box-shadow: 0 0 8px rgba(222, 214, 198, 0.6);
+    animation: gv-mote-rise var(--dur) linear infinite;
+    animation-delay: var(--delay);
 }
 
 .gv-collab {
@@ -153,14 +268,34 @@
     flex-shrink: 0;
     text-align: center;
 
+    &__halo {
+        position: absolute;
+        top: 44%;
+        left: 50%;
+        width: clamp(220px, 26vw, 320px);
+        height: clamp(220px, 26vw, 320px);
+        border-radius: 50%;
+        background: radial-gradient(circle,
+            color-mix(in srgb, var(--gv-lens) 30%, transparent) 0%,
+            transparent 68%);
+        filter: blur(18px);
+        animation: gv-halo 7s ease-in-out infinite;
+        pointer-events: none;
+        transition: background 450ms ease;
+    }
+
     &__art {
-        width: clamp(180px, 22vw, 260px);
+        position: relative;
+        width: clamp(180px, 22vw, 270px);
         height: auto;
-        filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.6));
+        filter: drop-shadow(0 14px 30px rgba(0, 0, 0, 0.62));
+        animation: gv-float 6s ease-in-out infinite;
+        will-change: transform;
     }
 
     &__plate {
-        margin-top: 4px;
+        position: relative;
+        margin-top: 20px;
         display: flex;
         flex-direction: column;
     }
@@ -408,6 +543,13 @@
 }
 
 .gv-empty {
+    &__emblem {
+        display: block;
+        width: 130px;
+        height: 130px;
+        margin: 0 auto 8px;
+    }
+
     &__verdict {
         font-size: 1.5rem;
         font-weight: 300;
@@ -566,7 +708,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .gv-card--skeleton {
+    .gv-card--skeleton,
+    .gv-hero__art,
+    .gv-collab__art,
+    .gv-collab__halo,
+    .gv-hinai__ring {
         animation: none;
     }
+
+    .gv-mote { display: none; }
 }
