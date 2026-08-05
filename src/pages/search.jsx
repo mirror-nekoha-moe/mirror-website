@@ -3,6 +3,7 @@ import { FaDownload, FaRegDotCircle, FaDrum, FaFilter, FaChevronDown, FaChevronU
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
 import MapperLink from '../components/MapperLink-collab-hinai.jsx';
+import SearchHero from '../components/SearchHero-collab-hinai.jsx';
 import { cover } from '../lib/mirror-collab-hinai.js';
 
 const toHttps = url => url ? (url.startsWith('//') ? `https:${url}` : url) : null;
@@ -227,6 +228,8 @@ export default function BeatmapsetSearch() {
       <title>Search</title>
       <audio ref={audioRef} />
       <div className="container mt-4">
+        <SearchHero />
+
         <h2 className="mb-3">Beatmapset Search</h2>
 
         <form className="mb-2" onSubmit={handleSearch}>
