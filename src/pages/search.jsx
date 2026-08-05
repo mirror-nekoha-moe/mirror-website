@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaDownload, FaRegDotCircle, FaDrum, FaFilter, FaChevronDown, FaChevronUp, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
-import { cover, mapperUrl } from '../lib/mirror.js';
+import MapperLink from '../components/MapperLink.jsx';
+import { cover } from '../lib/mirror.js';
 
 const toHttps = url => url ? (url.startsWith('//') ? `https:${url}` : url) : null;
 
@@ -363,11 +364,11 @@ export default function BeatmapsetSearch() {
                   <div>by: <span className="text-secondary">{set.artist}</span></div>
                 </div>
                 <div className="small d-flex align-items-center">
-                  <div>
-                    <span>mapped by: </span>
-                    <a className="text-decoration-none position-relative" style={{ zIndex: 2 }} href={mapperUrl(set.creator)} target="_blank" rel="noopener noreferrer">
-                      <span className="fw-bold text-white link-blue">{set.creator}</span>
-                    </a>
+                  <div className="d-flex align-items-center gap-1">
+                    <span>mapped by:</span>
+                    <span className="position-relative d-inline-flex fw-bold" style={{ zIndex: 2 }}>
+                      <MapperLink name={set.creator} avatar />
+                    </span>
                   </div>
                 </div>
                 <div className="small d-flex align-items-center gap-3">

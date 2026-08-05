@@ -183,8 +183,8 @@ export default function PackDetailModal({ pack, onClose }) {
 
                                             <span className="pack-modal__meta small flex-shrink-0 text-end">
                                                 {set.creator && (
-                                                    <span className="d-block text-truncate">
-                                                        <MapperLink name={set.creator} />
+                                                    <span className="d-flex justify-content-end text-truncate">
+                                                        <MapperLink name={set.creator} avatar />
                                                     </span>
                                                 )}
                                                 {setSummary.max_pp !== undefined && setSummary.max_pp !== null && (

@@ -5,7 +5,8 @@ import { FaDownload, FaRegDotCircle, FaDrum, FaHeart, FaClock, FaMusic, FaPlay, 
 import { SiOsu } from "react-icons/si";
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
-import { cover, mapperUrl, proxyImage } from '../lib/mirror.js';
+import MapperLink from '../components/MapperLink.jsx';
+import { cover, proxyImage } from '../lib/mirror.js';
 
 const PPY_IMAGE_HOST = /^https:\/\/(a|b|i|osu|assets)\.ppy\.sh\//i;
 
@@ -202,12 +203,11 @@ export default function BeatmapSet() {
                             </span>
                             <h2 className="map-title mb-0 fw-bold lh-sm">{data.title}</h2>
                             <div className="text-secondary small mb-1">{data.artist}</div>
-                            <div className="small">
-                                mapped by{' '}
-                                <a className="fw-bold text-white link-blue text-decoration-none"
-                                    href={mapperUrl(data.creator)} target="_blank" rel="noopener noreferrer">
-                                    {data.creator}
-                                </a>
+                            <div className="small d-flex align-items-center gap-1">
+                                <span>mapped by</span>
+                                <span className="fw-bold d-inline-flex">
+                                    <MapperLink name={data.creator} avatar />
+                                </span>
                             </div>
                             <div className="d-flex align-items-center gap-3 mt-2">
                                 {data.mode_osu_count > 0 && <span title="osu!" className="d-flex align-items-center gap-1 small"><FaRegDotCircle />{data.mode_osu_count}</span>}

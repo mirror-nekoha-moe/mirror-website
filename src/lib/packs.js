@@ -185,31 +185,3 @@ export function triggerDownload(url) {
     link.remove();
 }
 
-let sharedObserver = null;
-const inViewCallbacks = new WeakMap();
-
-function ensureObserver() {
-    if (sharedObserver) return sharedObserver;
-    sharedObserver = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-            const callback = inViewCallbacks.get(entry.target);
-            sharedObserver.unobserve(entry.target);
-            inViewCallbacks.delete(entry.target);
-            if (callback) callback();
-        });
-    }, { rootMargin: '300px' });
-    return sharedObserver;
-}
-
-export function observeOnce(el, callback) {
-    if (!el) return;
-    inViewCallbacks.set(el, callback);
-    ensureObserver().observe(el);
-}
-
-export function unobserve(el) {
-    if (!el || !sharedObserver) return;
-    inViewCallbacks.delete(el);
-    sharedObserver.unobserve(el);
-}

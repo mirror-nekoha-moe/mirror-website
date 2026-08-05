@@ -2,10 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { FaDownload, FaLayerGroup } from 'react-icons/fa';
 import MapperLink from './MapperLink.jsx';
 import { cover } from '../lib/mirror.js';
+import { observeOnce, unobserve } from '../lib/inview.js';
 import {
     MODE_LABELS,
-    observeOnce,
-    unobserve,
     fetchPackDetail,
     peekPackDetail,
     packRuleset,
