@@ -1,0 +1,752 @@
+.pkh {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid var(--nk-hair);
+    display: grid;
+    grid-template-columns: clamp(150px, 16vw, 206px) minmax(0, 1fr) clamp(168px, 19vw, 236px);
+    gap: clamp(1rem, 2.6vw, 2.2rem);
+    align-items: center;
+    padding: clamp(1.4rem, 3.2vw, 2.4rem);
+    perspective: 1400px;
+    background:
+        radial-gradient(90% 130% at 100% 0%, rgba(0, 206, 255, 0.1) 0%, transparent 56%),
+        radial-gradient(80% 120% at 0% 100%, rgba(124, 224, 211, 0.07) 0%, transparent 58%),
+        linear-gradient(160deg, var(--nk-hush) 0%, var(--nk-deep) 100%);
+    box-shadow: var(--nk-lift);
+}
+
+.pkh__bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image: var(--pkh-bg);
+    background-size: cover;
+    background-position: 62% 38%;
+    opacity: 0.82;
+    filter: saturate(1.06) brightness(1.02) blur(0.3px);
+    transform: scale(1.06);
+    animation: pkh-bg-drift 52s ease-in-out infinite;
+}
+
+.pkh__veil {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(46% 96% at 44% 50%,
+            rgba(8, 10, 18, 0.84) 0%,
+            rgba(8, 10, 18, 0.66) 44%,
+            rgba(8, 10, 18, 0.26) 74%,
+            transparent 100%),
+        linear-gradient(0deg, rgba(8, 10, 18, 0.42) 0%, transparent 24%),
+        rgba(8, 10, 18, 0.14);
+}
+
+.pkh__aurora {
+    position: absolute;
+    inset: -30% 0 auto;
+    height: 66%;
+    z-index: 1;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background:
+        radial-gradient(48% 40% at 22% 40%, rgba(124, 224, 211, 0.22) 0%, transparent 68%),
+        radial-gradient(42% 46% at 68% 30%, rgba(0, 206, 255, 0.2) 0%, transparent 70%),
+        radial-gradient(30% 38% at 88% 52%, rgba(207, 230, 255, 0.14) 0%, transparent 72%);
+    filter: blur(22px);
+    animation: pkh-aurora 19s ease-in-out infinite;
+}
+
+.pkh__snow {
+    position: absolute;
+    inset: -12% 0 -6%;
+    z-index: 2;
+    pointer-events: none;
+    mix-blend-mode: screen;
+}
+
+.pkh__snow--far {
+    background-image:
+        radial-gradient(1px 1px at 24px 38px, rgba(244, 249, 255, 0.62), transparent),
+        radial-gradient(1px 1px at 118px 92px, rgba(207, 230, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 196px 26px, rgba(244, 249, 255, 0.55), transparent),
+        radial-gradient(1px 1px at 262px 140px, rgba(142, 211, 255, 0.48), transparent),
+        radial-gradient(1px 1px at 62px 186px, rgba(244, 249, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 158px 232px, rgba(207, 230, 255, 0.44), transparent),
+        radial-gradient(1px 1px at 292px 204px, rgba(244, 249, 255, 0.52), transparent),
+        radial-gradient(1px 1px at 10px 268px, rgba(142, 211, 255, 0.42), transparent);
+    background-size: 320px 300px;
+    filter: blur(0.6px);
+    animation: pkh-snow-far 46s linear infinite;
+}
+
+.pkh__snow--mid {
+    background-image:
+        radial-gradient(1.7px 1.7px at 46px 60px, rgba(244, 249, 255, 0.8), transparent),
+        radial-gradient(1.7px 1.7px at 174px 22px, rgba(207, 230, 255, 0.7), transparent),
+        radial-gradient(1.7px 1.7px at 108px 168px, rgba(244, 249, 255, 0.74), transparent),
+        radial-gradient(1.7px 1.7px at 232px 118px, rgba(142, 211, 255, 0.66), transparent),
+        radial-gradient(1.7px 1.7px at 20px 216px, rgba(244, 249, 255, 0.7), transparent),
+        radial-gradient(1.7px 1.7px at 196px 244px, rgba(207, 230, 255, 0.62), transparent);
+    background-size: 260px 280px;
+    filter: blur(1px);
+    animation: pkh-snow-mid 29s linear infinite;
+}
+
+.pkh__snow--near {
+    background-image:
+        radial-gradient(2.6px 2.6px at 70px 44px, rgba(244, 249, 255, 0.95), transparent),
+        radial-gradient(2.6px 2.6px at 188px 128px, rgba(207, 230, 255, 0.85), transparent),
+        radial-gradient(2.6px 2.6px at 36px 178px, rgba(244, 249, 255, 0.9), transparent),
+        radial-gradient(2.6px 2.6px at 146px 212px, rgba(142, 211, 255, 0.8), transparent);
+    background-size: 220px 240px;
+    filter: blur(1.6px);
+    animation: pkh-snow-near 17s linear infinite;
+}
+
+.pkh__feather {
+    position: absolute;
+    top: -8%;
+    left: var(--fx);
+    z-index: 3;
+    width: var(--fs);
+    height: var(--fs);
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background: radial-gradient(circle at 50% 42%, rgba(255, 255, 255, 0.95) 0%, rgba(207, 230, 255, 0.5) 38%, transparent 70%);
+    filter: blur(0.5px);
+    opacity: 0;
+    animation:
+        pkh-feather-fall var(--fd) linear infinite,
+        pkh-feather-sway calc(var(--fd) / 3.2) ease-in-out infinite;
+    animation-delay: var(--fdl), var(--fdl);
+}
+
+.pkh__sweep {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -160px;
+    height: 120px;
+    z-index: 4;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background: linear-gradient(180deg,
+        transparent 0%,
+        rgba(0, 206, 255, 0.055) 36%,
+        rgba(207, 230, 255, 0.07) 60%,
+        transparent 100%);
+    animation: pkh-sweep 11s linear infinite;
+}
+
+.pkh__ch {
+    position: relative;
+    z-index: 5;
+    margin: 0;
+    overflow: hidden;
+    border-radius: $nk-panel-radius;
+    border: 1px solid var(--nk-hair-strong);
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    background: var(--nk-deep);
+
+    img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.pkh__ch--loop {
+    aspect-ratio: 9 / 16;
+    justify-self: start;
+    width: 100%;
+    transform: rotateY(6deg) rotateZ(-0.5deg);
+    box-shadow: var(--nk-glow-beam), 0 22px 46px rgba(0, 0, 0, 0.58);
+    animation: pkh-float-a 12s ease-in-out infinite;
+
+    img {
+        filter: saturate(1.12) contrast(1.05) brightness(1.04);
+        transition: opacity 0.7s ease;
+    }
+
+    img.is-live {
+        animation: pkh-fade-in 0.9s ease;
+    }
+}
+
+.pkh__ch--still {
+    aspect-ratio: 9 / 16;
+    justify-self: end;
+    width: 100%;
+    isolation: isolate;
+    transform: rotateY(-6deg) rotateZ(0.5deg);
+    box-shadow: var(--nk-glow-ice), 0 0 84px rgba(0, 206, 255, 0.13), 0 22px 46px rgba(0, 0, 0, 0.58);
+    animation: pkh-float-b 14s ease-in-out infinite;
+
+    img {
+        filter: saturate(1.06) contrast(1.04) brightness(0.99);
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: -16% -8% auto;
+        height: 82%;
+        z-index: 4;
+        pointer-events: none;
+        mix-blend-mode: screen;
+        background:
+            radial-gradient(44% 60% at 50% -8%, rgba(244, 249, 255, 0.36) 0%, rgba(142, 211, 255, 0.12) 46%, transparent 76%),
+            radial-gradient(18% 42% at 50% -6%, rgba(255, 255, 255, 0.24) 0%, transparent 72%);
+        filter: blur(9px);
+        animation: pkh-shaft 15s ease-in-out infinite;
+    }
+
+    &::before {
+        @include nk-frost-ring($nk-panel-radius, 1.5px, 0.6);
+        z-index: 7;
+        animation: pkh-ring 16s ease-in-out infinite;
+    }
+
+    img.pkh__figure-art {
+        position: absolute;
+        left: 50%;
+        bottom: 18.75%;
+        z-index: 3;
+        width: auto;
+        height: 47.66%;
+        transform: translateX(-50%);
+        object-fit: contain;
+        filter:
+            drop-shadow(0 0 9px rgba(207, 230, 255, 0.5))
+            drop-shadow(0 0 24px rgba(0, 206, 255, 0.28));
+        animation: pkh-muse 9s ease-in-out infinite;
+        will-change: translate;
+    }
+}
+
+.pkh__sky {
+    position: absolute;
+    inset: 0 0 56% 0;
+    z-index: 1;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background: radial-gradient(58% 66% at 42% 62%, rgba(255, 255, 255, 0.13) 0%, rgba(207, 230, 255, 0.05) 46%, transparent 74%);
+    filter: blur(15px);
+    animation: pkh-sky 34s ease-in-out infinite;
+}
+
+.pkh__figure-glow {
+    position: absolute;
+    left: 50%;
+    bottom: 15%;
+    z-index: 2;
+    width: 66%;
+    height: 54%;
+    transform: translateX(-50%);
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background: radial-gradient(50% 46% at 50% 40%,
+        rgba(207, 230, 255, 0.38) 0%,
+        rgba(0, 206, 255, 0.15) 46%,
+        transparent 74%);
+    filter: blur(17px);
+    animation: pkh-muse-glow 9s ease-in-out infinite;
+}
+
+.pkh__ch:hover {
+    transform: none;
+}
+
+.pkh__aura {
+    position: absolute;
+    inset: -18%;
+    z-index: 1;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background:
+        radial-gradient(36% 32% at 50% 44%, rgba(207, 230, 255, 0.44) 0%, rgba(0, 206, 255, 0.14) 46%, transparent 74%),
+        radial-gradient(50% 44% at 60% 72%, rgba(124, 224, 211, 0.22) 0%, transparent 72%);
+    filter: blur(14px);
+    animation: pkh-aura 8.5s ease-in-out infinite;
+}
+
+.pkh__glint {
+    position: absolute;
+    z-index: 6;
+    left: var(--gx);
+    top: var(--gy);
+    width: var(--gs);
+    height: var(--gs);
+    margin: calc(var(--gs) / -2) 0 0 calc(var(--gs) / -2);
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(142, 211, 255, 0.5) 26%, transparent 62%);
+    animation: pkh-glint 5.4s ease-in-out infinite;
+    animation-delay: var(--gd);
+
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.9) 50%, transparent 100%);
+    }
+
+    &::before {
+        width: 100%;
+        height: 1.2px;
+    }
+
+    &::after {
+        width: 1.2px;
+        height: 100%;
+    }
+}
+
+.pkh__spark {
+    position: absolute;
+    z-index: 4;
+    left: var(--sx);
+    top: var(--sy);
+    width: var(--ss);
+    height: var(--ss);
+    margin: calc(var(--ss) / -2) 0 0 calc(var(--ss) / -2);
+    pointer-events: none;
+    mix-blend-mode: screen;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.98) 0%, rgba(207, 240, 255, 0.55) 34%, transparent 66%);
+    animation: pkh-spark var(--sd) ease-in-out infinite;
+    animation-delay: var(--sdl);
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 240%;
+        height: 1px;
+        background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.75) 50%, transparent 100%);
+    }
+}
+
+.pkh__frost {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: radial-gradient(132% 132% at 50% 46%, transparent 58%, rgba(8, 10, 18, 0.46) 100%);
+}
+
+.pkh__frost--scan {
+    background:
+        repeating-linear-gradient(0deg, rgba(8, 10, 18, 0.1) 0 1px, transparent 1px 4px),
+        radial-gradient(132% 132% at 50% 46%, transparent 58%, rgba(8, 10, 18, 0.46) 100%);
+}
+
+.pkh__tag {
+    position: absolute;
+    left: 0.5rem;
+    bottom: 0.45rem;
+    z-index: 6;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
+    font-size: 0.56rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--nk-ink-soft);
+    padding: 0.18rem 0.48rem;
+    border-radius: 4px;
+    @include nk-rime-glass(0.55);
+    backdrop-filter: blur(3px);
+    z-index: 8;
+}
+
+.pkh__dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--nk-drift);
+    box-shadow: 0 0 6px rgba(74, 159, 216, 0.8);
+}
+
+.pkh__dot--live {
+    background: var(--nk-beam);
+    box-shadow: 0 0 7px rgba(0, 206, 255, 0.95);
+    animation: pkh-pulse 2.2s ease-in-out infinite;
+}
+
+.pkh__body {
+    position: relative;
+    z-index: 5;
+    min-width: 0;
+    text-shadow:
+        0 1px 2px rgba(4, 6, 12, 0.9),
+        0 2px 14px rgba(4, 6, 12, 0.75),
+        0 0 34px rgba(4, 6, 12, 0.5);
+}
+
+.pkh__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--nk-frost);
+    margin-bottom: 0.6rem;
+}
+
+.pkh__prov {
+    grid-column: 1 / -1;
+    position: relative;
+    z-index: 6;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin:
+        clamp(0.9rem, 2vw, 1.4rem)
+        calc(-1 * clamp(1.4rem, 3.2vw, 2.4rem))
+        calc(-1 * clamp(1.4rem, 3.2vw, 2.4rem));
+    padding: 0.72rem clamp(1.4rem, 3.2vw, 2.4rem);
+    background: rgba(6, 8, 14, 0.58);
+    backdrop-filter: blur(7px);
+    border-top: 1px solid var(--nk-hair);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    color: var(--nk-ink-soft);
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 8px rgba(4, 6, 12, 0.85);
+}
+
+.pkh__prov-k {
+    margin-right: 5px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--nk-ink-dim);
+}
+
+.pkh__prov-sep {
+    width: 1px;
+    height: 0.85em;
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.pkh__prov-src {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.pkh__prov-amp {
+    color: var(--nk-ink-dim);
+}
+
+.pkh__title {
+    margin: 0 0 0.55rem;
+    font-size: clamp(1.9rem, 4.4vw, 3.05rem);
+    font-weight: 700;
+    line-height: 1.02;
+    letter-spacing: 0.005em;
+    background: linear-gradient(115deg, var(--nk-snow) 0%, var(--nk-frost) 34%, var(--nk-beam) 68%, var(--nk-snow) 100%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    text-shadow: none;
+    filter:
+        drop-shadow(0 2px 3px rgba(4, 6, 12, 0.95))
+        drop-shadow(0 3px 16px rgba(4, 6, 12, 0.8))
+        drop-shadow(0 2px 26px rgba(0, 206, 255, 0.3));
+    animation: pkh-title 16s ease-in-out infinite;
+}
+
+.pkh__lede {
+    margin: 0;
+    max-width: 62ch;
+    font-size: 0.9rem;
+    line-height: 1.62;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.pkh__strip {
+    margin-top: clamp(0.9rem, 2vw, 1.35rem);
+    padding-top: clamp(0.8rem, 1.8vw, 1.1rem);
+    border-top: 1px solid var(--nk-hair);
+}
+
+.pkh__figure {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.pkh__number {
+    font-size: clamp(1.6rem, 3.6vw, 2.4rem);
+    font-weight: 700;
+    line-height: 1;
+    color: var(--nk-snow);
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 26px rgba(0, 206, 255, 0.34);
+}
+
+.pkh__unit {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--nk-ink-dim);
+}
+
+.pkh__proof {
+    margin-top: 0.3rem;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.pkh__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.7rem;
+}
+
+.pkh__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.24rem 0.6rem;
+    border-radius: 999px;
+    color: var(--nk-frost);
+    @include nk-rime-glass(0.45);
+}
+
+.pkh__chip--beam {
+    color: var(--nk-snow);
+    border-color: rgba(0, 206, 255, 0.42);
+    box-shadow: inset 0 0 18px rgba(0, 206, 255, 0.12);
+}
+
+.pkh__modes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 0.7rem;
+    font-size: 0.74rem;
+    color: var(--nk-ink-dim);
+
+    b {
+        color: var(--nk-frost);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+.pkh__modes-sep {
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--nk-hair-strong);
+}
+
+.pkh__skel {
+    border-radius: 6px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.11) 37%, rgba(255, 255, 255, 0.05) 63%);
+    background-size: 400% 100%;
+    animation: pkh-skel 1.5s ease infinite;
+}
+
+.pkh__skel--number {
+    width: 148px;
+    height: 34px;
+    margin-bottom: 0.6rem;
+}
+
+.pkh__skel--line {
+    width: min(320px, 70%);
+    height: 12px;
+}
+
+@keyframes pkh-bg-drift {
+    0%, 100% { transform: scale(1.06) translate3d(0, 0, 0); }
+    50%      { transform: scale(1.1) translate3d(-1.4%, -1%, 0); }
+}
+
+@keyframes pkh-aurora {
+    0%, 100% { opacity: 0.62; transform: translate3d(0, 0, 0); }
+    50%      { opacity: 1; transform: translate3d(2.5%, 2%, 0); }
+}
+
+@keyframes pkh-snow-far  { to { background-position: 34px 300px; } }
+@keyframes pkh-snow-mid  { to { background-position: -46px 280px; } }
+@keyframes pkh-snow-near { to { background-position: 68px 240px; } }
+
+@keyframes pkh-feather-fall {
+    0%   { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); }
+    8%   { opacity: 0.85; }
+    88%  { opacity: 0.6; }
+    100% { opacity: 0; transform: translate3d(0, 128%, 0) rotate(220deg); }
+}
+
+@keyframes pkh-feather-sway {
+    0%, 100% { margin-left: 0; }
+    50%      { margin-left: var(--fsw); }
+}
+
+@keyframes pkh-sweep {
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(0, 760px, 0); }
+}
+
+@keyframes pkh-float-a {
+    0%, 100% { translate: 0 0; }
+    50%      { translate: 0 -7px; }
+}
+
+@keyframes pkh-float-b {
+    0%, 100% { translate: 0 0; }
+    50%      { translate: 0 -9px; }
+}
+
+@keyframes pkh-fade-in {
+    from { opacity: 0.3; }
+    to   { opacity: 1; }
+}
+
+@keyframes pkh-sky {
+    0%, 100% { opacity: 0.58; transform: translate3d(-2%, 0, 0); }
+    50%      { opacity: 1; transform: translate3d(3%, 0.6%, 0); }
+}
+
+@keyframes pkh-spark {
+    0%, 62%, 100% { opacity: 0; transform: scale(0.3); }
+    72%           { opacity: 1; transform: scale(1); }
+    84%           { opacity: 0.35; transform: scale(0.7); }
+}
+
+@keyframes pkh-muse {
+    0%, 100% { translate: 0 0; }
+    50%      { translate: 0 -9px; }
+}
+
+@keyframes pkh-muse-glow {
+    0%, 100% { opacity: 0.66; }
+    50%      { opacity: 1; }
+}
+
+@keyframes pkh-aura {
+    0%, 100% { opacity: 0.6; transform: scale(1); }
+    50%      { opacity: 1; transform: scale(1.06); }
+}
+
+@keyframes pkh-shaft {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 1; }
+}
+
+@keyframes pkh-ring {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+}
+
+@keyframes pkh-glint {
+    0%, 42%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+    52%           { opacity: 1; transform: scale(1) rotate(46deg); }
+    70%           { opacity: 0.65; transform: scale(0.82) rotate(74deg); }
+    96%           { opacity: 0; transform: scale(0.4) rotate(96deg); }
+}
+
+@keyframes pkh-pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 7px rgba(0, 206, 255, 0.95); }
+    50%      { opacity: 0.55; box-shadow: 0 0 14px rgba(0, 206, 255, 0.55); }
+}
+
+@keyframes pkh-title {
+    0%, 100% { background-position: 0% 50%; }
+    50%      { background-position: 100% 50%; }
+}
+
+@keyframes pkh-skel {
+    0%   { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+
+@media (max-width: 1200px) {
+    .pkh {
+        grid-template-columns: minmax(0, 1fr) clamp(160px, 26vw, 210px);
+    }
+
+    .pkh__ch--loop {
+        display: none;
+    }
+}
+
+@media (max-width: 780px) {
+    .pkh {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .pkh__ch--still {
+        display: none;
+    }
+
+    .pkh__bg {
+        opacity: 0.66;
+        background-position: 68% 30%;
+    }
+
+    .pkh__veil {
+        background:
+            radial-gradient(110% 62% at 50% 62%, rgba(8, 10, 18, 0.86) 0%, rgba(8, 10, 18, 0.62) 58%, rgba(8, 10, 18, 0.34) 100%),
+            rgba(8, 10, 18, 0.16);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pkh__bg,
+    .pkh__aurora,
+    .pkh__snow,
+    .pkh__ch--loop,
+    .pkh__ch--still,
+    .pkh__ch--still::before,
+    .pkh__ch--still::after,
+    .pkh__ch--still img.pkh__figure-art,
+    .pkh__figure-glow,
+    .pkh__sky,
+    .pkh__aura,
+    .pkh__title,
+    .pkh__dot--live,
+    .pkh__skel {
+        animation: none;
+    }
+
+    .pkh__feather,
+    .pkh__glint,
+    .pkh__spark,
+    .pkh__sweep {
+        display: none;
+    }
+}
+
+@media print {
+    .pkh__snow,
+    .pkh__feather,
+    .pkh__aurora,
+    .pkh__sweep {
+        display: none;
+    }
+}

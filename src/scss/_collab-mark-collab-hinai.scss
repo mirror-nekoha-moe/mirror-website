@@ -1,0 +1,105 @@
+.nkmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.nkmark__img {
+    width: var(--nkmark-size, 18px);
+    height: var(--nkmark-size, 18px);
+    flex: none;
+    object-fit: contain;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 1px var(--nk-hair), 0 0 10px rgba(142, 211, 255, 0.16);
+}
+
+.nkmark__name {
+    font-weight: 600;
+}
+
+.nkmark__egg {
+    transform-origin: center;
+    animation: nkmark-egg-loop 1.4s linear infinite;
+    filter: drop-shadow(0 0 7px rgba(0, 206, 255, 0.45));
+}
+
+@keyframes nkmark-egg-loop {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nkmark__egg {
+        animation-duration: 3.5s;
+    }
+}
+
+.nkmark__x {
+    color: var(--nk-ink-dim);
+    font-weight: 400;
+}
+
+.nkmark__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: inherit;
+    text-decoration: none;
+    transition: color 180ms ease;
+
+    .nkmark__img {
+        transition: box-shadow 180ms ease;
+    }
+
+    &:hover,
+    &:focus-visible {
+        color: var(--nk-beam);
+
+        .nkmark__img {
+            box-shadow: 0 0 0 1px rgba(0, 206, 255, 0.55), var(--nk-glow-beam);
+        }
+
+        .nkmark__name {
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+    }
+}
+
+.nk-source__v {
+    margin-left: 0.28rem;
+    opacity: 0.62;
+    font-variant-numeric: tabular-nums;
+}
+
+.nk-source {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
+    white-space: nowrap;
+
+    .nkmark__img {
+        transition: box-shadow 180ms ease;
+    }
+
+    &:hover .nkmark__img,
+    &:focus-visible .nkmark__img {
+        box-shadow: 0 0 0 1px rgba(0, 206, 255, 0.55), var(--nk-glow-beam);
+    }
+}
+
+.nk-hinai-out {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: rgba(255, 255, 255, 0.26);
+    text-underline-offset: 3px;
+    transition: color 180ms ease, text-decoration-color 180ms ease;
+
+    &:hover,
+    &:focus-visible {
+        color: var(--nk-beam);
+        text-decoration-color: var(--nk-beam);
+    }
+}

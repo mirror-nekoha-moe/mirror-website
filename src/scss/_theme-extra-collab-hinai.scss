@@ -1,0 +1,69 @@
+$nk-snow:        #f4f9ff;
+$nk-frost:       #cfe6ff;
+$nk-ice:         #8ed3ff;
+$nk-beam:        #00ceff;
+$nk-aurora:      #7ce0d3;
+$nk-drift:       #4a9fd8;
+$nk-glacier:     #12405f;
+
+$nk-night:       #0c0c14;
+$nk-deep:        #080a12;
+$nk-hush:        #101422;
+$nk-rime:        #1b2334;
+
+$nk-hero-min:    360px;
+$nk-panel-radius: 12px;
+
+:root {
+    --nk-snow: #{$nk-snow};
+    --nk-frost: #{$nk-frost};
+    --nk-ice: #{$nk-ice};
+    --nk-beam: #{$nk-beam};
+    --nk-aurora: #{$nk-aurora};
+    --nk-drift: #{$nk-drift};
+    --nk-glacier: #{$nk-glacier};
+
+    --nk-night: #{$nk-night};
+    --nk-deep: #{$nk-deep};
+    --nk-hush: #{$nk-hush};
+    --nk-rime: #{$nk-rime};
+
+    --nk-ink: rgba(255, 255, 255, 0.94);
+    --nk-ink-soft: rgba(255, 255, 255, 0.72);
+    --nk-ink-dim: rgba(255, 255, 255, 0.5);
+
+    --nk-hair: rgba(255, 255, 255, 0.12);
+    --nk-hair-strong: rgba(207, 230, 255, 0.3);
+
+    --nk-glow-ice: 0 0 32px rgba(142, 211, 255, 0.28);
+    --nk-glow-beam: 0 0 26px rgba(0, 206, 255, 0.34);
+    --nk-lift: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+@mixin nk-frost-ring($radius: 12px, $width: 1.5px, $opacity: 0.55) {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    border-radius: $radius;
+    padding: $width;
+    background: linear-gradient(135deg,
+        rgba(244, 249, 255, $opacity) 0%,
+        rgba(0, 206, 255, $opacity * 0.7) 28%,
+        rgba(124, 224, 211, $opacity * 0.45) 52%,
+        rgba(244, 249, 255, $opacity * 0.85) 76%,
+        rgba(142, 211, 255, $opacity * 0.5) 100%);
+    background-size: 260% 260%;
+    -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+}
+
+@mixin nk-rime-glass($tint: 0.55) {
+    background: rgba(8, 10, 18, $tint);
+    border: 1px solid var(--nk-hair);
+    backdrop-filter: blur(6px);
+}

@@ -1,0 +1,30 @@
+@media (min-width: 768px) and (hover: hover) {
+    .navbar .nav-item.dropdown > .dropdown-menu {
+        margin-top: 0;
+    }
+
+    .navbar .nav-item.dropdown:hover > .dropdown-menu,
+    .navbar .nav-item.dropdown:focus-within > .dropdown-menu {
+        display: block;
+        animation: nk-nav-drop 140ms ease-out both;
+    }
+}
+
+@keyframes nk-nav-drop {
+    from {
+        opacity: 0;
+        translate: 0 -6px;
+    }
+
+    to {
+        opacity: 1;
+        translate: 0 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .navbar .nav-item.dropdown:hover > .dropdown-menu,
+    .navbar .nav-item.dropdown:focus-within > .dropdown-menu {
+        animation: none;
+    }
+}
