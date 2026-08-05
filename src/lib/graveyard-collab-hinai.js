@@ -1,4 +1,4 @@
-import { MIRROR } from './mirror.js';
+import { MIRROR } from './mirror-collab-hinai.js';
 
 const COLLAB = `${MIRROR}/api/v1/nekoha-collab`;
 

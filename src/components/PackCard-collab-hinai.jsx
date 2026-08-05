@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { FaDownload, FaLayerGroup } from 'react-icons/fa';
-import MapperLink from './MapperLink.jsx';
-import { cover } from '../lib/mirror.js';
-import { observeOnce, unobserve } from '../lib/inview.js';
+import MapperLink from './MapperLink-collab-hinai.jsx';
+import { cover } from '../lib/mirror-collab-hinai.js';
+import { observeOnce, unobserve } from '../lib/inview-collab-hinai.js';
 import {
     MODE_LABELS,
     fetchPackDetail,
@@ -15,7 +15,7 @@ import {
     formatPp,
     formatDate,
     triggerDownload,
-} from '../lib/packs.js';
+} from '../lib/packs-collab-hinai.js';
 
 const SPECTRUM_CEILING_PP = 1000;
 const COLLAGE_TILES = 4;

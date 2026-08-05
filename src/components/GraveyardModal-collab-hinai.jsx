@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FaDownload, FaTimes } from 'react-icons/fa';
-import MapperLink from './MapperLink.jsx';
-import { proxyImage } from '../lib/mirror.js';
+import MapperLink from './MapperLink-collab-hinai.jsx';
+import { proxyImage } from '../lib/mirror-collab-hinai.js';
 import {
     graveyardSet,
     graveyardDownloadUrl,

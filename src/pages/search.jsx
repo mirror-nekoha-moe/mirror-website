@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaDownload, FaRegDotCircle, FaDrum, FaFilter, FaChevronDown, FaChevronUp, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
-import MapperLink from '../components/MapperLink.jsx';
-import { cover } from '../lib/mirror.js';
+import MapperLink from '../components/MapperLink-collab-hinai.jsx';
+import { cover } from '../lib/mirror-collab-hinai.js';
 
 const toHttps = url => url ? (url.startsWith('//') ? `https:${url}` : url) : null;
 

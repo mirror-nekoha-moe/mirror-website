@@ -1,4 +1,4 @@
-import { MIRROR } from './mirror.js';
+import { MIRROR } from './mirror-collab-hinai.js';
 
 export const PP_MAX = 2000;
 export const PP_STEP = 25;

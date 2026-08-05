@@ -1,6 +1,6 @@
 import { useId } from 'react';
 import { FaBolt } from 'react-icons/fa';
-import { PP_MAX, PP_STEP, PP_PRESETS } from '../lib/packs.js';
+import { PP_MAX, PP_STEP, PP_PRESETS } from '../lib/packs-collab-hinai.js';
 
 export default function PpRangeFilter({
     value,

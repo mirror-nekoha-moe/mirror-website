@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaSearch, FaTimes, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import GraveyardCard from '../components/GraveyardCard-collab-hinai.jsx';
 import GraveyardModal from '../components/GraveyardModal-collab-hinai.jsx';
-import PpRangeFilter from '../components/PpRangeFilter.jsx';
+import PpRangeFilter from '../components/PpRangeFilter-collab-hinai.jsx';
 import GraveMist from '../components/GraveMist-collab-hinai.jsx';
 import Revenant from '../components/Revenant-collab-hinai.jsx';
 import Procession from '../components/Procession-collab-hinai.jsx';
-import useDebounced from '../lib/useDebounced.js';
+import useDebounced from '../lib/useDebounced-collab-hinai.js';
 import {
     PP_CAP,
     PP_PRESETS,
@@ -211,7 +211,7 @@ export default function Graveyard() {
                         </p>
                         <a className="gv-hinai" href="https://hinamizawa.ai/osu/beatmaps" target="_blank" rel="noopener noreferrer">
                             <span className="gv-hinai__ring" aria-hidden="true" />
-                            <img src="/assets/graveyard/hinai-logo.png" alt="" className="gv-hinai__logo" />
+                            <img src="/assets/collab-hinai/hinai-logo.png" alt="" className="gv-hinai__logo" />
                             <span className="gv-hinai__text">
                                 <span className="gv-hinai__kicker">PP engine</span>
                                 <span className="gv-hinai__name">hinamizawa.ai/osu/beatmaps</span>
@@ -221,7 +221,7 @@ export default function Graveyard() {
                     </div>
                     <aside className="gv-collab">
                         <span className="gv-collab__halo" aria-hidden="true" />
-                        <img src="/assets/graveyard/collab-hinai-nekoha.webp" alt="Hinai and Nekoha" className="gv-collab__art" />
+                        <img src="/assets/collab-hinai/collab-hinai-nekoha.webp" alt="Hinai and Nekoha" className="gv-collab__art" />
                         <div className="gv-collab__plate">
                             <span className="gv-collab__kicker">Collaboration</span>
                             <span className="gv-collab__names">Hinai &#215; Nekoha</span>

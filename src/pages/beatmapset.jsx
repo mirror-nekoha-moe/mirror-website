@@ -5,8 +5,8 @@ import { FaDownload, FaRegDotCircle, FaDrum, FaHeart, FaClock, FaMusic, FaPlay, 
 import { SiOsu } from "react-icons/si";
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
-import MapperLink from '../components/MapperLink.jsx';
-import { cover, proxyImage } from '../lib/mirror.js';
+import MapperLink from '../components/MapperLink-collab-hinai.jsx';
+import { cover, proxyImage } from '../lib/mirror-collab-hinai.js';
 
 const PPY_IMAGE_HOST = /^https:\/\/(a|b|i|osu|assets)\.ppy\.sh\//i;
 

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FaDownload, FaBolt, FaClock, FaMusic } from 'react-icons/fa';
-import MapperLink from './MapperLink.jsx';
-import { proxyImage } from '../lib/mirror.js';
+import MapperLink from './MapperLink-collab-hinai.jsx';
+import { proxyImage } from '../lib/mirror-collab-hinai.js';
 import {
     modColor,
     ppColor,

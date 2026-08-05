@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaSearch, FaTimes } from 'react-icons/fa';
-import PackCard from '../components/PackCard.jsx';
-import PackDetailModal from '../components/PackDetailModal.jsx';
-import PpRangeFilter from '../components/PpRangeFilter.jsx';
-import useDebounced from '../lib/useDebounced.js';
+import PackCard from '../components/PackCard-collab-hinai.jsx';
+import PackDetailModal from '../components/PackDetailModal-collab-hinai.jsx';
+import PpRangeFilter from '../components/PpRangeFilter-collab-hinai.jsx';
+import useDebounced from '../lib/useDebounced-collab-hinai.js';
 import {
     MODES,
     PACK_TYPES,
@@ -13,7 +13,7 @@ import {
     fetchPacks,
     fetchPackStats,
     formatCount,
-} from '../lib/packs.js';
+} from '../lib/packs-collab-hinai.js';
 
 const SEARCH_CAP = 200;
 const SKELETONS = 8;

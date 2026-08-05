@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaChevronDown, FaChevronRight, FaDownload, FaTimes } from 'react-icons/fa';
-import MapperLink from './MapperLink.jsx';
-import { cover, setDownloadUrl } from '../lib/mirror.js';
+import MapperLink from './MapperLink-collab-hinai.jsx';
+import { cover, setDownloadUrl } from '../lib/mirror-collab-hinai.js';
 import {
     MODE_LABELS,
     fetchPackDetail,
@@ -15,7 +15,7 @@ import {
     formatPp,
     formatDate,
     triggerDownload,
-} from '../lib/packs.js';
+} from '../lib/packs-collab-hinai.js';
 
 function sortedDiffs(set) {
     const diffs = set.beatmaps_pp || [];

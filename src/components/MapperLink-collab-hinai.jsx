@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { observeOnce, unobserve } from '../lib/inview.js';
-import { mapperUrl, proxyImage, peekMapperAvatar, fetchMapperAvatar } from '../lib/mirror.js';
+import { observeOnce, unobserve } from '../lib/inview-collab-hinai.js';
+import { mapperUrl, proxyImage, peekMapperAvatar, fetchMapperAvatar } from '../lib/mirror-collab-hinai.js';
 
 export default function MapperLink({ name, avatar = false }) {
     const [src, setSrc] = useState(() => peekMapperAvatar(name) || null);
