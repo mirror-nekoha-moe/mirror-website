@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaChevronDown, FaChevronRight, FaDownload, FaTimes } from 'react-icons/fa';
+import MapperLink from './MapperLink.jsx';
+import { cover, setDownloadUrl } from '../lib/mirror.js';
 import {
     MODE_LABELS,
     fetchPackDetail,
     peekPackDetail,
-    packCover,
     packRuleset,
     packTypeLabel,
     packZipUrl,
-    setDownloadUrl,
     ppColor,
     diffStars,
     formatCount,
@@ -173,24 +173,27 @@ export default function PackDetailModal({ pack, onClose }) {
                                                 </span>
                                                 <span
                                                     className="pack-modal__cover"
-                                                    style={{ backgroundImage: `url('${packCover(set.id, 'list')}')` }}
+                                                    style={{ backgroundImage: `url('${cover(set.id, 'list')}')` }}
                                                 />
                                                 <span className="flex-grow-1 overflow-hidden">
                                                     <span className="d-block text-white text-truncate">{set.title || `Set ${set.id}`}</span>
-                                                    <span className="d-block small text-secondary text-truncate">
-                                                        {set.artist}
-                                                        {set.creator && <span className="text-muted"> · {set.creator}</span>}
-                                                    </span>
-                                                </span>
-                                                <span className="small flex-shrink-0 text-end">
-                                                    {setSummary.max_pp !== undefined && setSummary.max_pp !== null && (
-                                                        <span className="d-block" style={{ color: ppColor(setSummary.max_pp) }}>
-                                                            {formatPp(setSummary.min_pp)}-{formatPp(setSummary.max_pp)} pp
-                                                        </span>
-                                                    )}
-                                                    <span className="d-block text-muted">{formatCount(diffs.length)} diffs</span>
+                                                    <span className="d-block small text-secondary text-truncate">{set.artist}</span>
                                                 </span>
                                             </button>
+
+                                            <span className="pack-modal__meta small flex-shrink-0 text-end">
+                                                {set.creator && (
+                                                    <span className="d-block text-truncate">
+                                                        <MapperLink name={set.creator} />
+                                                    </span>
+                                                )}
+                                                {setSummary.max_pp !== undefined && setSummary.max_pp !== null && (
+                                                    <span className="d-block" style={{ color: ppColor(setSummary.max_pp) }}>
+                                                        {formatPp(setSummary.min_pp)}-{formatPp(setSummary.max_pp)} pp
+                                                    </span>
+                                                )}
+                                                <span className="d-block text-muted">{formatCount(diffs.length)} diffs</span>
+                                            </span>
                                             <button
                                                 type="button"
                                                 className="btn btn-sm btn-success flex-shrink-0"

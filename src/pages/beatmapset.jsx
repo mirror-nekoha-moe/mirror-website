@@ -5,6 +5,9 @@ import { FaDownload, FaRegDotCircle, FaDrum, FaHeart, FaClock, FaMusic, FaPlay, 
 import { SiOsu } from "react-icons/si";
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
+import { cover, mapperUrl, proxyImage } from '../lib/mirror.js';
+
+const PPY_IMAGE_HOST = /^https:\/\/(a|b|i|osu|assets)\.ppy\.sh\//i;
 
 const STATUS_COLORS = {
     ranked: '#b3ff66',
@@ -124,8 +127,17 @@ export default function BeatmapSet() {
     }, [id]);
 
     useEffect(() => {
-        if (!descRef.current) 
+        if (!descRef.current)
             return;
+        descRef.current.querySelectorAll('img[src]').forEach(img => {
+            if (img.dataset.mirrorProxied)
+                return;
+            const src = img.getAttribute('src') || '';
+            if (!PPY_IMAGE_HOST.test(src))
+                return;
+            img.dataset.mirrorProxied = '1';
+            img.setAttribute('src', proxyImage(src));
+        });
         descRef.current.querySelectorAll('.js-spoilerbox__link').forEach(link => {
             if (link._spoilerBound)
                 return;
@@ -158,7 +170,7 @@ export default function BeatmapSet() {
     if (error) return <div className="mt-5 alert bg-danger">{error}</div>;
     if (!data) return null;
 
-    const coverUrl = `https://assets.ppy.sh/beatmaps/${data.id}/covers/cover.jpg`;
+    const coverUrl = cover(data.id, 'cover');
     const statusColor = STATUS_COLORS[data.status] ?? '#aaa';
 
     return (
@@ -178,7 +190,7 @@ export default function BeatmapSet() {
                 <div className="container">
                     <div className="d-flex gap-4 align-items-end flex-wrap">
                         <img
-                            src={`https://assets.ppy.sh/beatmaps/${data.id}/covers/list.jpg`}
+                            src={cover(data.id, 'list')}
                             alt="cover"
                             className="rounded-2 flex-shrink-0 object-fit-cover"
                             style={{ width: 100, height: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.6)' }}
@@ -193,7 +205,7 @@ export default function BeatmapSet() {
                             <div className="small">
                                 mapped by{' '}
                                 <a className="fw-bold text-white link-blue text-decoration-none"
-                                    href={`https://osu.ppy.sh/users/${data.user_id}`} target="_blank">
+                                    href={mapperUrl(data.creator)} target="_blank" rel="noopener noreferrer">
                                     {data.creator}
                                 </a>
                             </div>

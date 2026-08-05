@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { FaDownload, FaLayerGroup } from 'react-icons/fa';
+import MapperLink from './MapperLink.jsx';
+import { cover } from '../lib/mirror.js';
 import {
     MODE_LABELS,
     observeOnce,
     unobserve,
     fetchPackDetail,
     peekPackDetail,
-    packCover,
     packRuleset,
     packTypeLabel,
     packZipUrl,
@@ -71,7 +72,7 @@ export default function PackCard({ pack, onOpen }) {
                             <span
                                 key={set.id}
                                 className="pack-card__tile"
-                                style={{ backgroundImage: `url('${packCover(set.id, 'list')}')` }}
+                                style={{ backgroundImage: `url('${cover(set.id, 'list')}')` }}
                             />
                         ))
                     ) : (
@@ -86,9 +87,9 @@ export default function PackCard({ pack, onOpen }) {
 
             <div className="pack-card__body">
                 <div className="d-flex justify-content-between align-items-center gap-2 small">
-                    <span className="text-truncate">
-                        <span className="text-secondary">by </span>
-                        {pack.author || 'Unknown'}
+                    <span className="d-inline-flex align-items-center gap-1 text-truncate">
+                        <span className="text-secondary">by</span>
+                        <MapperLink name={pack.author} avatar />
                     </span>
                     <span className="text-muted flex-shrink-0">{formatDate(pack.date)}</span>
                 </div>

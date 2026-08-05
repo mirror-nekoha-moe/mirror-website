@@ -1,4 +1,4 @@
-export const MIRROR = 'https://mirror.hinamizawa.ai';
+import { MIRROR } from './mirror.js';
 
 export const PP_MAX = 2000;
 export const PP_STEP = 25;
@@ -124,13 +124,6 @@ export function fetchPackDetail(tag) {
 }
 
 export const packZipUrl = tag => `${MIRROR}/v3/osu/packs/${encodeURIComponent(tag)}/download`;
-export const setDownloadUrl = id => `${MIRROR}/api/v1/hinai/d/${id}`;
-export const coverUrl = (id, size) => `https://assets.ppy.sh/beatmaps/${id}/covers/${size}.jpg`;
-export const proxyImage = url => `${MIRROR}/v3/osu/beatmaps/proxy-image?url=${encodeURIComponent(url)}`;
-
-export function packCover(setId, size) {
-    return proxyImage(coverUrl(setId, size));
-}
 
 export function packRuleset(pack) {
     if (pack.ruleset_id !== null && pack.ruleset_id !== undefined) return pack.ruleset_id;

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { FaDownload, FaRegDotCircle, FaDrum, FaFilter, FaChevronDown, FaChevronUp, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
+import { cover, mapperUrl } from '../lib/mirror.js';
 
 const toHttps = url => url ? (url.startsWith('//') ? `https:${url}` : url) : null;
 
@@ -352,7 +353,7 @@ export default function BeatmapsetSearch() {
           {results.map(set => (
             <div className={`col-12 col-lg-6 ${!set.user_id ? 'missing-metadata' : ''}`} key={set.id}>
               <div className="border-beatmapcard rounded-4 border-4 p-3 beatmapset-card-bg beatmapset-card-hoverable position-relative"
-                style={{ background: `linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://assets.ppy.sh/beatmaps/${set.id}/covers/cover.jpg')` }}
+                style={{ background: `linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('${cover(set.id, 'cover')}')` }}
               >
                 <a href={`https://mirror.nekoha.moe/beatmapset/${set.id}`} className="stretched-link" aria-label={set.title} />
                 <div className="fw-bold">
@@ -364,7 +365,7 @@ export default function BeatmapsetSearch() {
                 <div className="small d-flex align-items-center">
                   <div>
                     <span>mapped by: </span>
-                    <a className="text-decoration-none position-relative" style={{ zIndex: 2 }} href={`https://osu.ppy.sh/users/${set.user_id}`} target="_blank">
+                    <a className="text-decoration-none position-relative" style={{ zIndex: 2 }} href={mapperUrl(set.creator)} target="_blank" rel="noopener noreferrer">
                       <span className="fw-bold text-white link-blue">{set.creator}</span>
                     </a>
                   </div>

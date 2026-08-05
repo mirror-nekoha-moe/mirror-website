@@ -4,6 +4,19 @@
     background-color: rgba(255, 255, 255, 0.12);
 }
 
+.mapper-link {
+    max-width: 100%;
+
+    &__avatar {
+        flex-shrink: 0;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        object-fit: cover;
+        background-color: $dark-grey;
+    }
+}
+
 .pack-card {
     background-color: $card-bg;
     overflow: hidden;
@@ -305,6 +318,11 @@
     &__chev {
         flex-shrink: 0;
         color: $grey;
+    }
+
+    &__meta {
+        max-width: 38%;
+        font-variant-numeric: tabular-nums;
     }
 
     &__cover {
