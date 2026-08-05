@@ -356,7 +356,7 @@ export default function BeatmapsetSearch() {
               <div className="border-beatmapcard rounded-4 border-4 p-3 beatmapset-card-bg beatmapset-card-hoverable position-relative"
                 style={{ background: `linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('${cover(set.id, 'cover')}')` }}
               >
-                <a href={`https://mirror.nekoha.moe/beatmapset/${set.id}`} className="stretched-link" aria-label={set.title} />
+                <a href={`/beatmapset/${set.id}`} className="stretched-link" aria-label={set.title} />
                 <div className="fw-bold">
                   <span className="text-white map-title">{!set.user_id ? 'Processing Metadata...' : set.title}</span>
                 </div>
