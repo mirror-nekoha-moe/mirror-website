@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaSearch, FaTimes } from 'react-icons/fa';
 import PackCard from '../components/PackCard-collab-hinai.jsx';
+import PacksHero from '../components/PacksHero-collab-hinai.jsx';
 import PackDetailModal from '../components/PackDetailModal-collab-hinai.jsx';
 import PpRangeFilter from '../components/PpRangeFilter-collab-hinai.jsx';
 import useDebounced from '../lib/useDebounced-collab-hinai.js';
@@ -147,45 +148,7 @@ export default function Packs() {
             <title>Beatmap Packs | Nekoha</title>
 
             <div className="container py-4 px-3 mx-auto">
-                <div className="mb-3">
-                    <h1 className="h3 mb-1">Beatmap Packs</h1>
-                    <p className="text-secondary mb-0">
-                        Browse the whole osu! pack catalogue with per-difficulty PP data, and pull a
-                        pack as one download. Served by the <span className="text-secondary">Hinai mirror</span>.
-                    </p>
-                </div>
-
-                {stats && (
-                    <div className="packs-stats card mb-3">
-                        <div className="card-body d-flex flex-wrap align-items-center gap-4">
-                            <div>
-                                <div className="h3 mb-0 text-secondary">{formatCount(stats.total_packs)}</div>
-                                <small className="text-muted">curated packs</small>
-                            </div>
-                            <div className="packs-stats__sep d-none d-md-block" />
-                            <div className="small">
-                                <div>{formatCount(stats.total_beatmapsets)} beatmapsets</div>
-                                <div className="text-muted">{formatCount(stats.total_diffs)} difficulties with PP data</div>
-                            </div>
-                            <div className="packs-stats__sep d-none d-md-block" />
-                            <div className="d-flex flex-wrap gap-2">
-                                <span className="badge rounded-pill text-bg-dark">{Math.round(Number(stats.pp_coverage_pct || 0))}% PP coverage</span>
-                                {stats.archive_size_gb && (
-                                    <span className="badge rounded-pill text-bg-dark">{stats.archive_size_gb} GB archive</span>
-                                )}
-                            </div>
-                            {Array.isArray(stats.modes) && stats.modes.length > 0 && (
-                                <div className="d-flex flex-wrap gap-3 small text-muted">
-                                    {stats.modes.map(entry => (
-                                        <span key={entry.mode}>
-                                            {MODE_LABELS[entry.mode] || entry.name} <span className="text-white">{formatCount(entry.count)}</span>
-                                        </span>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
+                <PacksHero stats={stats} />
 
                 <div className="alert cbg-dark border-0 small d-flex gap-2 mb-3">
                     <span className="text-secondary fw-bold">Installation:</span>
