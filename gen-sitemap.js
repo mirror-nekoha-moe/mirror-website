@@ -11,6 +11,7 @@ const sitemap = new SitemapStream({ hostname: 'https://mirror.nekoha.moe' });
 sitemap.write({ url: '/', changefreq: 'daily', priority: 1.0 });
 sitemap.write({ url: '/search', changefreq: 'daily', priority: 0.5 });
 sitemap.write({ url: '/packs', changefreq: 'daily', priority: 0.7 });
+sitemap.write({ url: '/graveyard', changefreq: 'weekly', priority: 0.7 });
 sitemap.write({ url: '/request', changefreq: 'daily', priority: 0.5 });
 
 sitemap.end();

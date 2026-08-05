@@ -11,6 +11,7 @@ import Footer from './components/footer.jsx'
 import Index from './pages/index.jsx'
 import Search from './pages/search.jsx'
 import Packs from './pages/packs.jsx'
+import Graveyard from './pages/graveyard.jsx'
 // import Monitor from './pages/monitor.jsx'
 import Error from './pages/error.jsx'
 import BeatmapSet from './pages/beatmapset.jsx';
@@ -32,6 +33,7 @@ createRoot(document.getElementById('root')).render(
                 <Route path="/" element={<Index />} />
                 <Route path="/search" element={<Search />} />
                 <Route path="/packs" element={<Packs />} />
+                <Route path="/graveyard" element={<Graveyard />} />
                 {/* <Route path="/monitor" element={<Monitor />} /> */}
                 <Route path="/beatmapset/:id" element={<BeatmapSet />} />
                 <Route path="/request" element={<Request />} />

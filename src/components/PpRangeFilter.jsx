@@ -2,29 +2,39 @@ import { useId } from 'react';
 import { FaBolt } from 'react-icons/fa';
 import { PP_MAX, PP_STEP, PP_PRESETS } from '../lib/packs.js';
 
-export default function PpRangeFilter({ value, onChange }) {
+export default function PpRangeFilter({
+    value,
+    onChange,
+    max = PP_MAX,
+    step = PP_STEP,
+    label = 'Pack PP ceiling',
+    presets = PP_PRESETS,
+    unboundedTop = true,
+    children,
+}) {
     const [lo, hi] = value;
     const fieldId = useId();
     const loId = `${fieldId}-lo`;
     const hiId = `${fieldId}-hi`;
 
-    const pctLo = (lo / PP_MAX) * 100;
-    const pctHi = (hi / PP_MAX) * 100;
-    const loOnTop = lo >= PP_MAX - PP_STEP;
+    const pctLo = (lo / max) * 100;
+    const pctHi = (hi / max) * 100;
+    const loOnTop = lo >= max - step;
 
     const setLo = raw => onChange([Math.min(Number(raw), hi), hi]);
     const setHi = raw => onChange([lo, Math.max(Number(raw), lo)]);
 
-    const readout = `${lo.toLocaleString()} to ${hi.toLocaleString()}${hi >= PP_MAX ? '+' : ''} pp`;
+    const topMark = unboundedTop && hi >= max ? '+' : '';
+    const readout = `${lo.toLocaleString()} to ${hi.toLocaleString()}${topMark} pp`;
 
     return (
         <div className="pp-filter">
             <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
                 <span className="pp-filter__label d-flex align-items-center gap-1">
                     <FaBolt size={11} />
-                    <span>Pack PP ceiling</span>
+                    <span>{label}</span>
                 </span>
-                {PP_PRESETS.map(preset => (
+                {presets.map(preset => (
                     <button
                         key={preset.label}
                         type="button"
@@ -34,6 +44,7 @@ export default function PpRangeFilter({ value, onChange }) {
                         {preset.label}
                     </button>
                 ))}
+                {children}
             </div>
 
             <div className="d-flex align-items-center gap-3">
@@ -47,10 +58,10 @@ export default function PpRangeFilter({ value, onChange }) {
                         style={{ zIndex: loOnTop ? 4 : 3 }}
                         type="range"
                         min="0"
-                        max={PP_MAX}
-                        step={PP_STEP}
+                        max={max}
+                        step={step}
                         value={lo}
-                        aria-label="Minimum pack PP ceiling"
+                        aria-label={`Minimum ${label}`}
                         onChange={e => setLo(e.target.value)}
                     />
                     <input
@@ -58,10 +69,10 @@ export default function PpRangeFilter({ value, onChange }) {
                         className="pp-range__input"
                         type="range"
                         min="0"
-                        max={PP_MAX}
-                        step={PP_STEP}
+                        max={max}
+                        step={step}
                         value={hi}
-                        aria-label="Maximum pack PP ceiling"
+                        aria-label={`Maximum ${label}`}
                         onChange={e => setHi(e.target.value)}
                     />
                 </div>
