@@ -427,7 +427,7 @@ export default function BeatmapsetSearch() {
                             onClick={e => { e.preventDefault(); e.stopPropagation(); setInfoSet(set); }}
                             title="PP for every mod, the josu viewer and the artwork, from mirror.hinamizawa.ai"
                         >
-                            <span>hinai info</span>
+                            <span>hinai data</span>
                             <img src={HINAI_MARK} alt="" width={14} height={14} className="btn-hinai__mark" />
                         </button>
                     </div>

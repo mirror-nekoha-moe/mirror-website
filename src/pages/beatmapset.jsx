@@ -258,7 +258,7 @@ export default function BeatmapSet() {
                             onClick={() => setInfoOpen(true)}
                             title="PP for every mod, the full song, the josu viewer and the artwork, from mirror.hinamizawa.ai"
                         >
-                            hinai info
+                            hinai data
                         </button>
                         <a className="btn btn-sm cbg-pink-2 d-flex align-items-center gap-2"
                             href={`https://osu.ppy.sh/beatmapsets/${data.id}`} target="_blank">

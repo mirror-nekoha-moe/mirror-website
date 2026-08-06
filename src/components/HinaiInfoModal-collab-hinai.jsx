@@ -152,7 +152,7 @@ export default function HinaiInfoModal({ seed, onClose }) {
                         <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
                             <span className="badge rounded-pill text-bg-dark border">{STATUS_LABELS[set.status] || 'Unknown'}</span>
                             {active && <span className="badge rounded-pill text-bg-dark border">{MODE_LABELS[active.mode] || active.mode}</span>}
-                            <span className="hinf__brand">hinai info</span>
+                            <span className="hinf__brand">hinai data</span>
                         </div>
                         <h2 className="h5 mb-0 text-white text-truncate">{set.title}</h2>
                         <div className="small text-secondary text-truncate">{set.artist}</div>
