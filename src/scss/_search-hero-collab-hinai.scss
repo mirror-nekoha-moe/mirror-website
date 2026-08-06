@@ -477,6 +477,18 @@ $nsh-reflect: 58px;
     to   { background-position: -40% 0, 0 0; }
 }
 
+@media (max-width: 1439px) {
+    .nsh__prov {
+        gap: 8px;
+        font-size: 0.66rem;
+    }
+
+    .nsh__prov-k {
+        margin-right: 4px;
+        letter-spacing: 0.1em;
+    }
+}
+
 @media (max-width: 767px) {
     .nsh {
         margin-bottom: 0.9rem;

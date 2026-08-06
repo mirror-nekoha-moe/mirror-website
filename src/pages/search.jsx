@@ -5,6 +5,9 @@ import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
 import MapperLink from '../components/MapperLink-collab-hinai.jsx';
 import SearchHero from '../components/SearchHero-collab-hinai.jsx';
 import { cover } from '../lib/mirror-collab-hinai.js';
+import { fetchPp, hardestDiff, ppKey } from '../lib/pp-collab-hinai.js';
+import { formatPP, ppColor } from '../lib/graveyard-collab-hinai.js';
+import { starTier } from '../lib/ranked-today-collab-hinai.js';
 
 const toHttps = url => url ? (url.startsWith('//') ? `https:${url}` : url) : null;
 
@@ -69,6 +72,7 @@ export default function BeatmapsetSearch() {
   const [error, setError]      = useState('');
   const [playingId, setPlayingId] = useState(null);
   const [volume, setVolume]    = useState(0.1);
+  const [ppMap, setPpMap]      = useState(() => new Map());
   const audioRef = useRef(null);
 
   // Refs to always have latest query/filters inside the IntersectionObserver callback
@@ -182,6 +186,21 @@ export default function BeatmapsetSearch() {
   // Keep refs in sync when state changes (for observer callback)
   useEffect(() => { queryRef.current   = query;   }, [query]);
   useEffect(() => { filtersRef.current = filters; }, [filters]);
+
+  useEffect(() => {
+    if (!results.length) return undefined;
+
+    const targets = [];
+    for (const set of results) {
+      const diff = hardestDiff(set);
+      if (diff) targets.push(diff);
+    }
+    if (!targets.length) return undefined;
+
+    let alive = true;
+    fetchPp(targets).then(next => { if (alive && next) setPpMap(next); });
+    return () => { alive = false; };
+  }, [results]);
 
   const activeFilterCount = [
     filters.status.length, filters.mode.length,
@@ -354,7 +373,10 @@ export default function BeatmapsetSearch() {
 
         {error && <div className="alert bg-danger">{error}</div>}
         <div className="row g-3 mb-3">
-          {results.map(set => (
+          {results.map(set => {
+            const diff = hardestDiff(set);
+            const pp = diff ? ppMap.get(ppKey(diff.id, diff.mode)) : undefined;
+            return (
             <div className={`col-12 col-lg-6 ${!set.user_id ? 'missing-metadata' : ''}`} key={set.id}>
               <div className="border-beatmapcard rounded-4 border-4 p-3 beatmapset-card-bg beatmapset-card-hoverable position-relative"
                 style={{ background: `linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('${cover(set.id, 'cover')}')` }}
@@ -392,6 +414,22 @@ export default function BeatmapsetSearch() {
                   <span title="osu!catch" className="d-flex align-items-center gap-1"><FaAppleWhole /><span className="small">{set.mirror?.mode_fruits_count ?? 0}</span></span>
                   <span title="osu!mania" className="d-flex align-items-center gap-1"><MdPiano /><span className="small">{set.mirror?.mode_mania_count ?? 0}</span></span>
                 </div>
+                {diff && (
+                  <div className="nkpp">
+                    <span className={`nkpp__sr nkpp__sr--t${starTier(diff.sr)}`}>{diff.sr.toFixed(2)}</span>
+                    {pp === undefined ? (
+                      <span className="nkpp__wait" aria-hidden="true" />
+                    ) : pp === null ? (
+                      <span className="nkpp__none" title="No PP for this difficulty yet">&#183;</span>
+                    ) : (
+                      <span className="nkpp__val" style={{ color: ppColor(pp) }}>
+                        {formatPP(pp)}<span className="nkpp__unit">pp</span>
+                      </span>
+                    )}
+                    <span className="nkpp__mod">NM</span>
+                    {diff.version && <span className="nkpp__diff">{diff.version}</span>}
+                  </div>
+                )}
                 <div className="d-flex flex-column flex-md-row align-items-left align-items-md-center gap-2 position-relative" style={{ zIndex: 2 }}>
                     <div class="d-flex flex-row gap-2">
                         <span className="badge border rounded-pill text-bg-dark flex-fill">{STATUS_LABELS[set.status] ?? 'Unknown'}</span>
@@ -424,7 +462,8 @@ export default function BeatmapsetSearch() {
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Infinite scroll sentinel */}

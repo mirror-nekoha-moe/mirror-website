@@ -719,6 +719,18 @@ $hn-ice: #ffe3e8;
     }
 }
 
+@media (max-width: 1439px) {
+    .gv-prov {
+        gap: 8px;
+        font-size: 0.66rem;
+
+        &__k {
+            margin-right: 4px;
+            letter-spacing: 0.1em;
+        }
+    }
+}
+
 @media (max-width: 991.98px) {
     .gv-hero__inner {
         flex-direction: column;

@@ -680,6 +680,18 @@
     100% { background-position: 0 50%; }
 }
 
+@media (max-width: 1439px) {
+    .pkh__prov {
+        gap: 8px;
+        font-size: 0.66rem;
+    }
+
+    .pkh__prov-k {
+        margin-right: 4px;
+        letter-spacing: 0.1em;
+    }
+}
+
 @media (max-width: 1200px) {
     .pkh {
         grid-template-columns: minmax(0, 1fr) clamp(160px, 26vw, 210px);

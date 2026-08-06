@@ -184,6 +184,12 @@ export default function SearchHero() {
                     <span className="nsh__prov-sep" />
                     <span><span className="nsh__prov-k">Archive</span> {formatBytes(index.total_size)}</span>
                     <span className="nsh__prov-sep" />
+                    {health && health.engines && health.engines.rosu_pp && (
+                        <>
+                            <span><span className="nsh__prov-k">Engine</span> rosu-pp {health.engines.rosu_pp}</span>
+                            <span className="nsh__prov-sep" />
+                        </>
+                    )}
                     <span className="nsh__prov-src">
                         <span className="nsh__prov-k">Source</span>
                         <NekohaSource label="mirror.nekoha.moe" size={13} />
