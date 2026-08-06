@@ -351,7 +351,8 @@ export default function BeatmapsetSearch() {
                 style={{ background: `linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('${cover(set.id, 'cover')}')` }}
               >
                 <a href={`/beatmapset/${set.id}`} className="stretched-link" aria-label={set.title} />
-                <div className="fw-bold">
+                <span className="badge border rounded-pill text-bg-dark nkstatus">{STATUS_LABELS[set.status] ?? 'Unknown'}</span>
+                <div className="fw-bold nkcard-head">
                   <span className="text-white map-title">{!set.user_id ? 'Processing Metadata...' : set.title}</span>
                 </div>
                 <div className="small d-flex align-items-center">
@@ -402,35 +403,30 @@ export default function BeatmapsetSearch() {
                 <div className="position-relative mb-2" style={{ zIndex: 2 }} onClick={e => e.stopPropagation()}>
                   <HinaiAudio setId={set.id} dense />
                 </div>
-                <div className="d-flex flex-column flex-md-row align-items-left align-items-md-center gap-2 position-relative" style={{ zIndex: 2 }}>
-                    <div class="d-flex flex-row gap-2">
-                        <span className="badge border rounded-pill text-bg-dark flex-fill">{STATUS_LABELS[set.status] ?? 'Unknown'}</span>
-                    </div>
-                    <div class="d-flex flex-column flex-md-row gap-2">
-                        <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}`}>
-                            <span>Download {(set.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB</span>
-                            <FaDownload color="white" />
-                        </a>
-                        {set.video && (
-                            <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}?noVideo=1`} title="Download without video">
+                <div className="d-flex flex-column flex-md-row gap-2 position-relative" style={{ zIndex: 2 }}>
+                    <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}`}>
+                        <span>Download {(set.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB</span>
+                        <FaDownload color="white" />
+                    </a>
+                    {set.video && (
+                        <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}?noVideo=1`} title="Download without video">
                             <span>No Video</span>
                             <FaDownload color="white" />
-                            </a>
-                        )}
-                        <a className="btn btn-sm btn-secondary d-flex align-items-center gap-2" href={`osu://s/${set.id}`}>
-                            <span>osu!direct</span>
-                            <FaDownload color="black" />
                         </a>
-                        <button
-                            type="button"
-                            className="btn btn-sm btn-hinai d-flex align-items-center gap-2"
-                            onClick={e => { e.preventDefault(); e.stopPropagation(); setInfoSet(set); }}
-                            title="PP for every mod, the josu viewer and the artwork, from mirror.hinamizawa.ai"
-                        >
-                            <span>hinai data</span>
-                            <img src={HINAI_MARK} alt="" width={14} height={14} className="btn-hinai__mark" />
-                        </button>
-                    </div>
+                    )}
+                    <a className="btn btn-sm btn-secondary d-flex align-items-center gap-2" href={`osu://s/${set.id}`}>
+                        <span>osu!direct</span>
+                        <FaDownload color="black" />
+                    </a>
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-hinai d-flex align-items-center gap-2"
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); setInfoSet(set); }}
+                        title="PP for every mod, the josu viewer and the artwork, from mirror.hinamizawa.ai"
+                    >
+                        <span>hinai data</span>
+                        <img src={HINAI_MARK} alt="" width={14} height={14} className="btn-hinai__mark" />
+                    </button>
                 </div>
               </div>
             </div>
