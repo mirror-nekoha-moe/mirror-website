@@ -1181,6 +1181,24 @@
     object-fit: cover;
 }
 
+.btn.btn-josu {
+    border: 1px solid #89b4fa;
+    background: #3f6fd8;
+    color: #e9f1ff;
+    font-weight: 600;
+
+    &:hover,
+    &:focus-visible {
+        border-color: #a8c8ff;
+        background: #5286ec;
+        color: #fff;
+    }
+
+    &:active {
+        background: #355cb4;
+    }
+}
+
 .haud--dense {
     gap: 8px;
     padding: 6px 9px;

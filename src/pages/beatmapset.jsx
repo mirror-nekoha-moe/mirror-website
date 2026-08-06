@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { FaDownload, FaRegDotCircle, FaDrum, FaHeart, FaClock, FaMusic } from 'react-icons/fa';
+import { FaDownload, FaRegDotCircle, FaDrum, FaHeart, FaClock, FaMusic, FaExternalLinkAlt } from 'react-icons/fa';
 import { SiOsu } from "react-icons/si";
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
 import MapperLink from '../components/MapperLink-collab-hinai.jsx';
 import { cover, proxyImage } from '../lib/mirror-collab-hinai.js';
 import HinaiInfoModal from '../components/HinaiInfoModal-collab-hinai.jsx';
+import { josuUrl } from '../lib/hinai-collab-hinai.js';
 import HinaiAudio from '../components/HinaiAudio-collab-hinai.jsx';
 
 const PPY_IMAGE_HOST = /^https:\/\/(a|b|i|osu|assets)\.ppy\.sh\//i;
@@ -137,7 +138,9 @@ function fmtDate(str) {
  *
  * Loads the set from the local mirror API, renders the hero (cover, status, mapper, audio
  * preview, download buttons), the BBCode description, the difficulty picker and a stat panel
- * for whichever difficulty is selected. The `hinai data` button opens {@link HinaiInfoModal}.
+ * for whichever difficulty is selected. The `hinai data` button opens {@link HinaiInfoModal};
+ * the `josu` button beside it deep-links the SELECTED difficulty into the josu web viewer, so it
+ * retargets as the picker changes rather than always opening the hardest diff.
  *
  * A second effect post-processes the description HTML after each data change, because that
  * markup is injected via `dangerouslySetInnerHTML` and React never owns those nodes: ppy.sh
@@ -292,6 +295,17 @@ export default function BeatmapSet() {
                         >
                             hinai data
                         </button>
+                        {(selectedDiff?.id ?? data.beatmaps?.[0]?.id) && (
+                            <a
+                                className="btn btn-sm btn-josu d-flex align-items-center gap-2"
+                                href={josuUrl(selectedDiff?.id ?? data.beatmaps[0].id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={`Watch ${selectedDiff?.version ?? 'this difficulty'} in the josu web viewer`}
+                            >
+                                josu <FaExternalLinkAlt size={10} />
+                            </a>
+                        )}
                         <a className="btn btn-sm cbg-pink-2 d-flex align-items-center gap-2"
                             href={`https://osu.ppy.sh/beatmapsets/${data.id}`} target="_blank">
                             View on osu!
