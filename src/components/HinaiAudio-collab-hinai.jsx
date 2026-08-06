@@ -15,6 +15,8 @@ import {
     toggleStoryboardLike,
 } from '../lib/hinai-collab-hinai.js';
 
+let nowPlaying = null;
+
 const POLL_MS = 6000;
 const POLL_MAX = 8;
 
@@ -118,7 +120,7 @@ export function FavoriteButton({ setId, kind = 'music', compactLabel = false }) 
     );
 }
 
-export default function HinaiAudio({ setId }) {
+export default function HinaiAudio({ setId, dense = false }) {
     const audioRef = useRef(null);
     const [src, setSrc] = useState(() => audioUrl(setId));
     const [playing, setPlaying] = useState(false);
@@ -140,10 +142,12 @@ export default function HinaiAudio({ setId }) {
         setQuality(null);
         setFullReady(false);
 
+        if (dense) return undefined;
+
         const ctrl = new AbortController();
         fetchAudioStatus(setId, ctrl.signal).then(s => setQuality(s.cached ? 'full' : 'preview'));
         return () => ctrl.abort();
-    }, [setId]);
+    }, [setId, dense]);
 
     useEffect(() => {
         if (quality !== 'preview' || fullReady) return undefined;
@@ -250,7 +254,7 @@ export default function HinaiAudio({ setId }) {
     const word = quality === 'full' ? 'full song' : 'preview';
 
     return (
-        <div className="haud">
+        <div className={dense ? "haud haud--dense" : "haud"}>
             <button
                 type="button"
                 className="haud__play"
@@ -312,13 +316,18 @@ export default function HinaiAudio({ setId }) {
                 )
             )}
 
-            <FavoriteButton setId={setId} />
+            <FavoriteButton setId={setId} compactLabel={dense} />
 
             <audio
                 ref={audioRef}
                 src={src}
                 preload="none"
                 onPlay={() => {
+                    if (nowPlaying && nowPlaying !== audioRef.current) nowPlaying.pause();
+                    nowPlaying = audioRef.current;
+                    if (dense && !hasPlayed.current) {
+                        fetchAudioStatus(setId).then(s => setQuality(s.cached ? 'full' : 'preview'));
+                    }
                     hasPlayed.current = true;
                     setPlaying(true);
                 }}

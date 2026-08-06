@@ -1,17 +1,3 @@
-.btn-hinai {
-    --bs-btn-color: #00ceff;
-    --bs-btn-bg: rgba(0, 206, 255, 0.12);
-    --bs-btn-border-color: rgba(0, 206, 255, 0.55);
-    --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: rgba(0, 206, 255, 0.24);
-    --bs-btn-hover-border-color: #00ceff;
-    --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: rgba(0, 206, 255, 0.32);
-    --bs-btn-active-border-color: #00ceff;
-    --bs-btn-focus-shadow-rgb: 0, 206, 255;
-    font-weight: 600;
-}
-
 .hinf {
     position: fixed;
     inset: 0;
@@ -989,5 +975,46 @@
 
     &--why {
         color: rgba(255, 255, 255, 0.45);
+    }
+}
+
+.btn.btn-hinai {
+    border: 1px solid #8a6cff;
+    background: #6b4bd6;
+    color: #f0e9ff;
+    font-weight: 600;
+
+    &:hover,
+    &:focus-visible {
+        border-color: #a78bff;
+        background: #7d5cf0;
+        color: #fff;
+    }
+
+    &:active {
+        background: #5a3cc0;
+    }
+}
+
+.btn-hinai__mark {
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.haud--dense {
+    gap: 8px;
+    padding: 6px 9px;
+
+    .haud__play {
+        width: 26px;
+        height: 26px;
+    }
+
+    .haud__time {
+        font-size: 0.62rem;
+    }
+
+    .haud__quality {
+        font-size: 0.54rem;
     }
 }

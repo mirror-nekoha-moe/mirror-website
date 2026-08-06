@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaDownload, FaRegDotCircle, FaDrum, FaFilter, FaChevronDown, FaChevronUp, FaPlay, FaPause, FaVolumeUp, FaInfoCircle, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaDownload, FaRegDotCircle, FaDrum, FaFilter, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
 import MapperLink from '../components/MapperLink-collab-hinai.jsx';
@@ -9,10 +9,9 @@ import { fetchPp, hardestDiff, ppKey } from '../lib/pp-collab-hinai.js';
 import { formatPP, ppColor } from '../lib/graveyard-collab-hinai.js';
 import { starTier } from '../lib/ranked-today-collab-hinai.js';
 import HinaiInfoModal from '../components/HinaiInfoModal-collab-hinai.jsx';
-import { FavoriteButton } from '../components/HinaiAudio-collab-hinai.jsx';
-import { audioUrl, josuUrl, previewFallback } from '../lib/hinai-collab-hinai.js';
+import HinaiAudio from '../components/HinaiAudio-collab-hinai.jsx';
 
-const toHttps = url => url ? (url.startsWith('//') ? `https:${url}` : url) : null;
+const HINAI_MARK = '/assets/collab-hinai/hinai-logo.png';
 
 const STATUSES = ['ranked', 'approved', 'loved', 'qualified', 'pending', 'graveyard', 'wip'];
 const STATUS_LABELS = { ranked: 'Ranked', approved: 'Approved', qualified: 'Qualified', loved: 'Loved', pending: 'Pending', wip: 'WIP', graveyard: 'Graveyard' };
@@ -73,13 +72,8 @@ export default function BeatmapsetSearch() {
   const [hasMore, setHasMore]  = useState(true);
   const [loading, setLoading]  = useState(false);
   const [error, setError]      = useState('');
-  const [playingId, setPlayingId] = useState(null);
-  const [volume, setVolume]    = useState(0.1);
   const [ppMap, setPpMap]      = useState(() => new Map());
   const [infoSet, setInfoSet]  = useState(null);
-  const audioRef = useRef(null);
-  const playingRef = useRef(null);
-  const triedFallback = useRef(new Set());
 
   // Refs to always have latest query/filters inside the IntersectionObserver callback
   const queryRef   = useRef(query);
@@ -218,52 +212,9 @@ export default function BeatmapsetSearch() {
     filters.video,
   ].filter(Boolean).length;
 
-  const togglePreview = (set) => {
-    const el = audioRef.current;
-    if (!el) return;
-    if (playingId === set.id) {
-      el.pause();
-      setPlayingId(null);
-      return;
-    }
-    playingRef.current = set;
-    triedFallback.current.delete(set.id);
-    el.src = audioUrl(set.id);
-    el.volume = volume;
-    el.play().catch(() => {});
-    setPlayingId(set.id);
-  };
-
-  const handleVolume = (v) => {
-    const val = parseFloat(v);
-    setVolume(val);
-    if (audioRef.current) audioRef.current.volume = val;
-  };
-
-  useEffect(() => {
-    const el = audioRef.current;
-    if (!el) return undefined;
-    el.volume = 0.1;
-    const onEnd = () => setPlayingId(null);
-    const onErr = () => {
-      const set = playingRef.current;
-      if (!set || triedFallback.current.has(set.id)) return;
-      triedFallback.current.add(set.id);
-      el.src = toHttps(set.preview_url) || previewFallback(set.id);
-      el.play().catch(() => {});
-    };
-    el.addEventListener('ended', onEnd);
-    el.addEventListener('error', onErr);
-    return () => {
-      el.removeEventListener('ended', onEnd);
-      el.removeEventListener('error', onErr);
-    };
-  }, []);
-
   return (
     <>
       <title>Search</title>
-      <audio ref={audioRef} />
       <div className="container mt-4">
         <SearchHero />
 
@@ -448,17 +399,12 @@ export default function BeatmapsetSearch() {
                     {diff.version && <span className="nkpp__diff">{diff.version}</span>}
                   </div>
                 )}
+                <div className="position-relative mb-2" style={{ zIndex: 2 }} onClick={e => e.stopPropagation()}>
+                  <HinaiAudio setId={set.id} dense />
+                </div>
                 <div className="d-flex flex-column flex-md-row align-items-left align-items-md-center gap-2 position-relative" style={{ zIndex: 2 }}>
                     <div class="d-flex flex-row gap-2">
                         <span className="badge border rounded-pill text-bg-dark flex-fill">{STATUS_LABELS[set.status] ?? 'Unknown'}</span>
-                        <button
-                            className="btn btn-sm btn-outline-secondary d-flex align-items-center  flex-fill"
-                            title={playingId === set.id ? 'Pause song' : 'Play the full song from mirror.hinamizawa.ai'}
-                            onClick={e => { e.preventDefault(); e.stopPropagation(); togglePreview(set); }}
-                        >
-                            {playingId === set.id ? <FaPause className="flex-fill" size={11} /> : <FaPlay className="flex-fill" size={11} />}
-                        </button>
-                        <FavoriteButton setId={set.id} compactLabel />
                     </div>
                     <div class="d-flex flex-column flex-md-row gap-2">
                         <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}`}>
@@ -479,26 +425,11 @@ export default function BeatmapsetSearch() {
                             type="button"
                             className="btn btn-sm btn-hinai d-flex align-items-center gap-2"
                             onClick={e => { e.preventDefault(); e.stopPropagation(); setInfoSet(set); }}
-                            title="PP for every mod, the full song, the josu viewer and the artwork, from mirror.hinamizawa.ai"
+                            title="PP for every mod, the josu viewer and the artwork, from mirror.hinamizawa.ai"
                         >
+                            <img src={HINAI_MARK} alt="" width={14} height={14} className="btn-hinai__mark" />
                             <span>hinai info</span>
-                            <FaInfoCircle size={12} />
                         </button>
-                        {diff && (
-                            <button
-                                type="button"
-                                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
-                                onClick={e => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    window.open(josuUrl(diff.id), 'josu-viewer', 'width=1280,height=800,menubar=no,toolbar=no,location=no,status=no');
-                                }}
-                                title={`Open ${diff.version || 'the hardest difficulty'} in the josu web viewer`}
-                            >
-                                <span>josu</span>
-                                <FaExternalLinkAlt size={10} />
-                            </button>
-                        )}
                     </div>
                 </div>
               </div>
@@ -522,35 +453,6 @@ export default function BeatmapsetSearch() {
 
       {infoSet && <HinaiInfoModal seed={infoSet} onClose={() => setInfoSet(null)} />}
 
-      {/* Floating audio player bar */}
-      {playingId && (() => {
-        const playing = results.find(r => r.id === playingId);
-        return (
-          <div className="position-fixed bottom-0 end-0 bg-dark border-top border-secondary px-3 py-2 d-flex align-items-center gap-3" style={{ zIndex: 1050 }}>
-            <button
-              className="btn btn-sm btn-outline-secondary flex-shrink-0 d-flex align-items-center"
-              title="Pause preview"
-              onClick={() => togglePreview(playing)}
-            >
-              <FaPause size={12} />
-            </button>
-            <div className="flex-grow-1 small text-truncate">
-              <span className="text-white fw-semibold">{playing?.title}</span>
-              {playing?.artist && <span className="text-secondary ms-2">{playing.artist}</span>}
-            </div>
-            <FaVolumeUp className="text-secondary flex-shrink-0" size={13} />
-            <input
-              type="range" min="0" max="1" step="0.01"
-              value={volume}
-              onChange={e => handleVolume(e.target.value)}
-              className="form-range flex-shrink-0"
-              style={{ width: 100 }}
-              title={`Preview volume: ${Math.round(volume * 100)}%`}
-            />
-            <span className="text-secondary small flex-shrink-0">{Math.round(volume * 100)}%</span>
-          </div>
-        );
-      })()}
     </>
   );
 }
