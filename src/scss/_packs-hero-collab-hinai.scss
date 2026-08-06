@@ -51,24 +51,28 @@
     height: 66%;
     z-index: 1;
     pointer-events: none;
-    mix-blend-mode: screen;
     background:
         radial-gradient(48% 40% at 22% 40%, rgba(124, 224, 211, 0.22) 0%, transparent 68%),
         radial-gradient(42% 46% at 68% 30%, rgba(0, 206, 255, 0.2) 0%, transparent 70%),
         radial-gradient(30% 38% at 88% 52%, rgba(207, 230, 255, 0.14) 0%, transparent 72%);
-    filter: blur(22px);
+    will-change: opacity;
     animation: pkh-aurora 19s ease-in-out infinite;
 }
 
 .pkh__snow {
     position: absolute;
-    inset: -12% 0 -6%;
+    top: calc(-12% - var(--tile));
+    right: 0;
+    bottom: -6%;
+    left: 0;
     z-index: 2;
     pointer-events: none;
-    mix-blend-mode: screen;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
 }
 
 .pkh__snow--far {
+    --tile: 300px;
     background-image:
         radial-gradient(1px 1px at 24px 38px, rgba(244, 249, 255, 0.62), transparent),
         radial-gradient(1px 1px at 118px 92px, rgba(207, 230, 255, 0.5), transparent),
@@ -79,11 +83,11 @@
         radial-gradient(1px 1px at 292px 204px, rgba(244, 249, 255, 0.52), transparent),
         radial-gradient(1px 1px at 10px 268px, rgba(142, 211, 255, 0.42), transparent);
     background-size: 320px 300px;
-    filter: blur(0.6px);
     animation: pkh-snow-far 46s linear infinite;
 }
 
 .pkh__snow--mid {
+    --tile: 280px;
     background-image:
         radial-gradient(1.7px 1.7px at 46px 60px, rgba(244, 249, 255, 0.8), transparent),
         radial-gradient(1.7px 1.7px at 174px 22px, rgba(207, 230, 255, 0.7), transparent),
@@ -92,18 +96,17 @@
         radial-gradient(1.7px 1.7px at 20px 216px, rgba(244, 249, 255, 0.7), transparent),
         radial-gradient(1.7px 1.7px at 196px 244px, rgba(207, 230, 255, 0.62), transparent);
     background-size: 260px 280px;
-    filter: blur(1px);
     animation: pkh-snow-mid 29s linear infinite;
 }
 
 .pkh__snow--near {
+    --tile: 240px;
     background-image:
         radial-gradient(2.6px 2.6px at 70px 44px, rgba(244, 249, 255, 0.95), transparent),
         radial-gradient(2.6px 2.6px at 188px 128px, rgba(207, 230, 255, 0.85), transparent),
         radial-gradient(2.6px 2.6px at 36px 178px, rgba(244, 249, 255, 0.9), transparent),
         radial-gradient(2.6px 2.6px at 146px 212px, rgba(142, 211, 255, 0.8), transparent);
     background-size: 220px 240px;
-    filter: blur(1.6px);
     animation: pkh-snow-near 17s linear infinite;
 }
 
@@ -133,7 +136,6 @@
     height: 120px;
     z-index: 4;
     pointer-events: none;
-    mix-blend-mode: screen;
     background: linear-gradient(180deg,
         transparent 0%,
         rgba(0, 206, 255, 0.055) 36%,
@@ -583,7 +585,7 @@
 
 @keyframes pkh-bg-drift {
     0%, 100% { transform: scale(1.06) translate3d(0, 0, 0); }
-    50%      { transform: scale(1.1) translate3d(-1.4%, -1%, 0); }
+    50%      { transform: scale(1.06) translate3d(-1.4%, -1%, 0); }
 }
 
 @keyframes pkh-aurora {
@@ -591,9 +593,9 @@
     50%      { opacity: 1; transform: translate3d(2.5%, 2%, 0); }
 }
 
-@keyframes pkh-snow-far  { to { background-position: 34px 300px; } }
-@keyframes pkh-snow-mid  { to { background-position: -46px 280px; } }
-@keyframes pkh-snow-near { to { background-position: 68px 240px; } }
+@keyframes pkh-snow-far  { to { transform: translate3d(34px, 300px, 0); } }
+@keyframes pkh-snow-mid  { to { transform: translate3d(-46px, 280px, 0); } }
+@keyframes pkh-snow-near { to { transform: translate3d(68px, 240px, 0); } }
 
 @keyframes pkh-feather-fall {
     0%   { opacity: 0; transform: translate3d(0, 0, 0) rotate(0deg); }

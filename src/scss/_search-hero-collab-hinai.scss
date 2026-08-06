@@ -51,24 +51,28 @@ $nsh-reflect: 58px;
     height: 90%;
     z-index: 1;
     pointer-events: none;
-    mix-blend-mode: screen;
     background:
         radial-gradient(44% 40% at 18% 46%, rgba(124, 224, 211, 0.2) 0%, transparent 68%),
         radial-gradient(40% 44% at 64% 34%, rgba(0, 206, 255, 0.19) 0%, transparent 70%),
         radial-gradient(30% 36% at 92% 50%, rgba(207, 230, 255, 0.13) 0%, transparent 72%);
-    filter: blur(24px);
+    will-change: opacity;
     animation: nsh-aurora 21s ease-in-out infinite;
 }
 
 .nsh__snow {
     position: absolute;
-    inset: -14% 0 -8%;
+    top: calc(-14% - var(--tile));
+    right: 0;
+    bottom: -8%;
+    left: 0;
     z-index: 2;
     pointer-events: none;
-    mix-blend-mode: screen;
+    will-change: transform;
+    transform: translate3d(0, 0, 0);
 }
 
 .nsh__snow--far {
+    --tile: 300px;
     background-image:
         radial-gradient(1px 1px at 30px 42px, rgba(244, 249, 255, 0.58), transparent),
         radial-gradient(1px 1px at 142px 96px, rgba(207, 230, 255, 0.48), transparent),
@@ -77,11 +81,11 @@ $nsh-reflect: 58px;
         radial-gradient(1px 1px at 74px 196px, rgba(244, 249, 255, 0.48), transparent),
         radial-gradient(1px 1px at 188px 236px, rgba(207, 230, 255, 0.42), transparent);
     background-size: 340px 300px;
-    filter: blur(0.6px);
     animation: nsh-snow-far 52s linear infinite;
 }
 
 .nsh__snow--mid {
+    --tile: 280px;
     background-image:
         radial-gradient(1.7px 1.7px at 58px 64px, rgba(244, 249, 255, 0.74), transparent),
         radial-gradient(1.7px 1.7px at 186px 24px, rgba(207, 230, 255, 0.64), transparent),
@@ -89,17 +93,16 @@ $nsh-reflect: 58px;
         radial-gradient(1.7px 1.7px at 252px 124px, rgba(142, 211, 255, 0.6), transparent),
         radial-gradient(1.7px 1.7px at 22px 224px, rgba(244, 249, 255, 0.64), transparent);
     background-size: 280px 280px;
-    filter: blur(1px);
     animation: nsh-snow-mid 33s linear infinite;
 }
 
 .nsh__snow--near {
+    --tile: 250px;
     background-image:
         radial-gradient(2.5px 2.5px at 88px 48px, rgba(244, 249, 255, 0.86), transparent),
         radial-gradient(2.5px 2.5px at 218px 138px, rgba(207, 230, 255, 0.72), transparent),
         radial-gradient(2.5px 2.5px at 42px 192px, rgba(244, 249, 255, 0.78), transparent);
     background-size: 240px 250px;
-    filter: blur(1.5px);
     animation: nsh-snow-near 20s linear infinite;
 }
 
@@ -431,8 +434,8 @@ $nsh-reflect: 58px;
 }
 
 @keyframes nsh-bg-drift {
-    0%, 100% { transform: scale(1.06) translate3d(0, 0, 0); }
-    50%      { transform: scale(1.12) translate3d(-1.2%, 0.8%, 0); }
+    0%, 100% { transform: scale(1.08) translate3d(0, 0, 0); }
+    50%      { transform: scale(1.08) translate3d(-1.2%, 0.8%, 0); }
 }
 
 @keyframes nsh-ring {
@@ -441,13 +444,13 @@ $nsh-reflect: 58px;
 }
 
 @keyframes nsh-aurora {
-    0%, 100% { opacity: 0.66; transform: translate3d(0, 0, 0) scale(1); }
-    50%      { opacity: 1; transform: translate3d(-2.4%, 1.6%, 0) scale(1.06); }
+    0%, 100% { opacity: 0.66; }
+    50%      { opacity: 1; }
 }
 
-@keyframes nsh-snow-far  { to { background-position: 34px 300px; } }
-@keyframes nsh-snow-mid  { to { background-position: -48px 280px; } }
-@keyframes nsh-snow-near { to { background-position: 62px 250px; } }
+@keyframes nsh-snow-far  { to { transform: translate3d(34px, 300px, 0); } }
+@keyframes nsh-snow-mid  { to { transform: translate3d(-48px, 280px, 0); } }
+@keyframes nsh-snow-near { to { transform: translate3d(62px, 250px, 0); } }
 
 @keyframes nsh-pulse {
     0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(0, 206, 255, 0.95); }
