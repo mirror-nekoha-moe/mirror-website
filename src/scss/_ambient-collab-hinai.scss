@@ -12,10 +12,10 @@
 
   &__sheet {
     position: absolute;
-    top: -6%;
+    top: 0;
     left: -30%;
     width: 160%;
-    height: 112%;
+    height: 100%;
     animation: gv-mist-drift var(--dur) ease-in-out infinite alternate;
     will-change: transform;
   }
@@ -42,6 +42,11 @@
   height: 34vh;
   z-index: 1;
   opacity: 0.26;
+
+  .gv-mist__sheet {
+    top: -6%;
+    height: 112%;
+  }
 
   @media (max-width: 760px) {
     height: 22vh;
