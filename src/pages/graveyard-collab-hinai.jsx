@@ -6,7 +6,7 @@ import PpRangeFilter from '../components/PpRangeFilter-collab-hinai.jsx';
 import GraveMist from '../components/GraveMist-collab-hinai.jsx';
 import Revenant from '../components/Revenant-collab-hinai.jsx';
 import Procession from '../components/Procession-collab-hinai.jsx';
-import { HINAI_URL, HinaiSource, NekohaSource } from '../components/CollabMark-collab-hinai.jsx';
+import { HINAI_URL, NEKOHA_URL, HinaiSource, NekohaSource } from '../components/CollabMark-collab-hinai.jsx';
 import { fetchMirrorHealth } from '../lib/mirror-collab-hinai.js';
 import useDebounced from '../lib/useDebounced-collab-hinai.js';
 import {
@@ -205,7 +205,9 @@ export default function Graveyard() {
                     <div className="gv-hero__copy">
                         <p className="gv-hero__eyebrow">
                             <span className="gv-hero__mark" />
-                            Nekoha &#215;{' '}
+                            <a className="nk-hinai-out" href={NEKOHA_URL} target="_blank" rel="noopener noreferrer">
+                                Nekoha
+                            </a>{' '}&#215;{' '}
                             <a className="nk-hinai-out" href={HINAI_URL} target="_blank" rel="noopener noreferrer">
                                 Hinai
                             </a>{' '}
@@ -240,7 +242,8 @@ export default function Graveyard() {
                             <span className="gv-collab__kicker">Collaboration</span>
                             <span className="gv-collab__names">
                                 <a className="nk-hinai-out" href={HINAI_URL} target="_blank" rel="noopener noreferrer">Hinai</a>
-                                {' '}&#215; Nekoha
+                                {' '}&#215;{' '}
+                                <a className="nk-hinai-out" href={NEKOHA_URL} target="_blank" rel="noopener noreferrer">Nekoha</a>
                             </span>
                         </div>
                     </aside>

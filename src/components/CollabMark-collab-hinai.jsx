@@ -70,8 +70,16 @@ export default function CollabMark({ size = 18, className = '', egg = false }) {
             className={className ? `nkmark ${className}` : 'nkmark'}
             style={{ '--nkmark-size': `${size}px` }}
         >
-            <img className="nkmark__img" src={NEKOHA_MARK} alt="" width={size} height={size} />
-            <span className="nkmark__name">nekoha</span>
+            <a
+                className="nkmark__link"
+                href={NEKOHA_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="mirror-server API docs on GitHub"
+            >
+                <img className="nkmark__img" src={NEKOHA_MARK} alt="" width={size} height={size} />
+                <span className="nkmark__name">nekoha</span>
+            </a>
             <span className="nkmark__x" aria-hidden="true">&#215;</span>
             {egg && (
                 <>
