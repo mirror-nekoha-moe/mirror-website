@@ -275,8 +275,8 @@ export async function getBeatmapEngagement(setId) {
         return {
             views: num(data.view_count),
             uniqueViewers: num(data.unique_viewers),
-            likes: num(data.like_count),
-            liked: !!data.user_liked,
+            likes: num(data.art_likes ?? data.like_count),
+            liked: !!(data.user_art_liked ?? data.user_liked),
             coverDownloads: num(data.cover_downloads),
             bgDownloads: num(data.bg_downloads),
             artDownloads: num(data.art_downloads),
@@ -298,7 +298,7 @@ export async function toggleArtLike(setId) {
     }
     if (!res.ok) throw new Error(String(res.status));
     const data = await res.json();
-    return { liked: !!data.liked, count: num(data.like_count) };
+    return { liked: !!data.liked, count: num(data.art_likes ?? data.like_count) };
 }
 
 export async function recordBeatmapView(setId) {
