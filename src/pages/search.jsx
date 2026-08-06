@@ -5,13 +5,18 @@ import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
 import MapperLink from '../components/MapperLink-collab-hinai.jsx';
 import SearchHero from '../components/SearchHero-collab-hinai.jsx';
 import { cover } from '../lib/mirror-collab-hinai.js';
-import { fetchPp, hardestDiff, ppKey } from '../lib/pp-collab-hinai.js';
+import { fetchPp, hardestDiff, ppKey, ppRetryAt } from '../lib/pp-collab-hinai.js';
 import { formatPP, ppColor } from '../lib/graveyard-collab-hinai.js';
 import { starTier } from '../lib/ranked-today-collab-hinai.js';
 import HinaiInfoModal from '../components/HinaiInfoModal-collab-hinai.jsx';
 import HinaiAudio from '../components/HinaiAudio-collab-hinai.jsx';
 
 const HINAI_MARK = '/assets/collab-hinai/hinai-logo.png';
+
+const PP_RETRY_MS = [3000, 9000, 27000];
+const PP_WAKE_MIN_MS = 10000;
+const PP_DEFER_ROUNDS = 2;
+const PP_DEFER_PAD_MS = 1000;
 
 const STATUSES = ['ranked', 'approved', 'loved', 'qualified', 'pending', 'graveyard', 'wip'];
 const STATUS_LABELS = { ranked: 'Ranked', approved: 'Approved', qualified: 'Qualified', loved: 'Loved', pending: 'Pending', wip: 'WIP', graveyard: 'Graveyard' };
@@ -198,8 +203,69 @@ export default function BeatmapsetSearch() {
     if (!targets.length) return undefined;
 
     let alive = true;
-    fetchPp(targets).then(next => { if (alive && next) setPpMap(next); });
-    return () => { alive = false; };
+    let step = 0;
+    let defers = 0;
+    let lastRun = 0;
+    let timer = null;
+
+    function stopTimer() {
+      if (timer === null) return;
+      clearTimeout(timer);
+      timer = null;
+    }
+
+    function schedule() {
+      if (!alive) return;
+
+      const at = ppRetryAt(targets);
+      if (at === 0) return;
+
+      const wait = at - Date.now();
+      stopTimer();
+
+      if (wait > 0) {
+        if (defers >= PP_DEFER_ROUNDS) return;
+        defers += 1;
+        step = 0;
+        timer = setTimeout(run, wait + PP_DEFER_PAD_MS);
+        return;
+      }
+
+      if (step >= PP_RETRY_MS.length) return;
+      timer = setTimeout(run, PP_RETRY_MS[step]);
+      step += 1;
+    }
+
+    function run() {
+      stopTimer();
+      lastRun = Date.now();
+      fetchPp(targets).then(next => {
+        if (!alive) return;
+        if (next) setPpMap(next);
+        schedule();
+      });
+    }
+
+    function wake() {
+      if (!alive) return;
+      if (document.visibilityState === 'hidden') return;
+      if (ppRetryAt(targets) === 0) return;
+      if (Date.now() - lastRun < PP_WAKE_MIN_MS) return;
+      step = 0;
+      defers = 0;
+      run();
+    }
+
+    run();
+    window.addEventListener('online', wake);
+    document.addEventListener('visibilitychange', wake);
+
+    return () => {
+      alive = false;
+      stopTimer();
+      window.removeEventListener('online', wake);
+      document.removeEventListener('visibilitychange', wake);
+    };
   }, [results]);
 
   const activeFilterCount = [
