@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaDownload, FaRegDotCircle, FaDrum, FaFilter, FaChevronDown, FaChevronUp, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
+import { FaDownload, FaRegDotCircle, FaDrum, FaFilter, FaChevronDown, FaChevronUp, FaPlay, FaPause, FaVolumeUp, FaInfoCircle, FaExternalLinkAlt } from 'react-icons/fa';
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
 import MapperLink from '../components/MapperLink-collab-hinai.jsx';
@@ -8,6 +8,9 @@ import { cover } from '../lib/mirror-collab-hinai.js';
 import { fetchPp, hardestDiff, ppKey } from '../lib/pp-collab-hinai.js';
 import { formatPP, ppColor } from '../lib/graveyard-collab-hinai.js';
 import { starTier } from '../lib/ranked-today-collab-hinai.js';
+import HinaiInfoModal from '../components/HinaiInfoModal-collab-hinai.jsx';
+import { FavoriteButton } from '../components/HinaiAudio-collab-hinai.jsx';
+import { audioUrl, josuUrl, previewFallback } from '../lib/hinai-collab-hinai.js';
 
 const toHttps = url => url ? (url.startsWith('//') ? `https:${url}` : url) : null;
 
@@ -73,7 +76,10 @@ export default function BeatmapsetSearch() {
   const [playingId, setPlayingId] = useState(null);
   const [volume, setVolume]    = useState(0.1);
   const [ppMap, setPpMap]      = useState(() => new Map());
+  const [infoSet, setInfoSet]  = useState(null);
   const audioRef = useRef(null);
+  const playingRef = useRef(null);
+  const triedFallback = useRef(new Set());
 
   // Refs to always have latest query/filters inside the IntersectionObserver callback
   const queryRef   = useRef(query);
@@ -213,18 +219,19 @@ export default function BeatmapsetSearch() {
   ].filter(Boolean).length;
 
   const togglePreview = (set) => {
-    const url = toHttps(set.preview_url);
-    if (!url) return;
     const el = audioRef.current;
+    if (!el) return;
     if (playingId === set.id) {
       el.pause();
       setPlayingId(null);
-    } else {
-      el.src = url;
-      el.volume = volume;
-      el.play().catch(() => {});
-      setPlayingId(set.id);
+      return;
     }
+    playingRef.current = set;
+    triedFallback.current.delete(set.id);
+    el.src = audioUrl(set.id);
+    el.volume = volume;
+    el.play().catch(() => {});
+    setPlayingId(set.id);
   };
 
   const handleVolume = (v) => {
@@ -235,11 +242,22 @@ export default function BeatmapsetSearch() {
 
   useEffect(() => {
     const el = audioRef.current;
-    if (!el) return;
+    if (!el) return undefined;
     el.volume = 0.1;
     const onEnd = () => setPlayingId(null);
+    const onErr = () => {
+      const set = playingRef.current;
+      if (!set || triedFallback.current.has(set.id)) return;
+      triedFallback.current.add(set.id);
+      el.src = toHttps(set.preview_url) || previewFallback(set.id);
+      el.play().catch(() => {});
+    };
     el.addEventListener('ended', onEnd);
-    return () => el.removeEventListener('ended', onEnd);
+    el.addEventListener('error', onErr);
+    return () => {
+      el.removeEventListener('ended', onEnd);
+      el.removeEventListener('error', onErr);
+    };
   }, []);
 
   return (
@@ -433,15 +451,14 @@ export default function BeatmapsetSearch() {
                 <div className="d-flex flex-column flex-md-row align-items-left align-items-md-center gap-2 position-relative" style={{ zIndex: 2 }}>
                     <div class="d-flex flex-row gap-2">
                         <span className="badge border rounded-pill text-bg-dark flex-fill">{STATUS_LABELS[set.status] ?? 'Unknown'}</span>
-                        {set.preview_url && (
-                            <button
-                                className="btn btn-sm btn-outline-secondary d-flex align-items-center  flex-fill"
-                                title={playingId === set.id ? 'Pause preview' : 'Play preview'}
-                                onClick={e => { e.preventDefault(); e.stopPropagation(); togglePreview(set); }}
-                            >
-                                {playingId === set.id ? <FaPause className="flex-fill" size={11} /> : <FaPlay className="flex-fill" size={11} />}
-                            </button>
-                        )}
+                        <button
+                            className="btn btn-sm btn-outline-secondary d-flex align-items-center  flex-fill"
+                            title={playingId === set.id ? 'Pause song' : 'Play the full song from mirror.hinamizawa.ai'}
+                            onClick={e => { e.preventDefault(); e.stopPropagation(); togglePreview(set); }}
+                        >
+                            {playingId === set.id ? <FaPause className="flex-fill" size={11} /> : <FaPlay className="flex-fill" size={11} />}
+                        </button>
+                        <FavoriteButton setId={set.id} compactLabel />
                     </div>
                     <div class="d-flex flex-column flex-md-row gap-2">
                         <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}`}>
@@ -458,6 +475,30 @@ export default function BeatmapsetSearch() {
                             <span>osu!direct</span>
                             <FaDownload color="black" />
                         </a>
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-hinai d-flex align-items-center gap-2"
+                            onClick={e => { e.preventDefault(); e.stopPropagation(); setInfoSet(set); }}
+                            title="PP for every mod, the full song, the josu viewer and the artwork, from mirror.hinamizawa.ai"
+                        >
+                            <span>hinai info</span>
+                            <FaInfoCircle size={12} />
+                        </button>
+                        {diff && (
+                            <button
+                                type="button"
+                                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
+                                onClick={e => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    window.open(josuUrl(diff.id), 'josu-viewer', 'width=1280,height=800,menubar=no,toolbar=no,location=no,status=no');
+                                }}
+                                title={`Open ${diff.version || 'the hardest difficulty'} in the josu web viewer`}
+                            >
+                                <span>josu</span>
+                                <FaExternalLinkAlt size={10} />
+                            </button>
+                        )}
                     </div>
                 </div>
               </div>
@@ -478,6 +519,8 @@ export default function BeatmapsetSearch() {
           <p className="text-center text-secondary small mb-4">No more results</p>
         )}
       </div>
+
+      {infoSet && <HinaiInfoModal seed={infoSet} onClose={() => setInfoSet(null)} />}
 
       {/* Floating audio player bar */}
       {playingId && (() => {

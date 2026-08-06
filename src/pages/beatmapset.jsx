@@ -7,6 +7,9 @@ import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
 import MapperLink from '../components/MapperLink-collab-hinai.jsx';
 import { cover, proxyImage } from '../lib/mirror-collab-hinai.js';
+import HinaiInfoModal from '../components/HinaiInfoModal-collab-hinai.jsx';
+import { FavoriteButton } from '../components/HinaiAudio-collab-hinai.jsx';
+import { audioUrl, previewFallback } from '../lib/hinai-collab-hinai.js';
 
 const PPY_IMAGE_HOST = /^https:\/\/(a|b|i|osu|assets)\.ppy\.sh\//i;
 
@@ -104,6 +107,8 @@ export default function BeatmapSet() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [playing, setPlaying] = useState(false);
+    const [infoOpen, setInfoOpen] = useState(false);
+    const triedFallback = useRef(false);
     const [volume, setVolume]   = useState(0.1);
     const audioRef = useRef(null);
     const descRef = useRef(null);
@@ -177,14 +182,22 @@ export default function BeatmapSet() {
     return (
         <>
             <title>{`${data.title} - Nekoha Mirror`}</title>
-            {data.preview_url && (
-                <audio
-                    ref={audioRef}
-                    src={data.preview_url.startsWith('//') ? `https:${data.preview_url}` : data.preview_url}
-                    onEnded={() => setPlaying(false)}
-                    onCanPlay={el => { if (el.target) el.target.volume = 0.1; }}
-                />
-            )}
+            <audio
+                ref={audioRef}
+                src={audioUrl(data.id)}
+                onEnded={() => setPlaying(false)}
+                onCanPlay={el => { if (el.target) el.target.volume = volume; }}
+                onError={el => {
+                    if (triedFallback.current) return;
+                    triedFallback.current = true;
+                    const raw = data.preview_url;
+                    const next = raw ? (raw.startsWith('//') ? `https:${raw}` : raw) : previewFallback(data.id);
+                    el.target.src = next;
+                    if (playing) el.target.play().catch(() => {});
+                }}
+            />
+
+            {infoOpen && <HinaiInfoModal seed={data} onClose={() => setInfoOpen(false)} />}
 
             <div className="position-relative py-4"
                 style={{ background: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.82)), url('${coverUrl}') center/cover no-repeat`, minHeight: 220 }}>
@@ -219,12 +232,15 @@ export default function BeatmapSet() {
                     </div>
 
                     <div className="d-flex flex-wrap align-items-center gap-2 mt-3">
-                        {data.preview_url && (
-                            <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2" onClick={togglePreview}>
-                                {playing ? <FaPause size={11} /> : <FaPlay size={11} />}
-                                <span>{playing ? 'Pause' : 'Preview'}</span>
-                            </button>
-                        )}
+                        <button
+                            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
+                            onClick={togglePreview}
+                            title="Streamed from mirror.hinamizawa.ai, full song when it is cached"
+                        >
+                            {playing ? <FaPause size={11} /> : <FaPlay size={11} />}
+                            <span>{playing ? 'Pause' : 'Play'}</span>
+                        </button>
+                        <FavoriteButton setId={data.id} />
                         <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${data.id}`}>
                             <FaDownload /> Download {(data.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB
                         </a>
@@ -236,6 +252,14 @@ export default function BeatmapSet() {
                         <a className="btn btn-sm btn-secondary d-flex align-items-center gap-2" href={`osu://s/${data.id}`}>
                             <FaDownload color="black" /> osu!direct
                         </a>
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-hinai d-flex align-items-center gap-2"
+                            onClick={() => setInfoOpen(true)}
+                            title="PP for every mod, the full song, the josu viewer and the artwork, from mirror.hinamizawa.ai"
+                        >
+                            hinai info
+                        </button>
                         <a className="btn btn-sm cbg-pink-2 d-flex align-items-center gap-2"
                             href={`https://osu.ppy.sh/beatmapsets/${data.id}`} target="_blank">
                             View on osu!
@@ -463,7 +487,7 @@ export default function BeatmapSet() {
             </div>
             <div className="mb-5" />
 
-            {playing && data?.preview_url && (
+            {playing && (
                 <div className="position-fixed bottom-0 start-0 end-0 bg-dark border-top border-secondary px-3 py-2 d-flex align-items-center gap-3" style={{ zIndex: 1050 }}>
                     <button
                         className="btn btn-sm btn-outline-secondary flex-shrink-0 d-flex align-items-center"
