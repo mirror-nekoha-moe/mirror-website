@@ -3,8 +3,7 @@ import { FaDownload, FaExternalLinkAlt, FaImage, FaTimes } from 'react-icons/fa'
 import MapperLink from './MapperLink-collab-hinai.jsx';
 import HinaiAudio, { FavoriteButton } from './HinaiAudio-collab-hinai.jsx';
 import HinaiPpPanel from './HinaiPpPanel-collab-hinai.jsx';
-import { HinaiSource, NekohaSource } from './CollabMark-collab-hinai.jsx';
-import { cover as coverArt, fetchMirrorHealth } from '../lib/mirror-collab-hinai.js';
+import { cover as coverArt } from '../lib/mirror-collab-hinai.js';
 import {
     backgroundUrl,
     compact,
@@ -50,7 +49,6 @@ export default function HinaiInfoModal({ seed, onClose }) {
     const [activeId, setActiveId] = useState(null);
     const [josuOpen, setJosuOpen] = useState(false);
     const [advancedOpen, setAdvancedOpen] = useState(false);
-    const [health, setHealth] = useState(null);
     const [engagement, setEngagement] = useState(null);
     const [artwork, setArtwork] = useState(null);
     const [artworkBusy, setArtworkBusy] = useState(null);
@@ -79,9 +77,6 @@ export default function HinaiInfoModal({ seed, onClose }) {
         let alive = true;
         fetchSetDetails(seed.id).then(full => {
             if (alive && full) setSet(prev => ({ ...prev, ...full }));
-        });
-        fetchMirrorHealth().then(next => {
-            if (alive) setHealth(next);
         });
         recordBeatmapView(seed.id).then(() => getBeatmapEngagement(seed.id)).then(next => {
             if (alive) setEngagement(next);
@@ -146,24 +141,31 @@ export default function HinaiInfoModal({ seed, onClose }) {
     return (
         <div className="hinf" onMouseDown={e => { if (e.target === e.currentTarget) handleClose(); }}>
             <div className="hinf__dialog cbg-dark rounded-3" role="dialog" aria-modal="true" aria-label={set.title}>
-                <div className="hinf__head">
-                    <span className="hinf__cover" style={{ backgroundImage: `url('${coverArt(set.id, 'cover')}')` }} />
-                    <div className="flex-grow-1 overflow-hidden">
-                        <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
-                            <span className="badge rounded-pill text-bg-dark border">{STATUS_LABELS[set.status] || 'Unknown'}</span>
-                            {active && <span className="badge rounded-pill text-bg-dark border">{MODE_LABELS[active.mode] || active.mode}</span>}
-                            <span className="hinf__brand">hinai data</span>
+                <div
+                    className="hinf__head"
+                    style={{ backgroundImage: `url('${coverArt(set.id, 'cover')}')` }}
+                >
+                    <div className="hinf__headinner">
+                        <div className="hinf__headtop">
+                            <div className="flex-grow-1 overflow-hidden">
+                                <div className="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                    <span className="badge rounded-pill text-bg-dark border">{STATUS_LABELS[set.status] || 'Unknown'}</span>
+                                    {active && <span className="badge rounded-pill text-bg-dark border">{MODE_LABELS[active.mode] || active.mode}</span>}
+                                    <span className="hinf__brand">hinai data</span>
+                                </div>
+                                <h2 className="h5 mb-0 text-white text-truncate">{set.title}</h2>
+                                <div className="small text-white-50 text-truncate">{set.artist}</div>
+                                <div className="small d-flex align-items-center gap-1 mt-1">
+                                    <span className="text-white-50">mapped by</span>
+                                    <MapperLink name={set.creator} avatar />
+                                </div>
+                            </div>
+                            <button type="button" ref={closeRef} className="hinf__close" onClick={handleClose} aria-label="Close">
+                                <FaTimes size={14} />
+                            </button>
                         </div>
-                        <h2 className="h5 mb-0 text-white text-truncate">{set.title}</h2>
-                        <div className="small text-secondary text-truncate">{set.artist}</div>
-                        <div className="small d-flex align-items-center gap-1 mt-1">
-                            <span className="text-muted">mapped by</span>
-                            <MapperLink name={set.creator} avatar />
-                        </div>
+                        <HinaiAudio setId={set.id} />
                     </div>
-                    <button type="button" ref={closeRef} className="btn btn-sm btn-dark-c1 flex-shrink-0" onClick={handleClose} aria-label="Close">
-                        <FaTimes />
-                    </button>
                 </div>
 
                 <div className="hinf__body">
@@ -202,8 +204,6 @@ export default function HinaiInfoModal({ seed, onClose }) {
                         )}
                     </div>
 
-                    <HinaiAudio setId={set.id} />
-
                     {diffs.length > 0 && (
                         <div className="hinf__diffs" role="tablist" aria-label="Difficulties">
                             {diffs.map(d => (
@@ -240,6 +240,11 @@ export default function HinaiInfoModal({ seed, onClose }) {
                                     <span className="hinf__bark">Combo</span>
                                     <span className="hinf__barv">{active.max_combo ? `${active.max_combo}x` : '-'}</span>
                                 </div>
+                            </div>
+
+                            <div className="hinf__keys">
+                                <span><kbd>Esc</kbd> Close</span>
+                                <span><kbd>&larr;</kbd> <kbd>&rarr;</kbd> Switch difficulty</span>
                             </div>
 
                             <section className="hinf__section">
@@ -464,25 +469,6 @@ export default function HinaiInfoModal({ seed, onClose }) {
                         </div>
                     )}
 
-                    <div className="hinf__prov">
-                        <span><span className="hinf__provk">Beatmap</span> <NekohaSource label="mirror.nekoha.moe" size={13} /></span>
-                        <span className="hinf__provsep" />
-                        <span>
-                            <span className="hinf__provk">PP, audio, art</span>{' '}
-                            <HinaiSource size={13} version={health && health.version} />
-                        </span>
-                        {health && health.engines && health.engines.rosu_pp && (
-                            <>
-                                <span className="hinf__provsep" />
-                                <span><span className="hinf__provk">Engine</span> rosu-pp {health.engines.rosu_pp}</span>
-                            </>
-                        )}
-                    </div>
-
-                    <div className="hinf__keys">
-                        <span><kbd>Esc</kbd> Close</span>
-                        <span><kbd>&larr;</kbd> <kbd>&rarr;</kbd> Switch difficulty</span>
-                    </div>
                 </div>
             </div>
         </div>
