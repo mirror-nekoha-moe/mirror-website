@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { FaDownload, FaRegDotCircle, FaDrum, FaHeart, FaClock, FaMusic, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
+import { FaDownload, FaRegDotCircle, FaDrum, FaHeart, FaClock, FaMusic } from 'react-icons/fa';
 import { SiOsu } from "react-icons/si";
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
 import MapperLink from '../components/MapperLink-collab-hinai.jsx';
 import { cover, proxyImage } from '../lib/mirror-collab-hinai.js';
 import HinaiInfoModal from '../components/HinaiInfoModal-collab-hinai.jsx';
-import { FavoriteButton } from '../components/HinaiAudio-collab-hinai.jsx';
-import { audioUrl, previewFallback } from '../lib/hinai-collab-hinai.js';
+import HinaiAudio from '../components/HinaiAudio-collab-hinai.jsx';
 
 const PPY_IMAGE_HOST = /^https:\/\/(a|b|i|osu|assets)\.ppy\.sh\//i;
 
@@ -106,11 +105,7 @@ export default function BeatmapSet() {
     const [selectedDiff, setSelectedDiff] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [playing, setPlaying] = useState(false);
     const [infoOpen, setInfoOpen] = useState(false);
-    const triedFallback = useRef(false);
-    const [volume, setVolume]   = useState(0.1);
-    const audioRef = useRef(null);
     const descRef = useRef(null);
 
     useEffect(() => {
@@ -155,19 +150,6 @@ export default function BeatmapSet() {
         });
     }, [data]);
 
-    const togglePreview = () => {
-        const el = audioRef.current;
-        if (!el || !el.src) return;
-        if (playing) { el.pause(); setPlaying(false); }
-        else { el.play().catch(() => {}); setPlaying(true); }
-    };
-
-    const handleVolume = (v) => {
-        const val = parseFloat(v);
-        setVolume(val);
-        if (audioRef.current) audioRef.current.volume = val;
-    };
-
     if (loading) return (
         <div className="search-loading-bar mt-0 rounded-0">
             <div className="search-loading-bar-value" />
@@ -182,20 +164,6 @@ export default function BeatmapSet() {
     return (
         <>
             <title>{`${data.title} - Nekoha Mirror`}</title>
-            <audio
-                ref={audioRef}
-                src={audioUrl(data.id)}
-                onEnded={() => setPlaying(false)}
-                onCanPlay={el => { if (el.target) el.target.volume = volume; }}
-                onError={el => {
-                    if (triedFallback.current) return;
-                    triedFallback.current = true;
-                    const raw = data.preview_url;
-                    const next = raw ? (raw.startsWith('//') ? `https:${raw}` : raw) : previewFallback(data.id);
-                    el.target.src = next;
-                    if (playing) el.target.play().catch(() => {});
-                }}
-            />
 
             {infoOpen && <HinaiInfoModal seed={data} onClose={() => setInfoOpen(false)} />}
 
@@ -231,16 +199,11 @@ export default function BeatmapSet() {
                         </div>
                     </div>
 
-                    <div className="d-flex flex-wrap align-items-center gap-2 mt-3">
-                        <button
-                            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
-                            onClick={togglePreview}
-                            title="Streamed from mirror.hinamizawa.ai, full song when it is cached"
-                        >
-                            {playing ? <FaPause size={11} /> : <FaPlay size={11} />}
-                            <span>{playing ? 'Pause' : 'Play'}</span>
-                        </button>
-                        <FavoriteButton setId={data.id} />
+                    <div className="nkbs__player mt-3">
+                        <HinaiAudio setId={data.id} />
+                    </div>
+
+                    <div className="d-flex flex-wrap align-items-center gap-2 mt-2">
                         <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${data.id}`}>
                             <FaDownload /> Download {(data.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB
                         </a>
@@ -486,32 +449,6 @@ export default function BeatmapSet() {
                 </div>
             </div>
             <div className="mb-5" />
-
-            {playing && (
-                <div className="position-fixed bottom-0 start-0 end-0 bg-dark border-top border-secondary px-3 py-2 d-flex align-items-center gap-3" style={{ zIndex: 1050 }}>
-                    <button
-                        className="btn btn-sm btn-outline-secondary flex-shrink-0 d-flex align-items-center"
-                        title="Pause preview"
-                        onClick={togglePreview}
-                    >
-                        <FaPause size={12} />
-                    </button>
-                    <div className="flex-grow-1 small text-truncate">
-                        <span className="text-white fw-semibold">{data.title}</span>
-                        {data.artist && <span className="text-secondary ms-2">{data.artist}</span>}
-                    </div>
-                    <FaVolumeUp className="text-secondary flex-shrink-0" size={13} />
-                    <input
-                        type="range" min="0" max="1" step="0.01"
-                        value={volume}
-                        onChange={e => handleVolume(e.target.value)}
-                        className="form-range flex-shrink-0"
-                        style={{ width: 100 }}
-                        title={`Preview volume: ${Math.round(volume * 100)}%`}
-                    />
-                    <span className="text-secondary small flex-shrink-0">{Math.round(volume * 100)}%</span>
-                </div>
-            )}
         </>
     );
 }

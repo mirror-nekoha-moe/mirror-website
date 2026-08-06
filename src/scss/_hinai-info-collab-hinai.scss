@@ -1141,3 +1141,25 @@
         font-size: 0.54rem;
     }
 }
+
+.nkbs__player {
+    max-width: 620px;
+
+    .haud {
+        border-color: rgba(255, 255, 255, 0.18);
+        background: rgba(9, 11, 19, 0.58);
+        backdrop-filter: blur(9px);
+        box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+    }
+
+    .haud__time {
+        color: rgba(255, 255, 255, 0.72);
+    }
+}
+
+@media (max-width: 575.98px) {
+    .nkbs__player .haud {
+        gap: 8px;
+        padding: 7px 9px;
+    }
+}
