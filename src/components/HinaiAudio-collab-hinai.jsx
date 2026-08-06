@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FaHeart, FaPause, FaPlay, FaRegHeart } from 'react-icons/fa';
+import { FaHeart, FaPause, FaPlay, FaRegHeart, FaVolumeDown, FaVolumeMute, FaVolumeUp } from 'react-icons/fa';
 import {
     audioUrl,
     compact,
@@ -19,6 +19,57 @@ let nowPlaying = null;
 
 const POLL_MS = 6000;
 const POLL_MAX = 8;
+
+const VOL_KEY = 'nk-haud-volume';
+const VOL_STEP = 0.05;
+
+const volSubs = new Set();
+let volState = null;
+
+function clamp01(n) {
+    return Math.round(Math.min(1, Math.max(0, n)) * 100) / 100;
+}
+
+function readVolume() {
+    if (volState) return volState;
+
+    let volume = 1;
+    let muted = false;
+    try {
+        const raw = window.localStorage.getItem(VOL_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        if (parsed && Number.isFinite(parsed.volume)) volume = clamp01(parsed.volume);
+        if (parsed && typeof parsed.muted === 'boolean') muted = parsed.muted;
+    } catch {
+        volume = 1;
+        muted = false;
+    }
+
+    volState = { volume, muted };
+    return volState;
+}
+
+function persistVolume(next) {
+    try {
+        window.localStorage.setItem(VOL_KEY, JSON.stringify(next));
+        return true;
+    } catch {
+        return false;
+    }
+}
+
+function writeVolume(volume, muted) {
+    const next = { volume: clamp01(volume), muted };
+    volState = next;
+    persistVolume(next);
+    volSubs.forEach(fn => fn(next));
+}
+
+function VolumeIcon({ volume, muted }) {
+    if (muted || volume === 0) return <FaVolumeMute size={12} />;
+    if (volume < 0.5) return <FaVolumeDown size={12} />;
+    return <FaVolumeUp size={12} />;
+}
 
 const KINDS = {
     music: {
@@ -131,6 +182,22 @@ export default function HinaiAudio({ setId, dense = false }) {
     const triedFallback = useRef(false);
     const hasPlayed = useRef(false);
     const dragging = useRef(false);
+    const volDragging = useRef(false);
+    const [vol, setVol] = useState(readVolume);
+
+    useEffect(() => {
+        volSubs.add(setVol);
+        return () => {
+            volSubs.delete(setVol);
+        };
+    }, []);
+
+    useEffect(() => {
+        const a = audioRef.current;
+        if (!a) return;
+        a.volume = vol.volume;
+        a.muted = vol.muted;
+    }, [vol, src]);
 
     useEffect(() => {
         setSrc(audioUrl(setId));
@@ -217,6 +284,55 @@ export default function HinaiAudio({ setId, dense = false }) {
         dragging.current = false;
         if (e.currentTarget.hasPointerCapture(e.pointerId)) {
             e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+    };
+
+    const setVolumeAt = (clientX, rail) => {
+        const rect = rail.getBoundingClientRect();
+        const next = clamp01((clientX - rect.left) / rect.width);
+        writeVolume(next, next === 0 ? vol.muted : false);
+    };
+
+    const nudgeVolume = delta => {
+        const base = vol.muted ? 0 : vol.volume;
+        const next = clamp01(base + delta);
+        writeVolume(next, next === 0);
+    };
+
+    const endVolDrag = e => {
+        volDragging.current = false;
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+            e.currentTarget.releasePointerCapture(e.pointerId);
+        }
+    };
+
+    const onVolKey = e => {
+        switch (e.key) {
+            case 'ArrowLeft':
+            case 'ArrowDown':
+                e.preventDefault();
+                nudgeVolume(-VOL_STEP);
+                break;
+            case 'ArrowRight':
+            case 'ArrowUp':
+                e.preventDefault();
+                nudgeVolume(VOL_STEP);
+                break;
+            case 'Home':
+                e.preventDefault();
+                writeVolume(0, true);
+                break;
+            case 'End':
+                e.preventDefault();
+                writeVolume(1, false);
+                break;
+            case 'm':
+            case 'M':
+                e.preventDefault();
+                writeVolume(vol.volume, !vol.muted);
+                break;
+            default:
+                break;
         }
     };
 
@@ -315,6 +431,44 @@ export default function HinaiAudio({ setId, dense = false }) {
                     </span>
                 )
             )}
+
+            <div className="haud__vol">
+                <button
+                    type="button"
+                    className="haud__volbtn"
+                    onClick={() => writeVolume(vol.volume, !vol.muted)}
+                    aria-label={vol.muted ? 'Unmute' : 'Mute'}
+                    title={vol.muted ? 'Unmute' : `Mute (${Math.round(vol.volume * 100)}%)`}
+                >
+                    <VolumeIcon volume={vol.volume} muted={vol.muted} />
+                </button>
+
+                <div
+                    className="haud__volrail"
+                    role="slider"
+                    tabIndex={0}
+                    aria-label="Volume"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round((vol.muted ? 0 : vol.volume) * 100)}
+                    onPointerDown={e => {
+                        volDragging.current = true;
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                        setVolumeAt(e.clientX, e.currentTarget);
+                    }}
+                    onPointerMove={e => {
+                        if (volDragging.current) setVolumeAt(e.clientX, e.currentTarget);
+                    }}
+                    onPointerUp={endVolDrag}
+                    onPointerCancel={endVolDrag}
+                    onKeyDown={onVolKey}
+                >
+                    <div
+                        className="haud__volfill"
+                        style={{ width: `${(vol.muted ? 0 : vol.volume) * 100}%` }}
+                    />
+                </div>
+            </div>
 
             <FavoriteButton setId={setId} compactLabel={dense} />
 

@@ -617,6 +617,62 @@
         color: #88da20;
         white-space: nowrap;
     }
+
+    &__vol {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    &__volbtn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.55);
+        transition: color 0.15s ease;
+
+        &:hover,
+        &:focus-visible {
+            color: #00ceff;
+        }
+    }
+
+    &__volrail {
+        position: relative;
+        flex-shrink: 0;
+        width: 60px;
+        height: 4px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.12);
+        cursor: pointer;
+        touch-action: none;
+
+        &:hover .haud__volfill,
+        &:focus-visible .haud__volfill {
+            background: #00ceff;
+        }
+    }
+
+    &__volfill {
+        height: 100%;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.5);
+        transition: background 0.15s ease;
+    }
+}
+
+@media (max-width: 519.98px) {
+    .haud__volrail {
+        display: none;
+    }
 }
 
 .hfav {
@@ -1139,6 +1195,19 @@
 
     .haud__quality {
         font-size: 0.54rem;
+    }
+
+    .haud__vol {
+        gap: 4px;
+    }
+
+    .haud__volbtn {
+        width: 20px;
+        height: 20px;
+    }
+
+    .haud__volrail {
+        width: 44px;
     }
 }
 
