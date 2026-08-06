@@ -184,10 +184,6 @@ export default function SearchHero() {
                     <span className="nsh__prov-sep" />
                     <span><span className="nsh__prov-k">Archive</span> {formatBytes(index.total_size)}</span>
                     <span className="nsh__prov-sep" />
-                    <span><span className="nsh__prov-k">Scanned to</span> #{formatCount(index.scan_cursor)}</span>
-                    <span className="nsh__prov-sep" />
-                    <span><span className="nsh__prov-k">Ranked missing</span> {formatCount(index.missing_beatmapsets_ranked)}</span>
-                    <span className="nsh__prov-sep" />
                     <span className="nsh__prov-src">
                         <span className="nsh__prov-k">Source</span>
                         <NekohaSource label="mirror.nekoha.moe" size={13} />
