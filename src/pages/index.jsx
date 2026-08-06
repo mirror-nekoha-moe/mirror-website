@@ -1,10 +1,39 @@
 import nekohaImage from '../img/nekoha.png';
 
 import { useState, useEffect } from 'react'
-import { FaDiscord, FaGithub } from 'react-icons/fa';
+import { FaDiscord } from 'react-icons/fa';
 import DownloadChart from '../components/DownloadChart.jsx';
 import ApiCallChart from '../components/ApiCallChart.jsx';
+import { GithubMark, NEKOHA_URL } from '../components/CollabMark-collab-hinai.jsx';
 
+/**
+ * The mirror's landing page: hero blurb, primary call-to-action buttons, and
+ * the live corpus dashboard.
+ *
+ * On mount it fires three independent requests. `/api/stats` is the only one
+ * that drives the `loading` / `error` states, so a failure there replaces the
+ * whole dashboard with an alert. `/api/download-stats?days=30` and
+ * `/api/api-call-stats` swallow their rejections and simply leave their state
+ * empty, which is why their cards render conditionally: a chart backend being
+ * down degrades to a missing panel rather than taking the page with it.
+ *
+ * The dashboard renders four headline counters, then three full-width status
+ * breakdowns ("Missing Beatmapsets by Status", "Beatmapsets by Status", "Size
+ * by Status"), and finally one card per game mode (osu / taiko / catch / mania)
+ * carrying that same seven-status breakdown over `{mode}_bm_*` keys. All of
+ * them are driven by inline tables mapping API keys to labels and colour
+ * classes, some Bootstrap (`bg-info`, `bg-success`) and some project-local
+ * (`cbg-pink-2`, `cbg-dark-grey`).
+ *
+ * Two of the breakdowns are derived rather than read straight off the payload:
+ * "Beatmapsets by Status" subtracts the matching `missing_*` count from each
+ * total so it reports what is genuinely downloadable, and "Size by Status"
+ * converts raw bytes to GiB (`1024 ** 3`, labelled GB). Every breakdown cell is
+ * gated on its key being present, so a payload missing a field drops that tile;
+ * the four headline counters instead fall back to a displayed 0.
+ *
+ * @returns {JSX.Element} The landing page, including its `<title>`.
+ */
 function Index() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,36 +64,36 @@ function Index() {
   return (
     <>
       <title>osu! Beatmap Mirror | Nekoha</title>
-      <div class="container py-4 px-3 mx-auto">
+      <div className="container py-4 px-3 mx-auto">
         <div className="row mb-4 d-flex justify-content-between">
           <div className="col-12 col-lg-3 offset-lg-2 align-self-center">
             <img src={nekohaImage} className="mx-auto d-block img-fluid" alt="nekoha" />
           </div>
           <div className="col-12 col-lg-7 align-self-center text-center text-lg-start">
-            <h1 class="h3">osu! Beatmap Mirror</h1>
-            <h2 class="h5">Nekoha</h2>
+            <h1 className="h3">osu! Beatmap Mirror</h1>
+            <h2 className="h5">Nekoha</h2>
             <p>
                 Nekoha is an osu! beatmap mirror that stores all osu! Beatmaps, though not all yet, but it's growing.
-                Download Beatmaps or fetch their data with <span class="text-secondary">no ratelimit</span>.
-            </p>            
+                Download Beatmaps or fetch their data with <span className="text-secondary">no ratelimit</span>.
+            </p>
           </div>
         </div>
-        <div class="text-center mb-4">
-          <div class="row g-2 justify-content-center">
-            <div class="col-12 col-md-auto">
-              <a class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2" href="/search">
+        <div className="text-center mb-4">
+          <div className="row g-2 justify-content-center">
+            <div className="col-12 col-md-auto">
+              <a className="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2" href="/search">
                 Browse Beatmaps
               </a>
             </div>
-            <div class="col-12 col-md-auto">
-                <a class="btn btn-info w-100 d-flex align-items-center justify-content-center gap-2" href="https://discord.gg/QNCmZBqwBQ" target="_blank" rel="noopener noreferrer">
+            <div className="col-12 col-md-auto">
+                <a className="btn btn-info w-100 d-flex align-items-center justify-content-center gap-2" href="https://discord.gg/QNCmZBqwBQ" target="_blank" rel="noopener noreferrer">
                   <FaDiscord color="#fff" />
-                  <span class="text-white">Join Discord</span>
+                  <span className="text-white">Join Discord</span>
                 </a>
             </div>
-            <div class="col-12 col-md-auto">
-              <a class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2" href="https://github.com/mirror-nekoha-moe/mirror-server/blob/master/README.MD" target="_blank" rel="noopener noreferrer">
-                <FaGithub />
+            <div className="col-12 col-md-auto">
+              <a className="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2" href={NEKOHA_URL} target="_blank" rel="noopener noreferrer">
+                <GithubMark size={16} />
                 <span>API Documentation</span>
               </a>
             </div>

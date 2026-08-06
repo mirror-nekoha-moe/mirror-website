@@ -1,9 +1,22 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { FaDownload, FaRegDotCircle, FaDrum, FaFilter, FaChevronDown, FaChevronUp, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
+import { FaDownload, FaRegDotCircle, FaDrum, FaFilter, FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
+import MapperLink from '../components/MapperLink-collab-hinai.jsx';
+import SearchHero from '../components/SearchHero-collab-hinai.jsx';
+import { cover } from '../lib/mirror-collab-hinai.js';
+import { fetchPp, hardestDiff, ppKey, ppRetryAt } from '../lib/pp-collab-hinai.js';
+import { formatPP, ppColor } from '../lib/graveyard-collab-hinai.js';
+import { starTier } from '../lib/ranked-today-collab-hinai.js';
+import HinaiInfoModal from '../components/HinaiInfoModal-collab-hinai.jsx';
+import HinaiAudio from '../components/HinaiAudio-collab-hinai.jsx';
 
-const toHttps = url => url ? (url.startsWith('//') ? `https:${url}` : url) : null;
+const HINAI_MARK = '/assets/collab-hinai/hinai-logo.png';
+
+const PP_RETRY_MS = [3000, 9000, 27000];
+const PP_WAKE_MIN_MS = 10000;
+const PP_DEFER_ROUNDS = 2;
+const PP_DEFER_PAD_MS = 1000;
 
 const STATUSES = ['ranked', 'approved', 'loved', 'qualified', 'pending', 'graveyard', 'wip'];
 const STATUS_LABELS = { ranked: 'Ranked', approved: 'Approved', qualified: 'Qualified', loved: 'Loved', pending: 'Pending', wip: 'WIP', graveyard: 'Graveyard' };
@@ -26,6 +39,18 @@ const SORT_OPTIONS = [
   { value: 'difficulty', label: 'Diff Count' },
 ];
 
+/**
+ * Builds a fresh filter object for the search form: every selection empty, sort at its default.
+ *
+ * It is a factory rather than a shared constant because the value is handed to `useState`, kept
+ * in a ref and passed straight to `fetchPage` on reset; minting a new object each time keeps one
+ * reset's `status`/`mode` arrays from ever aliasing another's. Every filter scalar starts as `''`
+ * (not `null`) so the inputs stay controlled and `buildParams` can drop unset ones with a single
+ * truthiness test. `sort` and `order` are the deliberate exceptions, seeded to the `updated`/`desc`
+ * default rather than left blank.
+ *
+ * @returns {object} A new filter state with empty selections and the default `updated`/`desc` sort.
+ */
 const emptyFilters = () => ({
   status: [], mode: [],
   set_id: '', map_id: '',
@@ -40,6 +65,23 @@ const emptyFilters = () => ({
   sort: 'updated', order: 'desc',
 });
 
+/**
+ * A labelled min/max pair of number inputs bound to two keys of the shared filter object.
+ *
+ * The row is deliberately generic over key names instead of holding its own state: it writes
+ * straight back through `setFilters` with a functional update, so several rows editing the same
+ * object in the same tick cannot clobber each other.
+ *
+ * @param {object} props - Component props.
+ * @param {string} props.label - Caption shown above the pair (e.g. `Star Rating`).
+ * @param {string} props.keyMin - Filter key holding the lower bound.
+ * @param {string} props.keyMax - Filter key holding the upper bound.
+ * @param {object} props.filters - Current filter state, read for both input values.
+ * @param {React.Dispatch<React.SetStateAction<object>>} props.setFilters - Filter state setter.
+ * @param {string} [props.step='0.1'] - `step` attribute for both inputs; pass `'1'` for whole
+ *   numbers such as BPM or length in seconds.
+ * @returns {JSX.Element} A grid column holding the min and max inputs.
+ */
 function RangeRow({ label, keyMin, keyMax, filters, setFilters, step = '0.1' }) {
   return (
     <div className="col-6 col-md-4 col-lg-3">
@@ -56,18 +98,30 @@ function RangeRow({ label, keyMin, keyMax, filters, setFilters, step = '0.1' }) 
   );
 }
 
+/**
+ * The beatmapset search page: query box, collapsible filter panel, and an infinitely scrolling
+ * grid of result cards enriched with PP for each set's hardest difficulty.
+ *
+ * Three things make this component fiddlier than a plain list. First, the IntersectionObserver
+ * that drives infinite scroll is installed once and would otherwise capture stale state, so the
+ * live query, filters, page number, loading flag and has-more flag are all mirrored into refs
+ * that its callback reads. Second, a generation counter (`genRef`) is bumped on every new search
+ * or reset and re-checked once each response lands, so an append that was already in flight
+ * cannot splice old rows onto a fresh result set. Third, PP is not part of the search payload: it is
+ * polled separately from the hinamizawa mirror on a backoff ladder whenever `results` changes.
+ *
+ * @returns {JSX.Element} The full search page.
+ */
 export default function BeatmapsetSearch() {
   const [query, setQuery]      = useState('');
   const [filters, setFilters]  = useState(emptyFilters());
   const [showFilters, setShow] = useState(false);
   const [results, setResults]  = useState([]);
-  const [page, setPage]        = useState(1);
   const [hasMore, setHasMore]  = useState(true);
   const [loading, setLoading]  = useState(false);
   const [error, setError]      = useState('');
-  const [playingId, setPlayingId] = useState(null);
-  const [volume, setVolume]    = useState(0.1);
-  const audioRef = useRef(null);
+  const [ppMap, setPpMap]      = useState(() => new Map());
+  const [infoSet, setInfoSet]  = useState(null);
 
   // Refs to always have latest query/filters inside the IntersectionObserver callback
   const queryRef   = useRef(query);
@@ -79,6 +133,21 @@ export default function BeatmapsetSearch() {
   // Increment on every new search/reset to discard stale in-flight appends
   const genRef     = useRef(0);
 
+  /**
+   * Flattens the filter state into the query object sent to `/api/search`.
+   *
+   * `q` and `page` are always written; every filter field is copied only when truthy, so blank
+   * inputs and empty multi-selects never reach the API. That keeps the URL short and, more
+   * importantly, keeps unset ranges from being sent as `''` and interpreted as a real bound. An
+   * empty `q` does land in the returned object and is dropped by the caller's own `v !== ''` pass
+   * before the query string is built. Array filters (`status`, `mode`) are comma-joined, and the
+   * `set_id` filter is renamed to the API's `id` parameter.
+   *
+   * @param {number} pageNum - 1-based page to request.
+   * @param {string} q - Free-text query.
+   * @param {object} f - Filter state as produced by `emptyFilters`.
+   * @returns {Object<string, string|number>} Query parameters, omitting anything unset.
+   */
   const buildParams = (pageNum, q, f) => {
     const p = { q, page: pageNum };
     if (f.set_id)         p.id         = f.set_id;
@@ -105,6 +174,25 @@ export default function BeatmapsetSearch() {
     return p;
   };
 
+    /**
+     * Fetches one page of search results and either replaces or appends to the grid.
+     *
+     * Concurrency is handled with two separate mechanisms because they solve different problems:
+     * `loadingRef` is a synchronous mutex that stops the scroll observer from firing the same
+     * page twice before React has re-rendered, while the `genRef` snapshot taken at entry is
+     * re-checked after the await so a response that outlived its search is dropped instead of
+     * being merged into newer results. `hasMore` is inferred from the page being full (>= 100
+     * rows), so it goes false on the first short page rather than after a wasted empty request.
+     *
+     * Note that `pageRef` is only advanced on success, so a failed page is retried rather than
+     * skipped the next time the sentinel comes into view.
+     *
+     * @param {number} pageNum - 1-based page to load.
+     * @param {string} q - Free-text query for this request.
+     * @param {object} f - Filter state for this request.
+     * @param {boolean} [replace=false] - Replace the grid instead of appending to it.
+     * @returns {Promise<void>} Resolves once state has been updated (or the response discarded).
+     */
     const fetchPage = useCallback(async (pageNum, q, f, replace = false) => {
         if (loadingRef.current) return;
         const gen = genRef.current;
@@ -135,7 +223,7 @@ export default function BeatmapsetSearch() {
     }, []);
 
     // Initial load
-    useEffect(() => { fetchPage(1, '', emptyFilters(), true); }, []);
+    useEffect(() => { fetchPage(1, '', emptyFilters(), true); }, [fetchPage]);
 
   // IntersectionObserver for infinite scroll
   useEffect(() => {
@@ -148,6 +236,20 @@ export default function BeatmapsetSearch() {
     return () => observer.disconnect();
   }, [fetchPage]);
 
+  /**
+   * Runs a new search from the current query and filter state.
+   *
+   * Bumps the generation counter first so any append still in flight is invalidated before the
+   * grid is cleared, then pushes the live query/filters into the refs the scroll observer reads
+   * and rewinds the page cursor to 0 (page 1 is requested here; the observer picks up from
+   * whatever the successful fetch writes back).
+   *
+   * Doubles as both the form's `onSubmit` and the filter panel's "Apply Filters" click handler,
+   * which is why it defends with `preventDefault`.
+   *
+   * @param {React.SyntheticEvent} e - Submit or click event.
+   * @returns {void}
+   */
   const handleSearch = (e) => {
     e.preventDefault();
     genRef.current    += 1;   // invalidate any in-flight appends
@@ -156,11 +258,20 @@ export default function BeatmapsetSearch() {
     pageRef.current    = 0;
     hasMoreRef.current = true;
     setHasMore(true);
-    setPage(1);
     setResults([]);
     fetchPage(1, query, filters, true);
   };
 
+  /**
+   * Clears the query and every filter, then reloads the unfiltered first page.
+   *
+   * The blank filter object is built once and written to both state and `filtersRef`, and the
+   * same object is passed straight to `fetchPage` — the fetch cannot wait for the state update,
+   * so it has to be handed the new filters explicitly. Like `handleSearch`, it bumps the
+   * generation counter so in-flight appends from the old query are discarded.
+   *
+   * @returns {void}
+   */
   const handleReset = () => {
     const f = emptyFilters();
     genRef.current    += 1;   // invalidate any in-flight appends
@@ -175,12 +286,149 @@ export default function BeatmapsetSearch() {
     fetchPage(1, '', f, true);
   };
 
+  /**
+   * Adds or removes one ranked-status key from the `status` multi-select.
+   *
+   * Only stages the change: nothing is refetched until Search or Apply Filters is pressed.
+   *
+   * @param {string} s - Status key from `STATUSES` (e.g. `'ranked'`, `'graveyard'`).
+   * @returns {void}
+   */
   const toggleStatus = s => setFilters(f => ({ ...f, status: f.status.includes(s) ? f.status.filter(x => x !== s) : [...f.status, s] }));
+  /**
+   * Adds or removes one game mode from the `mode` multi-select.
+   *
+   * Only stages the change: nothing is refetched until Search or Apply Filters is pressed.
+   *
+   * @param {string} m - Mode key from `MODES` (`'osu'`, `'taiko'`, `'fruits'`, `'mania'`).
+   * @returns {void}
+   */
   const toggleMode   = m => setFilters(f => ({ ...f, mode:   f.mode.includes(m)   ? f.mode.filter(x => x !== m)   : [...f.mode,   m] }));
 
   // Keep refs in sync when state changes (for observer callback)
   useEffect(() => { queryRef.current   = query;   }, [query]);
   useEffect(() => { filtersRef.current = filters; }, [filters]);
+
+  useEffect(() => {
+    if (!results.length) return undefined;
+
+    const targets = [];
+    for (const set of results) {
+      const diff = hardestDiff(set);
+      if (diff) targets.push(diff);
+    }
+    if (!targets.length) return undefined;
+
+    let alive = true;
+    let step = 0;
+    let defers = 0;
+    let lastRun = 0;
+    let timer = null;
+
+    /**
+     * Cancels any pending poll and clears the handle.
+     *
+     * Nulling `timer` matters: it is the effect's only record of whether a poll is armed, so a
+     * stale handle would let cleanup or a re-schedule believe one is still queued.
+     *
+     * @returns {void}
+     */
+    function stopTimer() {
+      if (timer === null) return;
+      clearTimeout(timer);
+      timer = null;
+    }
+
+    /**
+     * Arms the next PP poll, or stops polling when there is nothing left to wait for.
+     *
+     * `ppRetryAt` reports the earliest moment any still-unresolved target is worth asking about,
+     * returning 0 once every visible difficulty has a cached value. A time in the future means
+     * the PP layer is cooling down (rate limit or negative-cache TTL), so this waits it out plus
+     * a small pad and resets the fast ladder — but only `PP_DEFER_ROUNDS` times, so a map the
+     * mirror never computes cannot keep the page polling forever. Otherwise it walks the fixed
+     * `PP_RETRY_MS` ladder one rung per call and gives up at the end of it.
+     *
+     * @returns {void}
+     */
+    function schedule() {
+      if (!alive) return;
+
+      const at = ppRetryAt(targets);
+      if (at === 0) return;
+
+      const wait = at - Date.now();
+      stopTimer();
+
+      if (wait > 0) {
+        if (defers >= PP_DEFER_ROUNDS) return;
+        defers += 1;
+        step = 0;
+        timer = setTimeout(run, wait + PP_DEFER_PAD_MS);
+        return;
+      }
+
+      if (step >= PP_RETRY_MS.length) return;
+      timer = setTimeout(run, PP_RETRY_MS[step]);
+      step += 1;
+    }
+
+    /**
+     * Performs one batched PP fetch for every visible hardest-difficulty target, then re-arms.
+     *
+     * `fetchPp` resolves to null rather than a snapshot whenever it made no progress at all, which
+     * is either the global cooldown being active or every batch failing to settle; hence the
+     * truthiness guard before publishing, since any other outcome is a Map safe to render. The
+     * `alive` check inside the `.then` is what keeps an unmounted or superseded effect from writing
+     * state, and `lastRun` is stamped up front so the wake throttle measures from the request going
+     * out rather than from it coming back.
+     *
+     * @returns {void}
+     */
+    function run() {
+      stopTimer();
+      lastRun = Date.now();
+      fetchPp(targets).then(next => {
+        if (!alive) return;
+        if (next) setPpMap(next);
+        schedule();
+      });
+    }
+
+    /**
+     * Restarts polling when the tab is brought back to the foreground or the network returns.
+     *
+     * A backgrounded tab has its timers throttled, so the ladder will usually have run itself
+     * out by the time the user comes back; this gives the page a second chance at the PP that
+     * never arrived. It is deliberately defensive, because `visibilitychange` and `online` can
+     * fire in bursts: hidden tabs are ignored, nothing happens when every target already
+     * resolved, and `PP_WAKE_MIN_MS` since the last request is enforced so tab-flipping cannot
+     * be turned into a request flood against the mirror. Both counters reset so a genuine wake
+     * gets a full fresh ladder rather than resuming a spent one.
+     *
+     * @returns {void}
+     */
+    function wake() {
+      if (!alive) return;
+      if (document.visibilityState === 'hidden') return;
+      if (ppRetryAt(targets) === 0) return;
+      if (Date.now() - lastRun < PP_WAKE_MIN_MS) return;
+      step = 0;
+      defers = 0;
+      run();
+    }
+
+    run();
+    window.addEventListener('online', wake);
+    document.addEventListener('visibilitychange', wake);
+
+    return () => {
+      alive = false;
+      stopTimer();
+      window.removeEventListener('online', wake);
+      document.removeEventListener('visibilitychange', wake);
+    };
+  }, [results]);
 
   const activeFilterCount = [
     filters.status.length, filters.mode.length,
@@ -192,41 +440,12 @@ export default function BeatmapsetSearch() {
     filters.video,
   ].filter(Boolean).length;
 
-  const togglePreview = (set) => {
-    const url = toHttps(set.preview_url);
-    if (!url) return;
-    const el = audioRef.current;
-    if (playingId === set.id) {
-      el.pause();
-      setPlayingId(null);
-    } else {
-      el.src = url;
-      el.volume = volume;
-      el.play().catch(() => {});
-      setPlayingId(set.id);
-    }
-  };
-
-  const handleVolume = (v) => {
-    const val = parseFloat(v);
-    setVolume(val);
-    if (audioRef.current) audioRef.current.volume = val;
-  };
-
-  useEffect(() => {
-    const el = audioRef.current;
-    if (!el) return;
-    el.volume = 0.1;
-    const onEnd = () => setPlayingId(null);
-    el.addEventListener('ended', onEnd);
-    return () => el.removeEventListener('ended', onEnd);
-  }, []);
-
   return (
     <>
       <title>Search</title>
-      <audio ref={audioRef} />
       <div className="container mt-4">
+        <SearchHero />
+
         <h2 className="mb-3">Beatmapset Search</h2>
 
         <form className="mb-2" onSubmit={handleSearch}>
@@ -351,24 +570,28 @@ export default function BeatmapsetSearch() {
 
         {error && <div className="alert bg-danger">{error}</div>}
         <div className="row g-3 mb-3">
-          {results.map(set => (
+          {results.map(set => {
+            const diff = hardestDiff(set);
+            const pp = diff ? ppMap.get(ppKey(diff.id, diff.mode)) : undefined;
+            return (
             <div className={`col-12 col-lg-6 ${!set.user_id ? 'missing-metadata' : ''}`} key={set.id}>
               <div className="border-beatmapcard rounded-4 border-4 p-3 beatmapset-card-bg beatmapset-card-hoverable position-relative"
-                style={{ background: `linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://assets.ppy.sh/beatmaps/${set.id}/covers/cover.jpg')` }}
+                style={{ background: `linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('${cover(set.id, 'cover')}')` }}
               >
-                <a href={`https://mirror.nekoha.moe/beatmapset/${set.id}`} className="stretched-link" aria-label={set.title} />
-                <div className="fw-bold">
+                <a href={`/beatmapset/${set.id}`} className="stretched-link" aria-label={set.title} />
+                <span className="badge border rounded-pill text-bg-dark nkstatus">{STATUS_LABELS[set.status] ?? 'Unknown'}</span>
+                <div className="fw-bold nkcard-head">
                   <span className="text-white map-title">{!set.user_id ? 'Processing Metadata...' : set.title}</span>
                 </div>
                 <div className="small d-flex align-items-center">
                   <div>by: <span className="text-secondary">{set.artist}</span></div>
                 </div>
                 <div className="small d-flex align-items-center">
-                  <div>
-                    <span>mapped by: </span>
-                    <a className="text-decoration-none position-relative" style={{ zIndex: 2 }} href={`https://osu.ppy.sh/users/${set.user_id}`} target="_blank">
-                      <span className="fw-bold text-white link-blue">{set.creator}</span>
-                    </a>
+                  <div className="d-flex align-items-center gap-1">
+                    <span>mapped by:</span>
+                    <span className="position-relative d-inline-flex fw-bold" style={{ zIndex: 2 }}>
+                      <MapperLink name={set.creator} avatar />
+                    </span>
                   </div>
                 </div>
                 <div className="small d-flex align-items-center gap-3">
@@ -389,39 +612,54 @@ export default function BeatmapsetSearch() {
                   <span title="osu!catch" className="d-flex align-items-center gap-1"><FaAppleWhole /><span className="small">{set.mirror?.mode_fruits_count ?? 0}</span></span>
                   <span title="osu!mania" className="d-flex align-items-center gap-1"><MdPiano /><span className="small">{set.mirror?.mode_mania_count ?? 0}</span></span>
                 </div>
-                <div className="d-flex flex-column flex-md-row align-items-left align-items-md-center gap-2 position-relative" style={{ zIndex: 2 }}>
-                    <div class="d-flex flex-row gap-2">
-                        <span className="badge border rounded-pill text-bg-dark flex-fill">{STATUS_LABELS[set.status] ?? 'Unknown'}</span>
-                        {set.preview_url && (
-                            <button
-                                className="btn btn-sm btn-outline-secondary d-flex align-items-center  flex-fill"
-                                title={playingId === set.id ? 'Pause preview' : 'Play preview'}
-                                onClick={e => { e.preventDefault(); e.stopPropagation(); togglePreview(set); }}
-                            >
-                                {playingId === set.id ? <FaPause className="flex-fill" size={11} /> : <FaPlay className="flex-fill" size={11} />}
-                            </button>
-                        )}
-                    </div>
-                    <div class="d-flex flex-column flex-md-row gap-2">
-                        <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}`}>
-                            <span>Download {(set.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB</span>
-                            <FaDownload color="white" />
-                        </a>
-                        {set.video && (
-                            <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}?noVideo=1`} title="Download without video">
+                {diff && (
+                  <div className="nkpp">
+                    <span className={`nkpp__sr nkpp__sr--t${starTier(diff.sr)}`}>{diff.sr.toFixed(2)}</span>
+                    {pp === undefined ? (
+                      <span className="nkpp__wait" aria-hidden="true" />
+                    ) : pp === null ? (
+                      <span className="nkpp__none" title="No PP for this difficulty yet">&#183;</span>
+                    ) : (
+                      <span className="nkpp__val" style={{ color: ppColor(pp) }}>
+                        {formatPP(pp)}<span className="nkpp__unit">pp</span>
+                      </span>
+                    )}
+                    <span className="nkpp__mod">NM</span>
+                    {diff.version && <span className="nkpp__diff">{diff.version}</span>}
+                  </div>
+                )}
+                <div className="position-relative mb-2" style={{ zIndex: 2 }} onClick={e => e.stopPropagation()}>
+                  <HinaiAudio setId={set.id} dense />
+                </div>
+                <div className="d-flex flex-column flex-md-row gap-2 position-relative" style={{ zIndex: 2 }}>
+                    <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}`}>
+                        <span>Download {((set.mirror?.file_size ?? 0) / (1024 ** 2)).toFixed(2)} MB</span>
+                        <FaDownload color="white" />
+                    </a>
+                    {set.video && (
+                        <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}?noVideo=1`} title="Download without video">
                             <span>No Video</span>
                             <FaDownload color="white" />
-                            </a>
-                        )}
-                        <a className="btn btn-sm btn-secondary d-flex align-items-center gap-2" href={`osu://s/${set.id}`}>
-                            <span>osu!direct</span>
-                            <FaDownload color="black" />
                         </a>
-                    </div>
+                    )}
+                    <a className="btn btn-sm btn-secondary d-flex align-items-center gap-2" href={`osu://s/${set.id}`}>
+                        <span>osu!direct</span>
+                        <FaDownload color="black" />
+                    </a>
+                    <button
+                        type="button"
+                        className="btn btn-sm btn-hinai d-flex align-items-center gap-2"
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); setInfoSet(set); }}
+                        title="PP for every mod, the josu viewer and the artwork, from mirror.hinamizawa.ai"
+                    >
+                        <span>hinai data</span>
+                        <img src={HINAI_MARK} alt="" width={14} height={14} className="btn-hinai__mark" />
+                    </button>
                 </div>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Infinite scroll sentinel */}
@@ -437,35 +675,8 @@ export default function BeatmapsetSearch() {
         )}
       </div>
 
-      {/* Floating audio player bar */}
-      {playingId && (() => {
-        const playing = results.find(r => r.id === playingId);
-        return (
-          <div className="position-fixed bottom-0 end-0 bg-dark border-top border-secondary px-3 py-2 d-flex align-items-center gap-3" style={{ zIndex: 1050 }}>
-            <button
-              className="btn btn-sm btn-outline-secondary flex-shrink-0 d-flex align-items-center"
-              title="Pause preview"
-              onClick={() => togglePreview(playing)}
-            >
-              <FaPause size={12} />
-            </button>
-            <div className="flex-grow-1 small text-truncate">
-              <span className="text-white fw-semibold">{playing?.title}</span>
-              {playing?.artist && <span className="text-secondary ms-2">{playing.artist}</span>}
-            </div>
-            <FaVolumeUp className="text-secondary flex-shrink-0" size={13} />
-            <input
-              type="range" min="0" max="1" step="0.01"
-              value={volume}
-              onChange={e => handleVolume(e.target.value)}
-              className="form-range flex-shrink-0"
-              style={{ width: 100 }}
-              title={`Preview volume: ${Math.round(volume * 100)}%`}
-            />
-            <span className="text-secondary small flex-shrink-0">{Math.round(volume * 100)}%</span>
-          </div>
-        );
-      })()}
+      {infoSet && <HinaiInfoModal seed={infoSet} onClose={() => setInfoSet(null)} />}
+
     </>
   );
 }

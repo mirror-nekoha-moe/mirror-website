@@ -1,10 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { FaDownload, FaRegDotCircle, FaDrum, FaHeart, FaClock, FaMusic, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
+import { FaDownload, FaRegDotCircle, FaDrum, FaHeart, FaClock, FaMusic, FaExternalLinkAlt } from 'react-icons/fa';
 import { SiOsu } from "react-icons/si";
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
+import MapperLink from '../components/MapperLink-collab-hinai.jsx';
+import { cover, proxyImage } from '../lib/mirror-collab-hinai.js';
+import HinaiInfoModal from '../components/HinaiInfoModal-collab-hinai.jsx';
+import { josuUrl } from '../lib/hinai-collab-hinai.js';
+import HinaiAudio from '../components/HinaiAudio-collab-hinai.jsx';
+
+const PPY_IMAGE_HOST = /^https:\/\/(a|b|i|osu|assets)\.ppy\.sh\//i;
 
 const STATUS_COLORS = {
     ranked: '#b3ff66',
@@ -68,7 +75,21 @@ const LANGUAGE_LABELS = {
     14: 'Other'
 };
 
-function statBar({ label, value, max = 10 }) {
+/**
+ * Horizontal meter for a single difficulty attribute (CS / AR / OD / HP / SR).
+ *
+ * The fill width is clamped to 100%, so a value above `max` renders as a full bar instead of
+ * overflowing the track. Every call site passes `max={10}`, and star ratings routinely exceed
+ * that, so the SR bar in particular pins at full. The numeric readout is NOT clamped and still
+ * prints the real value to one decimal.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} props.label - Short attribute name rendered to the left of the bar.
+ * @param {number|string} props.value - Attribute value; parsed with `parseFloat` for both fill and readout.
+ * @param {number} [props.max=10] - Value that corresponds to a completely filled bar.
+ * @returns {JSX.Element} The labelled stat row.
+ */
+function StatBar({ label, value, max = 10 }) {
     const pct = Math.min(100, (parseFloat(value) / max) * 100);
     return (
         <div className="d-flex align-items-center gap-2 mb-2">
@@ -81,51 +102,115 @@ function statBar({ label, value, max = 10 }) {
     );
 }
 
+/**
+ * Format a whole-second duration as `m:ss`.
+ *
+ * Minutes are never padded and never roll over into hours, so a hypothetical 90 minute map
+ * reads `90:00`, not `1:30:00`. That is fine for beatmap lengths and drain times, which are
+ * the only things this is used for.
+ *
+ * @param {number} seconds - Duration in seconds.
+ * @returns {string} The `m:ss` representation.
+ */
 function fmtTime(seconds) {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/**
+ * Format an API timestamp as `D Mon YYYY` in the viewer's local timezone.
+ *
+ * Only a falsy input is guarded; an unparseable string still flows through `Date` and would
+ * render as `NaN Invalid Date NaN`, so callers should pass values that came from the mirror API.
+ *
+ * @param {string|null|undefined} str - Timestamp accepted by the `Date` constructor.
+ * @returns {string} The formatted date, or 'N/A' when nothing was supplied.
+ */
 function fmtDate(str) {
     if (!str) return 'N/A';
     const d = new Date(str);
     return `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
 }
 
+/**
+ * Beatmapset detail page for the `/beatmapset/:id` route.
+ *
+ * Loads the set from the local mirror API, renders the hero (cover, status, mapper, audio
+ * preview, download buttons), the BBCode description, the difficulty picker and a stat panel
+ * for whichever difficulty is selected. The `hinai data` button opens {@link HinaiInfoModal};
+ * the `josu` button beside it deep-links the SELECTED difficulty into the josu web viewer, so it
+ * retargets as the picker changes rather than always opening the hardest diff.
+ *
+ * A second effect post-processes the description HTML after each data change, because that
+ * markup is injected via `dangerouslySetInnerHTML` and React never owns those nodes: ppy.sh
+ * images are rewritten through the hinai image proxy so osu never sees the visitor, and
+ * spoilerbox links get a toggle handler. Both passes mark what they touched (the
+ * `mirrorProxied` dataset key, i.e. a `data-mirror-proxied` attribute, and a `_spoilerBound`
+ * expando on the link) so a re-run never proxies twice or double-binds.
+ *
+ * @returns {JSX.Element|null} The page, a loading bar while fetching, an error alert on
+ * failure, or null when no data is present.
+ */
 export default function BeatmapSet() {
     const { id } = useParams();
     const [data, setData] = useState(null);
     const [selectedDiff, setSelectedDiff] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [playing, setPlaying] = useState(false);
-    const [volume, setVolume]   = useState(0.1);
-    const audioRef = useRef(null);
+    const [infoOpen, setInfoOpen] = useState(false);
     const descRef = useRef(null);
 
     useEffect(() => {
+        let active = true;
+        /**
+         * Fetch the beatmapset named by the current route id into component state.
+         *
+         * Rejects a non-numeric id locally before spending a request, since the value comes
+         * straight off the URL. Difficulties are sorted descending by star rating, which makes
+         * the hardest diff both the first row of the picker and the initial selection.
+         *
+         * Every state write that happens after the await is gated on the effect-scoped `active`
+         * flag, which the effect cleanup clears. Navigating between two beatmapset routes can
+         * otherwise let the older request resolve last and paint the previous set under the new
+         * URL.
+         *
+         * @returns {Promise<void>} Resolves once the request has settled. Loading state is only
+         * cleared when this run is still the active one; a superseded run deliberately leaves it
+         * set, so the newer request owns the spinner.
+         */
         const fetchBeatmapset = async () => {
             setLoading(true);
             setError('');
             try {
                 if (!/^\d+$/.test(id)) { setError('Invalid beatmapset ID'); return; }
                 const res = await axios.get(`/api/beatmapset/${id}`);
+                if (!active) return;
                 const beatmaps = res.data.beatmaps.slice().sort((a, b) => b.difficulty_rating - a.difficulty_rating);
                 setData({ ...res.data, beatmaps });
                 setSelectedDiff(beatmaps[0]);
             } catch {
-                setError('Failed to load beatmapset');
+                if (active) setError('Failed to load beatmapset');
             } finally {
-                setLoading(false);
+                if (active) setLoading(false);
             }
         };
         fetchBeatmapset();
+        return () => { active = false; };
     }, [id]);
 
     useEffect(() => {
-        if (!descRef.current) 
+        if (!descRef.current)
             return;
+        descRef.current.querySelectorAll('img[src]').forEach(img => {
+            if (img.dataset.mirrorProxied)
+                return;
+            const src = img.getAttribute('src') || '';
+            if (!PPY_IMAGE_HOST.test(src))
+                return;
+            img.dataset.mirrorProxied = '1';
+            img.setAttribute('src', proxyImage(src));
+        });
         descRef.current.querySelectorAll('.js-spoilerbox__link').forEach(link => {
             if (link._spoilerBound)
                 return;
@@ -137,19 +222,6 @@ export default function BeatmapSet() {
         });
     }, [data]);
 
-    const togglePreview = () => {
-        const el = audioRef.current;
-        if (!el || !el.src) return;
-        if (playing) { el.pause(); setPlaying(false); }
-        else { el.play().catch(() => {}); setPlaying(true); }
-    };
-
-    const handleVolume = (v) => {
-        const val = parseFloat(v);
-        setVolume(val);
-        if (audioRef.current) audioRef.current.volume = val;
-    };
-
     if (loading) return (
         <div className="search-loading-bar mt-0 rounded-0">
             <div className="search-loading-bar-value" />
@@ -158,27 +230,21 @@ export default function BeatmapSet() {
     if (error) return <div className="mt-5 alert bg-danger">{error}</div>;
     if (!data) return null;
 
-    const coverUrl = `https://assets.ppy.sh/beatmaps/${data.id}/covers/cover.jpg`;
+    const coverUrl = cover(data.id, 'cover');
     const statusColor = STATUS_COLORS[data.status] ?? '#aaa';
 
     return (
         <>
-            <title>{data.title} - Nekoha Mirror</title>
-            {data.preview_url && (
-                <audio
-                    ref={audioRef}
-                    src={data.preview_url.startsWith('//') ? `https:${data.preview_url}` : data.preview_url}
-                    onEnded={() => setPlaying(false)}
-                    onCanPlay={el => { if (el.target) el.target.volume = 0.1; }}
-                />
-            )}
+            <title>{`${data.title} - Nekoha Mirror`}</title>
+
+            {infoOpen && <HinaiInfoModal seed={data} onClose={() => setInfoOpen(false)} />}
 
             <div className="position-relative py-4"
                 style={{ background: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.82)), url('${coverUrl}') center/cover no-repeat`, minHeight: 220 }}>
                 <div className="container">
                     <div className="d-flex gap-4 align-items-end flex-wrap">
                         <img
-                            src={`https://assets.ppy.sh/beatmaps/${data.id}/covers/list.jpg`}
+                            src={cover(data.id, 'list')}
                             alt="cover"
                             className="rounded-2 flex-shrink-0 object-fit-cover"
                             style={{ width: 100, height: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.6)' }}
@@ -190,12 +256,11 @@ export default function BeatmapSet() {
                             </span>
                             <h2 className="map-title mb-0 fw-bold lh-sm">{data.title}</h2>
                             <div className="text-secondary small mb-1">{data.artist}</div>
-                            <div className="small">
-                                mapped by{' '}
-                                <a className="fw-bold text-white link-blue text-decoration-none"
-                                    href={`https://osu.ppy.sh/users/${data.user_id}`} target="_blank">
-                                    {data.creator}
-                                </a>
+                            <div className="small d-flex align-items-center gap-1">
+                                <span>mapped by</span>
+                                <span className="fw-bold d-inline-flex">
+                                    <MapperLink name={data.creator} avatar />
+                                </span>
                             </div>
                             <div className="d-flex align-items-center gap-3 mt-2">
                                 {data.mode_osu_count > 0 && <span title="osu!" className="d-flex align-items-center gap-1 small"><FaRegDotCircle />{data.mode_osu_count}</span>}
@@ -206,15 +271,13 @@ export default function BeatmapSet() {
                         </div>
                     </div>
 
-                    <div className="d-flex flex-wrap align-items-center gap-2 mt-3">
-                        {data.preview_url && (
-                            <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2" onClick={togglePreview}>
-                                {playing ? <FaPause size={11} /> : <FaPlay size={11} />}
-                                <span>{playing ? 'Pause' : 'Preview'}</span>
-                            </button>
-                        )}
+                    <div className="nkbs__player mt-3">
+                        <HinaiAudio setId={data.id} />
+                    </div>
+
+                    <div className="d-flex flex-wrap align-items-center gap-2 mt-2">
                         <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${data.id}`}>
-                            <FaDownload /> Download {(data.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB
+                            <FaDownload /> Download {((data.mirror?.file_size ?? 0) / (1024 ** 2)).toFixed(2)} MB
                         </a>
                         {data.video && (
                             <a className="btn btn-sm btn-outline-success d-flex align-items-center gap-2" href={`/api/download/${data.id}?noVideo=1`} title="Download without video">
@@ -224,6 +287,25 @@ export default function BeatmapSet() {
                         <a className="btn btn-sm btn-secondary d-flex align-items-center gap-2" href={`osu://s/${data.id}`}>
                             <FaDownload color="black" /> osu!direct
                         </a>
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-hinai d-flex align-items-center gap-2"
+                            onClick={() => setInfoOpen(true)}
+                            title="PP for every mod, the full song, the josu viewer and the artwork, from mirror.hinamizawa.ai"
+                        >
+                            hinai data
+                        </button>
+                        {(selectedDiff?.id ?? data.beatmaps?.[0]?.id) && (
+                            <a
+                                className="btn btn-sm btn-josu d-flex align-items-center gap-2"
+                                href={josuUrl(selectedDiff?.id ?? data.beatmaps[0].id)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title={`Watch ${selectedDiff?.version ?? 'this difficulty'} in the josu web viewer`}
+                            >
+                                josu <FaExternalLinkAlt size={10} />
+                            </a>
+                        )}
                         <a className="btn btn-sm cbg-pink-2 d-flex align-items-center gap-2"
                             href={`https://osu.ppy.sh/beatmapsets/${data.id}`} target="_blank">
                             View on osu!
@@ -313,7 +395,7 @@ export default function BeatmapSet() {
                                     <span className="text-secondary">Difficulties</span><span>{data.mirror?.beatmap_count}</span>
                                 </div>
                                 <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">File Size</span><span>{(data.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB</span>
+                                    <span className="text-secondary">File Size</span><span>{((data.mirror?.file_size ?? 0) / (1024 ** 2)).toFixed(2)} MB</span>
                                 </div>
                                 {data.bpm && (
                                     <div className="d-flex justify-content-between">
@@ -391,11 +473,11 @@ export default function BeatmapSet() {
                                     </div>
                                 </div>
 
-                                <statBar label="CS" value={selectedDiff.cs} max={10} />
-                                <statBar label="AR" value={selectedDiff.ar} max={10} />
-                                <statBar label="OD" value={selectedDiff.accuracy} max={10} />
-                                <statBar label="HP" value={selectedDiff.drain} max={10} />
-                                <statBar label="SR" value={selectedDiff.difficulty_rating} max={10} />
+                                <StatBar label="CS" value={selectedDiff.cs} max={10} />
+                                <StatBar label="AR" value={selectedDiff.ar} max={10} />
+                                <StatBar label="OD" value={selectedDiff.accuracy} max={10} />
+                                <StatBar label="HP" value={selectedDiff.drain} max={10} />
+                                <StatBar label="SR" value={selectedDiff.difficulty_rating} max={10} />
 
                                 <div className="border-top border-secondary mt-3 pt-3 d-flex flex-wrap gap-3 small">
                                     <div><span className="text-secondary">Circles </span>{parseInt(selectedDiff.count_circles)}</div>
@@ -450,32 +532,6 @@ export default function BeatmapSet() {
                 </div>
             </div>
             <div className="mb-5" />
-
-            {playing && data?.preview_url && (
-                <div className="position-fixed bottom-0 start-0 end-0 bg-dark border-top border-secondary px-3 py-2 d-flex align-items-center gap-3" style={{ zIndex: 1050 }}>
-                    <button
-                        className="btn btn-sm btn-outline-secondary flex-shrink-0 d-flex align-items-center"
-                        title="Pause preview"
-                        onClick={togglePreview}
-                    >
-                        <FaPause size={12} />
-                    </button>
-                    <div className="flex-grow-1 small text-truncate">
-                        <span className="text-white fw-semibold">{data.title}</span>
-                        {data.artist && <span className="text-secondary ms-2">{data.artist}</span>}
-                    </div>
-                    <FaVolumeUp className="text-secondary flex-shrink-0" size={13} />
-                    <input
-                        type="range" min="0" max="1" step="0.01"
-                        value={volume}
-                        onChange={e => handleVolume(e.target.value)}
-                        className="form-range flex-shrink-0"
-                        style={{ width: 100 }}
-                        title={`Preview volume: ${Math.round(volume * 100)}%`}
-                    />
-                    <span className="text-secondary small flex-shrink-0">{Math.round(volume * 100)}%</span>
-                </div>
-            )}
         </>
     );
 }
