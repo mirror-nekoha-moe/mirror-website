@@ -59,12 +59,14 @@ const MOTES = [
  * All filter state (mod lens, search term, mode, status, sort, PP band, meme mode) feeds one effect
  * that resets to page 1 and refetches. The term and the PP band go through `useDebounced` at 400ms
  * and 250ms respectively, so typing or dragging a slider does not fire a request per keystroke or
- * per pixel. Two refs keep overlapping requests honest: `genRef` is a monotonic generation counter
+ * per pixel. Three refs keep overlapping requests honest: `genRef` is a monotonic generation counter
  * checked in every `then`/`catch`, so a slow response belonging to a superseded filter set is
- * dropped instead of overwriting fresh results, and `busyRef` blocks the infinite-scroll loader
- * while any request is outstanding. A payload with `ready === false` means the collab collection is
- * still being built upstream and is surfaced through the error banner rather than as "no results",
- * because an empty grid would read as a real answer.
+ * dropped instead of overwriting fresh results, `busyRef` blocks the infinite-scroll loader while
+ * any request is outstanding, and `hasMoreRef` blocks it once the list is exhausted. Every search
+ * request also carries an `AbortSignal`: the page-1 effect aborts on filter change, and
+ * `pageAbortRef` holds the in-flight page so unmounting cancels it. A payload with `ready === false`
+ * means the collab collection is still being built upstream and is surfaced through the error
+ * banner rather than as "no results", because an empty grid would read as a real answer.
  *
  * Paging is an `IntersectionObserver` on a 1px sentinel with a 400px `rootMargin`, so the next page
  * starts loading before the user reaches the bottom. The observer is installed once on mount and
@@ -107,9 +109,16 @@ export default function Graveyard() {
     const genRef = useRef(0);
     const busyRef = useRef(false);
     const pageRef = useRef(1);
+    const loadedRef = useRef(0);
+    const hasMoreRef = useRef(false);
+    const pageAbortRef = useRef(null);
     const sentinelRef = useRef(null);
     const filtersRef = useRef(null);
     const loadMoreRef = useRef(() => {});
+
+    useEffect(() => () => {
+        if (pageAbortRef.current) pageAbortRef.current.abort();
+    }, []);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -132,9 +141,11 @@ export default function Graveyard() {
 
         busyRef.current = true;
         pageRef.current = 1;
+        loadedRef.current = 0;
         setLoading(true);
         setError('');
         setMaps([]);
+        hasMoreRef.current = false;
         setHasMore(false);
 
         const query = buildSearchQuery({
@@ -152,9 +163,12 @@ export default function Graveyard() {
                     return;
                 }
                 const rows = data.maps || [];
+                const more = rows.length >= 24 && rows.length < Number(data.total || 0);
+                loadedRef.current = rows.length;
+                hasMoreRef.current = more;
                 setMaps(rows);
                 setTotal(Number(data.total || 0));
-                setHasMore(rows.length >= 24 && rows.length < Number(data.total || 0));
+                setHasMore(more);
                 setLoading(false);
                 busyRef.current = false;
             })
@@ -173,39 +187,47 @@ export default function Graveyard() {
      *
      * Reads the current filters out of `filtersRef` rather than from state so it can be declared
      * with an empty dependency list and keep a stable identity. It bails out when a request is
-     * already in flight (`busyRef`) or before the first filter snapshot exists, and discards the
-     * response if `genRef` moved on while it was waiting, which means the filters changed and a
-     * fresh page-1 search already owns the list.
+     * already in flight (`busyRef`), before the first filter snapshot exists, or once `hasMoreRef`
+     * says the list is exhausted, so a sentinel that stays in view at the end of the results does
+     * not keep asking for pages that do not exist. It discards the response if `genRef` moved on
+     * while it was waiting, which means the filters changed and a fresh page-1 search already owns
+     * the list.
      *
-     * `hasMore` is recomputed inside the `setMaps` updater because it depends on the merged length,
-     * which only exists there; it stays true only while the accumulated rows are short of the
-     * reported total AND the server actually returned something, so an empty page terminates
-     * paging even if the total is wrong.
+     * The request carries its own `AbortController`, parked in `pageAbortRef` so unmounting can
+     * cancel an in-flight page instead of letting it settle into a dead component.
+     *
+     * `hasMore` is computed from `loadedRef`, the running count of rows already in the list, rather
+     * than inside the `setMaps` updater, which has to stay pure. It stays true only while the
+     * accumulated rows are short of the reported total AND the server actually returned something,
+     * so an empty page terminates paging even if the total is wrong.
      *
      * @returns {void}
      */
     const loadMore = useCallback(() => {
-        if (busyRef.current || !filtersRef.current) return;
+        if (busyRef.current || !filtersRef.current || !hasMoreRef.current) return;
         const gen = genRef.current;
         const next = pageRef.current + 1;
+        const controller = new AbortController();
+        pageAbortRef.current = controller;
         busyRef.current = true;
         setPaging(true);
 
-        searchGraveyard(buildSearchQuery({ ...filtersRef.current, page: next }))
+        searchGraveyard(buildSearchQuery({ ...filtersRef.current, page: next }), controller.signal)
             .then(data => {
                 if (gen !== genRef.current) return;
                 const rows = data.maps || [];
-                setMaps(prev => {
-                    const merged = prev.concat(rows);
-                    setHasMore(merged.length < Number(data.total || 0) && rows.length > 0);
-                    return merged;
-                });
+                const loaded = loadedRef.current + rows.length;
+                const more = loaded < Number(data.total || 0) && rows.length > 0;
+                loadedRef.current = loaded;
+                hasMoreRef.current = more;
+                setMaps(prev => prev.concat(rows));
+                setHasMore(more);
                 pageRef.current = next;
                 setPaging(false);
                 busyRef.current = false;
             })
             .catch(() => {
-                if (gen !== genRef.current) return;
+                if (controller.signal.aborted || gen !== genRef.current) return;
                 setPaging(false);
                 busyRef.current = false;
             });
@@ -226,26 +248,24 @@ export default function Graveyard() {
     /**
      * Flips "meme" mode, the escape hatch for the broken aspire maps that score above `PP_CAP`.
      *
-     * Turning it on pins the PP band to `[PP_CAP, PP_CAP]`, which `buildSearchQuery` reads as
+     * Turning it on pins the PP band to `MEME_RANGE`, which `buildSearchQuery` reads as
      * "min_pp = cap, no max_pp at all" and therefore as an open-ended tail above the cap rather
      * than a zero-width band. Turning it off clamps the band back to at most `[PP_CAP - 10,
      * PP_CAP]`, which leaves the slider on a usable non-degenerate range; note that it restores a
      * clamp, not whatever band the user had before enabling meme mode, which was not retained.
      *
-     * The `setPpRange` call is nested inside the `setMemeMode` updater so both writes agree on the
-     * same `next` value, and the range clamp is itself an updater because it needs the previous
-     * `[lo, hi]`.
+     * The next mode is derived from `memeMode` first so the two writes are plain sibling calls
+     * agreeing on the same `next` value rather than one setter nested inside the other's updater.
+     * The range clamp is still an updater because it needs the previous `[lo, hi]`.
      *
      * @returns {void}
      */
     const toggleMeme = () => {
-        setMemeMode(on => {
-            const next = !on;
-            setPpRange(([lo, hi]) => (next
-                ? [PP_CAP, PP_CAP]
-                : [Math.min(lo, PP_CAP - 10), Math.min(hi, PP_CAP)]));
-            return next;
-        });
+        const next = !memeMode;
+        setMemeMode(next);
+        setPpRange(([lo, hi]) => (next
+            ? MEME_RANGE
+            : [Math.min(lo, PP_CAP - 10), Math.min(hi, PP_CAP)]));
     };
 
     const lens = modColor(activeMod);

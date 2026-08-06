@@ -2,7 +2,6 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-
   mix-blend-mode: var(--mist-blend, normal);
 
   &__tint {
@@ -89,9 +88,7 @@
   width: calc((100vw - 1400px) / 2);
   z-index: 1;
   pointer-events: none;
-
   overflow: hidden;
-
   user-select: none;
 
   &--left { left: 0; }

@@ -39,6 +39,7 @@
     .navbar.nk-nav > .nk-nav__inner {
         --nk-nav-container: 960px;
         --nk-nav-edge: calc((100% - var(--nk-nav-container)) / 2 + 12px);
+
         padding-left: var(--nk-nav-edge);
         padding-right: var(--nk-nav-edge);
     }

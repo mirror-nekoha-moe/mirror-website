@@ -10,6 +10,7 @@
     --gv-fog: #aaa195;
     --gv-bone: #e3dad1;
     --gv-tide: #aed3c0;
+
     position: relative;
     isolation: isolate;
 }
@@ -251,10 +252,10 @@ $hn-ice: #ffe3e8;
 }
 
 @keyframes gv-mote-rise {
-    from { transform: translate3d(0, 0, 0); opacity: 0; }
+    0%   { transform: translate3d(0, 0, 0); opacity: 0; }
     12%  { opacity: 0.9; }
     82%  { opacity: 0.55; }
-    to   { transform: translate3d(var(--sway), -320px, 0); opacity: 0; }
+    100% { transform: translate3d(var(--sway), -320px, 0); opacity: 0; }
 }
 
 .gv-hero__motes {

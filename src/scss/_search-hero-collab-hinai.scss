@@ -17,6 +17,7 @@ $nsh-reflect: 58px;
 
     &::after {
         @include nk-frost-ring(14px, 1.3px, 0.34);
+
         animation: nsh-ring 24s ease-in-out infinite;
     }
 }
@@ -73,6 +74,7 @@ $nsh-reflect: 58px;
 
 .nsh__snow--far {
     --tile: 300px;
+
     background-image:
         radial-gradient(1px 1px at 30px 42px, rgba(244, 249, 255, 0.58), transparent),
         radial-gradient(1px 1px at 142px 96px, rgba(207, 230, 255, 0.48), transparent),
@@ -86,6 +88,7 @@ $nsh-reflect: 58px;
 
 .nsh__snow--mid {
     --tile: 280px;
+
     background-image:
         radial-gradient(1.7px 1.7px at 58px 64px, rgba(244, 249, 255, 0.74), transparent),
         radial-gradient(1.7px 1.7px at 186px 24px, rgba(207, 230, 255, 0.64), transparent),
@@ -98,6 +101,7 @@ $nsh-reflect: 58px;
 
 .nsh__snow--near {
     --tile: 250px;
+
     background-image:
         radial-gradient(2.5px 2.5px at 88px 48px, rgba(244, 249, 255, 0.86), transparent),
         radial-gradient(2.5px 2.5px at 218px 138px, rgba(207, 230, 255, 0.72), transparent),
@@ -217,7 +221,6 @@ $nsh-reflect: 58px;
     text-decoration: none;
     box-shadow: 0 10px 26px rgba(0, 0, 0, 0.5);
     transition: border-color 180ms ease, box-shadow 180ms ease;
-
     -webkit-box-reflect: below 5px linear-gradient(rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.12) 40%, transparent 78%);
 
     &:hover,
@@ -271,6 +274,7 @@ $nsh-reflect: 58px;
     padding: 0.14rem 0.38rem;
     border-radius: 999px;
     @include nk-rime-glass(0.5);
+
     backdrop-filter: blur(4px);
     font-variant-numeric: tabular-nums;
 }
@@ -387,6 +391,7 @@ $nsh-reflect: 58px;
     padding: 0.16rem 0.44rem;
     border-radius: 5px;
     @include nk-rime-glass(0.5);
+
     backdrop-filter: blur(4px);
 }
 

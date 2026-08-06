@@ -64,35 +64,35 @@ function Index() {
   return (
     <>
       <title>osu! Beatmap Mirror | Nekoha</title>
-      <div class="container py-4 px-3 mx-auto">
+      <div className="container py-4 px-3 mx-auto">
         <div className="row mb-4 d-flex justify-content-between">
           <div className="col-12 col-lg-3 offset-lg-2 align-self-center">
             <img src={nekohaImage} className="mx-auto d-block img-fluid" alt="nekoha" />
           </div>
           <div className="col-12 col-lg-7 align-self-center text-center text-lg-start">
-            <h1 class="h3">osu! Beatmap Mirror</h1>
-            <h2 class="h5">Nekoha</h2>
+            <h1 className="h3">osu! Beatmap Mirror</h1>
+            <h2 className="h5">Nekoha</h2>
             <p>
                 Nekoha is an osu! beatmap mirror that stores all osu! Beatmaps, though not all yet, but it's growing.
-                Download Beatmaps or fetch their data with <span class="text-secondary">no ratelimit</span>.
-            </p>            
+                Download Beatmaps or fetch their data with <span className="text-secondary">no ratelimit</span>.
+            </p>
           </div>
         </div>
-        <div class="text-center mb-4">
-          <div class="row g-2 justify-content-center">
-            <div class="col-12 col-md-auto">
-              <a class="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2" href="/search">
+        <div className="text-center mb-4">
+          <div className="row g-2 justify-content-center">
+            <div className="col-12 col-md-auto">
+              <a className="btn btn-secondary w-100 d-flex align-items-center justify-content-center gap-2" href="/search">
                 Browse Beatmaps
               </a>
             </div>
-            <div class="col-12 col-md-auto">
-                <a class="btn btn-info w-100 d-flex align-items-center justify-content-center gap-2" href="https://discord.gg/QNCmZBqwBQ" target="_blank" rel="noopener noreferrer">
+            <div className="col-12 col-md-auto">
+                <a className="btn btn-info w-100 d-flex align-items-center justify-content-center gap-2" href="https://discord.gg/QNCmZBqwBQ" target="_blank" rel="noopener noreferrer">
                   <FaDiscord color="#fff" />
-                  <span class="text-white">Join Discord</span>
+                  <span className="text-white">Join Discord</span>
                 </a>
             </div>
-            <div class="col-12 col-md-auto">
-              <a class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2" href={NEKOHA_URL} target="_blank" rel="noopener noreferrer">
+            <div className="col-12 col-md-auto">
+              <a className="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2" href={NEKOHA_URL} target="_blank" rel="noopener noreferrer">
                 <GithubMark size={16} />
                 <span>API Documentation</span>
               </a>

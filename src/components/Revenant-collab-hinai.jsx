@@ -1,3 +1,28 @@
+import { useEffect, useState } from "react";
+/**
+ * Media query for a viewer who has asked for less motion.
+ *
+ * The stylesheet already reacts to this by swapping the emblem to its still group, but CSS cannot
+ * stop the SMIL clocks it hides, so the component reads the same query to drop the animated group
+ * outright.
+ * @type {string}
+ */
+const CALM_QUERY = "(prefers-reduced-motion: reduce)";
+/**
+ * Reads {@link CALM_QUERY} once, right now.
+ *
+ * Used as the component's initial state as well as its subscription handler, because the
+ * unmatched value is the ANIMATED branch: settling this in an effect alone would build the SMIL
+ * clocks for one frame before tearing them down again, on exactly the machine that asked for no
+ * motion. The app renders client-side only (`createRoot`, never hydrated), so reading `matchMedia`
+ * during the initial render is safe; the `typeof window` guard is for a non-DOM test runner.
+ *
+ * @returns {boolean} `true` when the viewer has asked for reduced motion.
+ */
+function prefersCalm() {
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia(CALM_QUERY).matches;
+}
 /**
  * The single `d` attribute for the revenant skull: eight sub-paths, spelled out across eleven array
  * entries joined by spaces, since the cranium and jaw outline alone spans the first four entries.
@@ -26,14 +51,20 @@ const SKULL = [
 /**
  * Decorative skull that smears in and out of the graveyard fog.
  *
- * Renders {@link SKULL} twice. The `.gv-revenant__live` group is pushed through a turbulence plus
+ * Renders {@link SKULL} twice while motion is allowed. The `.gv-revenant__live` group is pushed through a turbulence plus
  * displacement filter whose `scale` is animated 150 -> ~20 -> 150 over 26s, so the skull starts as
  * unrecognisable noise, resolves into a face, then dissolves again; a matching 26s opacity animation
  * on the same group fades it so the resolve lands while it is most visible. The `.gv-revenant__still`
  * group is the same path with no filter, kept `display: none` by CSS until
  * `prefers-reduced-motion: reduce`, where the emblem variant swaps to it and the ambient variant is
- * hidden outright. That is why both groups are always in the DOM: the reduced-motion swap is done in
- * CSS, not here.
+ * hidden outright.
+ *
+ * Under {@link CALM_QUERY} the live group and its filter are left out of the DOM entirely rather
+ * than merely hidden, because a `display: none` group's SMIL clocks keep running; the still group is
+ * then the only thing rendered, which is exactly what the CSS swap was already showing. The query is
+ * read via {@link prefersCalm} for the very first render and then watched, so a reduced-motion
+ * viewer never gets even one frame of the animated group and toggling the preference restores or
+ * removes it without a reload.
  *
  * The gradient and filter ids are namespaced with `id` because SVG defs live in one document-wide
  * namespace, so two instances on the same page sharing an id would resolve to the same filter.
@@ -45,6 +76,20 @@ const SKULL = [
  * @returns {JSX.Element} An `aria-hidden` svg carrying no semantic content.
  */
 function Revenant({ id, className, variant = "ambient" }) {
+  const [calm, setCalm] = useState(prefersCalm);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return undefined;
+    const query = window.matchMedia(CALM_QUERY);
+    /**
+     * Copies the media query's current state into `calm`, adding or dropping the animated group.
+     *
+     * @returns {void}
+     */
+    const sync = () => setCalm(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
   const veil = `${id}-veil`;
   const ink = `${id}-ink`;
   return <svg
@@ -62,7 +107,7 @@ function Revenant({ id, className, variant = "ambient" }) {
           <stop className="gv-revenant__jaw" offset="100%" />
         </linearGradient>
 
-        <filter
+        {!calm && <filter
     id={veil}
     x="-75%"
     y="-70%"
@@ -99,10 +144,10 @@ function Revenant({ id, className, variant = "ambient" }) {
           </feDisplacementMap>
 
           <feGaussianBlur stdDeviation="0.7" />
-        </filter>
+        </filter>}
       </defs>
 
-      <g className="gv-revenant__live" filter={`url(#${veil})`}>
+      {!calm && <g className="gv-revenant__live" filter={`url(#${veil})`}>
         <path d={SKULL} fillRule="evenodd" fill={`url(#${ink})`} />
         <animate
     attributeName="opacity"
@@ -111,7 +156,7 @@ function Revenant({ id, className, variant = "ambient" }) {
     keyTimes="0;0.08;0.30;0.46;0.66;0.84;1"
     values="0;0.26;0.82;0.88;0.40;0;0"
   />
-      </g>
+      </g>}
 
       <g className="gv-revenant__still">
         <path d={SKULL} fillRule="evenodd" fill={`url(#${ink})`} />

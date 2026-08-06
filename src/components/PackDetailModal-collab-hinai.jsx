@@ -18,6 +18,17 @@ import {
 } from '../lib/packs-collab-hinai.js';
 
 /**
+ * Selector for the elements the dialog's focus trap is allowed to cycle through.
+ *
+ * Disabled buttons are excluded because a busy download button drops out of the tab order the
+ * moment it is clicked, and `tabindex="-1"` nodes are excluded because they are programmatic
+ * focus targets rather than tab stops.
+ *
+ * @type {string}
+ */
+const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
  * Orders a beatmapset's difficulties from lowest to highest PP on a copy of the array.
  *
  * Difficulties with no PP value are coerced to `Infinity` so they sink to the bottom of the
@@ -46,6 +57,9 @@ function sortedDiffs(set) {
  * by a retry prompt. The two busy flags are optimistic UI only, cleared by timers, because a
  * download is handed to the browser through a synthetic anchor and never reports completion.
  *
+ * Focus moves to the close button on mount and is then trapped inside the dialog, so tabbing
+ * cannot wander into the page behind an overlay that is already inert to the pointer.
+ *
  * @param {Object} props - Component props.
  * @param {Object} props.pack - Pack summary row from the grid (tag, name, author, date, pp_summary).
  * @param {() => void} props.onClose - Invoked on Escape, the close button, or a backdrop mousedown.
@@ -61,6 +75,7 @@ export default function PackDetailModal({ pack, onClose }) {
     const [busySets, setBusySets] = useState(() => []);
     const [zipBusy, setZipBusy] = useState(false);
     const closeRef = useRef(null);
+    const dialogRef = useRef(null);
 
     useEffect(() => {
         let active = true;
@@ -93,7 +108,39 @@ export default function PackDetailModal({ pack, onClose }) {
     const handleClose = useCallback(() => onClose(), [onClose]);
 
     useEffect(() => {
-        const onKeyDown = e => { if (e.key === 'Escape') handleClose(); };
+        /**
+         * Closes the dialog on Escape and keeps Tab focus cycling inside it.
+         *
+         * Focus that has escaped the dialog (or never entered it) is pulled back to the first
+         * focusable element, and the two edges wrap onto each other so neither Tab nor
+         * Shift+Tab can reach the page behind the overlay.
+         *
+         * @param {KeyboardEvent} e - The document-level keydown event.
+         * @returns {void}
+         */
+        const onKeyDown = e => {
+            if (e.key === 'Escape') {
+                handleClose();
+                return;
+            }
+            if (e.key !== 'Tab') return;
+            const dialog = dialogRef.current;
+            if (!dialog) return;
+            const focusable = dialog.querySelectorAll(FOCUSABLE_SELECTOR);
+            if (focusable.length === 0) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (!dialog.contains(document.activeElement)) {
+                e.preventDefault();
+                first.focus();
+            } else if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        };
         document.addEventListener('keydown', onKeyDown);
         return () => document.removeEventListener('keydown', onKeyDown);
     }, [handleClose]);
@@ -149,7 +196,7 @@ export default function PackDetailModal({ pack, onClose }) {
 
     return (
         <div className="pack-modal" onMouseDown={e => { if (e.target === e.currentTarget) handleClose(); }}>
-            <div className="pack-modal__dialog cbg-dark rounded-3" role="dialog" aria-modal="true" aria-label={pack.name}>
+            <div className="pack-modal__dialog cbg-dark rounded-3" ref={dialogRef} role="dialog" aria-modal="true" aria-label={pack.name}>
                 <div className="pack-modal__head">
                     <div className="flex-grow-1 overflow-hidden">
                         <div className="d-flex align-items-center gap-2 mb-1">

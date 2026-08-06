@@ -1,6 +1,8 @@
 import { MIRROR } from './mirror-collab-hinai.js';
+import { getJson } from './http-collab-hinai.js';
 
 const COLLAB = `${MIRROR}/api/v1/nekoha-collab`;
+const UPSTREAM_LABEL = 'collab API';
 
 export const PAGE_SIZE = 24;
 export const PP_CAP = 2000;
@@ -240,29 +242,6 @@ export function buildSearchQuery({ mod, status, sort, mode, term, page, ppRange,
 }
 
 /**
- * Fetch JSON from the collab API, with an abort signal and a readable failure.
- *
- * The body is read as text and parsed by hand instead of using `res.json()`
- * so that an HTML error page from an upstream proxy surfaces as a clear
- * "non-JSON response" instead of a raw SyntaxError about an unexpected '<'.
- *
- * @param {string} url - Absolute URL to request.
- * @param {AbortSignal} [signal] - Signal used to cancel a superseded request.
- * @returns {Promise<any>} Parsed JSON payload.
- * @throws {Error} If the response status is not ok, or the body is not JSON.
- */
-async function getJson(url, signal) {
-    const res = await fetch(url, { signal, headers: { accept: 'application/json' } });
-    if (!res.ok) throw new Error(`request failed: ${res.status}`);
-    const body = await res.text();
-    try {
-        return JSON.parse(body);
-    } catch {
-        throw new Error('collab API returned a non-JSON response');
-    }
-}
-
-/**
  * Run a graveyard search against the collab API.
  *
  * @param {string} query - Query string from buildSearchQuery, without '?'.
@@ -270,7 +249,7 @@ async function getJson(url, signal) {
  * @returns {Promise<any>} Parsed search results payload.
  */
 export function searchGraveyard(query, signal) {
-    return getJson(`${COLLAB}/search?${query}`, signal);
+    return getJson(`${COLLAB}/search?${query}`, UPSTREAM_LABEL, signal);
 }
 
 /**
@@ -280,7 +259,7 @@ export function searchGraveyard(query, signal) {
  * @returns {Promise<any>} Parsed stats payload.
  */
 export function graveyardStats(signal) {
-    return getJson(`${COLLAB}/stats`, signal);
+    return getJson(`${COLLAB}/stats`, UPSTREAM_LABEL, signal);
 }
 
 /**
@@ -291,7 +270,7 @@ export function graveyardStats(signal) {
  * @returns {Promise<any>} Parsed beatmapset detail payload.
  */
 export function graveyardSet(setId, signal) {
-    return getJson(`${COLLAB}/s/${setId}`, signal);
+    return getJson(`${COLLAB}/s/${setId}`, UPSTREAM_LABEL, signal);
 }
 
 /**

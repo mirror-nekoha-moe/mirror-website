@@ -82,6 +82,7 @@
         radial-gradient(1px 1px at 158px 232px, rgba(207, 230, 255, 0.44), transparent),
         radial-gradient(1px 1px at 292px 204px, rgba(244, 249, 255, 0.52), transparent),
         radial-gradient(1px 1px at 10px 268px, rgba(142, 211, 255, 0.42), transparent);
+
     background-size: 320px 300px;
     animation: pkh-snow-far 46s linear infinite;
 }
@@ -95,6 +96,7 @@
         radial-gradient(1.7px 1.7px at 232px 118px, rgba(142, 211, 255, 0.66), transparent),
         radial-gradient(1.7px 1.7px at 20px 216px, rgba(244, 249, 255, 0.7), transparent),
         radial-gradient(1.7px 1.7px at 196px 244px, rgba(207, 230, 255, 0.62), transparent);
+
     background-size: 260px 280px;
     animation: pkh-snow-mid 29s linear infinite;
 }
@@ -106,6 +108,7 @@
         radial-gradient(2.6px 2.6px at 188px 128px, rgba(207, 230, 255, 0.85), transparent),
         radial-gradient(2.6px 2.6px at 36px 178px, rgba(244, 249, 255, 0.9), transparent),
         radial-gradient(2.6px 2.6px at 146px 212px, rgba(142, 211, 255, 0.8), transparent);
+
     background-size: 220px 240px;
     animation: pkh-snow-near 17s linear infinite;
 }
@@ -199,15 +202,17 @@
         height: 82%;
         z-index: 4;
         pointer-events: none;
-            background:
+        background:
             radial-gradient(44% 60% at 50% -8%, rgba(244, 249, 255, 0.36) 0%, rgba(142, 211, 255, 0.12) 46%, transparent 76%),
             radial-gradient(18% 42% at 50% -6%, rgba(255, 255, 255, 0.24) 0%, transparent 72%);
+
         filter: blur(9px);
         animation: pkh-shaft 15s ease-in-out infinite;
     }
 
     &::before {
         @include nk-frost-ring($nk-panel-radius, 1.5px, 0.6);
+
         z-index: 7;
         animation: pkh-ring 16s ease-in-out infinite;
     }
@@ -347,7 +352,6 @@
     position: absolute;
     left: 0.5rem;
     bottom: 0.45rem;
-    z-index: 6;
     display: inline-flex;
     align-items: center;
     gap: 0.34rem;
@@ -359,6 +363,7 @@
     padding: 0.18rem 0.48rem;
     border-radius: 4px;
     @include nk-rime-glass(0.55);
+
     backdrop-filter: blur(3px);
     z-index: 8;
 }
@@ -598,8 +603,8 @@
 }
 
 @keyframes pkh-feather-sway {
-    0%, 100% { margin-left: 0; }
-    50%      { margin-left: var(--fsw); }
+    0%, 100% { translate: 0; }
+    50%      { translate: var(--fsw); }
 }
 
 @keyframes pkh-sweep {

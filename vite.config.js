@@ -30,7 +30,12 @@ async function apiVersion() {
  * specifically so `apiVersion()` can be awaited before `define` is assembled:
  * `__BUILD_DATE__` and `__NEKOHA_API_VERSION__` are compile-time literal
  * substitutions, so both values are frozen into the bundle at build time rather
- * than read at runtime. Also silences three Sass 1.80+ deprecations (`import`,
+ * than read at runtime. Vite calls this factory for `serve` as well as `build`,
+ * so the remote version fetch is restricted to `command === 'build'` and
+ * `vite dev` uses `API_VERSION_FALLBACK` outright: an unreachable GitHub would
+ * otherwise stall dev startup for the full 4s timeout.
+ *
+ * Also silences three Sass 1.80+ deprecations (`import`,
  * `global-builtin`, `color-functions`) raised by the legacy `@import` chain in
  * `src/scss/` and by Bootstrap's own stylesheets, aliases `~bootstrap` to the
  * installed package so `@import '~bootstrap'` resolves, emits unhashed output
@@ -43,7 +48,7 @@ async function apiVersion() {
  *
  * @type {import('vite').UserConfigFnPromise}
  */
-export default defineConfig(async () => ({
+export default defineConfig(async ({ command }) => ({
     plugins: [react()],
     css: {
         preprocessorOptions: {
@@ -54,7 +59,7 @@ export default defineConfig(async () => ({
     },
     define: {
         __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
-        __NEKOHA_API_VERSION__: JSON.stringify(await apiVersion()),
+        __NEKOHA_API_VERSION__: JSON.stringify(command === 'build' ? await apiVersion() : API_VERSION_FALLBACK),
     },
     resolve: {
         alias: {

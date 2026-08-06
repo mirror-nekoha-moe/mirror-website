@@ -633,7 +633,7 @@ export default function BeatmapsetSearch() {
                 </div>
                 <div className="d-flex flex-column flex-md-row gap-2 position-relative" style={{ zIndex: 2 }}>
                     <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${set.id}`}>
-                        <span>Download {(set.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB</span>
+                        <span>Download {((set.mirror?.file_size ?? 0) / (1024 ** 2)).toFixed(2)} MB</span>
                         <FaDownload color="white" />
                     </a>
                     {set.video && (

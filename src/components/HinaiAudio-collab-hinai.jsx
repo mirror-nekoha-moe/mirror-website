@@ -310,9 +310,15 @@ export default function HinaiAudio({ setId, dense = false }) {
 
         if (dense) return undefined;
 
+        let alive = true;
         const ctrl = new AbortController();
-        fetchAudioStatus(setId, ctrl.signal).then(s => setQuality(s.cached ? 'full' : 'preview'));
-        return () => ctrl.abort();
+        fetchAudioStatus(setId, ctrl.signal).then(s => {
+            if (alive) setQuality(s.cached ? 'full' : 'preview');
+        });
+        return () => {
+            alive = false;
+            ctrl.abort();
+        };
     }, [setId, dense]);
 
     useEffect(() => {

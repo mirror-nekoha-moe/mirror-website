@@ -80,8 +80,8 @@ export default function PackCard({ pack, onOpen }) {
     const sets = (detail && detail.beatmapsets) || [];
     const tiles = sets.slice(0, COLLAGE_TILES);
     const summary = pack.pp_summary;
-    const minPp = summary ? summary.min_pp : null;
-    const maxPp = summary ? summary.max_pp : null;
+    const minPp = summary && summary.min_pp !== undefined ? summary.min_pp : null;
+    const maxPp = summary && summary.max_pp !== undefined ? summary.max_pp : null;
 
     const spanLo = minPp === null ? 0 : Math.min(100, (minPp / SPECTRUM_CEILING_PP) * 100);
     const spanHi = maxPp === null ? 0 : Math.min(100, (maxPp / SPECTRUM_CEILING_PP) * 100);

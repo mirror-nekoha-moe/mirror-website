@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
     EXCLUSIVE,
     MOD_TONES,
@@ -70,6 +70,11 @@ export default function HinaiPpPanel({ beatmapId, mode, maxCombo }) {
 
     const calcAbort = useRef(null);
     const debounceRef = useRef(null);
+
+    const fieldId = useId();
+    const accId = `${fieldId}-acc`;
+    const comboId = `${fieldId}-combo`;
+    const missId = `${fieldId}-miss`;
 
     const modsStr = useMemo(() => modsToWire(active), [active]);
 
@@ -292,11 +297,11 @@ export default function HinaiPpPanel({ beatmapId, mode, maxCombo }) {
 
                 <div className="hpp__acc">
                     <div className="hpp__acchead">
-                        <label htmlFor="hpp-acc">Accuracy</label>
+                        <label htmlFor={accId}>Accuracy</label>
                         <span className="hpp__accval">{accuracy.toFixed(2)}%</span>
                     </div>
                     <input
-                        id="hpp-acc"
+                        id={accId}
                         type="range"
                         className="form-range hpp__slider"
                         min="90"
@@ -321,11 +326,11 @@ export default function HinaiPpPanel({ beatmapId, mode, maxCombo }) {
 
                 <div className="hpp__fields">
                     <div className="hpp__field">
-                        <label htmlFor="hpp-combo">
+                        <label htmlFor={comboId}>
                             Combo {maxCombo > 0 && <span className="hpp__fieldmax">/ {maxCombo}</span>}
                         </label>
                         <input
-                            id="hpp-combo"
+                            id={comboId}
                             type="number"
                             className="form-control form-control-sm bg-dark text-white border-secondary"
                             min="0"
@@ -339,9 +344,9 @@ export default function HinaiPpPanel({ beatmapId, mode, maxCombo }) {
                         />
                     </div>
                     <div className="hpp__field">
-                        <label htmlFor="hpp-miss">Misses</label>
+                        <label htmlFor={missId}>Misses</label>
                         <input
-                            id="hpp-miss"
+                            id={missId}
                             type="number"
                             className="form-control form-control-sm bg-dark text-white border-secondary"
                             min="0"

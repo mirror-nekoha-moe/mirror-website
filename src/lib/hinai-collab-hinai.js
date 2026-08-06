@@ -308,13 +308,15 @@ export async function fetchPpCalc(beatmapId, opts, signal) {
 /**
  * Asks the mirror whether a set's full track is already cached, so the player can label
  * playback as full quality or a 30s preview and decide whether to keep polling.
- * Fails OPEN: any network error, non-ok response, or abort resolves to `{ cached: true }`
- * rather than rejecting, so an unreachable status endpoint degrades to "assume full" and
- * never leaves a permanent "preview" badge on the UI. Note the abort case resolves too,
- * so callers that abort on cleanup still receive a value and must guard their own state writes.
+ * Fails OPEN on genuine failures: a network error, a non-ok response, or a body that will not
+ * parse all resolve to `{ cached: true }` rather than rejecting, so an unreachable status
+ * endpoint degrades to "assume full" and never leaves a permanent "preview" badge on the UI.
+ * An ABORT is deliberately not folded into that: it resolves `{ cached: false, aborted: true }`,
+ * because a cancelled probe learned nothing and must not be reported as a cached track.
+ * Callers still receive a value in every case and must guard their own state writes.
  * @param {number|string} setId - Beatmap set id.
  * @param {AbortSignal} [signal] - Abort signal for effect cleanup.
- * @returns {Promise<{cached: boolean, bytes: number|null}>} Cache state and cached byte size when known.
+ * @returns {Promise<{cached: boolean, bytes: number|null, aborted?: boolean}>} Cache state, cached byte size when known, and `aborted` when the probe was cancelled.
  */
 export async function fetchAudioStatus(setId, signal) {
     try {
@@ -325,7 +327,8 @@ export async function fetchAudioStatus(setId, signal) {
         if (!res.ok) return { cached: true, bytes: null };
         const data = await res.json();
         return { cached: data && data.status === 'cached', bytes: num(data && data.size_bytes) };
-    } catch {
+    } catch (err) {
+        if (err && err.name === 'AbortError') return { cached: false, bytes: null, aborted: true };
         return { cached: true, bytes: null };
     }
 }
@@ -587,9 +590,9 @@ function saveBlob(blob, filename) {
  * does not exist, possibly with a `fallback` URL the server suggested), or `unavailable`
  * (network error or any other non-ok status, with `retryAfter` seconds when the server sent
  * that header). The mirror's `x-hinai-forensics` header is passed through on whichever failure
- * kind actually carries a response, so a network error has none. The one path that can still
- * reject is the success branch, where reading the body and handing it to the download manager
- * runs outside the try/catch.
+ * kind actually carries a response, so a network error has none. The success branch is guarded
+ * too: if reading the body or handing it to the download manager fails, that also resolves
+ * `unavailable` rather than rejecting.
  * @param {string} url - Artwork URL, normally built by {@link backgroundUrl} or {@link coverUrl}.
  * @param {string} filename - Filename to save as.
  * @returns {Promise<{kind: 'ok'} | {kind: 'none', message: string, fallback?: string, forensics?: string} | {kind: 'unavailable', message: string, retryAfter?: number, forensics?: string}>} Outcome for the UI to render.
@@ -603,8 +606,16 @@ export async function downloadArtwork(url, filename) {
     }
 
     if (res.ok) {
-        saveBlob(await res.blob(), filename);
-        return { kind: 'ok' };
+        try {
+            saveBlob(await res.blob(), filename);
+            return { kind: 'ok' };
+        } catch {
+            return {
+                kind: 'unavailable',
+                message: 'Could not save the artwork. Please try again.',
+                forensics: res.headers.get('x-hinai-forensics') || undefined,
+            };
+        }
     }
 
     let body = null;

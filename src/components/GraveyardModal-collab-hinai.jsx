@@ -23,8 +23,9 @@ import {
  *
  * @param {number|string} bytes - Raw size from the collab API, coerced with `Number`.
  * @returns {string|null} A string such as `"4.21 MB"`, or `null` when the value is not a finite
- *   positive number. The modal's only call site guards on `set.file_size` being truthy rather than
- *   on this `null`, so a truthy but unparseable size would still reach the label as `"null"`.
+ *   positive number. The modal's only call site guards on this `null` rather than on the raw
+ *   `file_size`, so a truthy but unparseable size drops the size from the download label instead of
+ *   printing `"(null)"`.
  */
 function formatBytes(bytes) {
     const value = Number(bytes);
@@ -129,6 +130,7 @@ export default function GraveyardModal({ seed, activeMod, onClose }) {
     }, [selected]);
 
     const cover = set && set.cover ? set.cover : seed.cover;
+    const downloadSize = set ? formatBytes(set.file_size) : null;
 
     return (
         <div className="gv-modal" onMouseDown={e => { if (e.target === e.currentTarget) handleClose(); }}>
@@ -160,7 +162,7 @@ export default function GraveyardModal({ seed, activeMod, onClose }) {
                 <div className="gv-modal__actions">
                     <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={graveyardDownloadUrl(seed.beatmapset_id)}>
                         <FaDownload size={11} />
-                        <span>Download .osz{set && set.file_size ? ` (${formatBytes(set.file_size)})` : ''}</span>
+                        <span>Download .osz{downloadSize ? ` (${downloadSize})` : ''}</span>
                     </a>
                     <a className="btn btn-sm btn-secondary d-flex align-items-center gap-2" href={`osu://s/${seed.beatmapset_id}`}>
                         <FaDownload size={11} color="black" />
@@ -206,7 +208,7 @@ export default function GraveyardModal({ seed, activeMod, onClose }) {
                             {selected && (
                                 <div className="gv-modal__attrs">
                                     {[
-                                        ['AR', selected.ar], ['OD', selected.od], ['CS', selected.cs], ['HP', selected.hp],
+                                        ['AR', Number(selected.ar)], ['OD', Number(selected.od)], ['CS', Number(selected.cs)], ['HP', Number(selected.hp)],
                                         ['BPM', Math.round(Number(selected.bpm) || 0)],
                                         ['Combo', `${formatCount(selected.max_combo)}x`],
                                         ['Length', formatLength(selected.total_length)],

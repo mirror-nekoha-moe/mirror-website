@@ -1,4 +1,14 @@
+import { useEffect, useState } from "react";
 import { SKULL } from "./Revenant-collab-hinai.jsx";
+/**
+ * The conditions under which this column is worth building at all.
+ *
+ * Mirrors the stylesheet, which hides `.gv-proc` below 1680px and under
+ * `prefers-reduced-motion`. Matching the two keeps the component from paying for
+ * SMIL timelines and two `feTurbulence` filters that CSS would then hide.
+ * @type {string}
+ */
+const PROC_QUERY = "(min-width: 1680px) and (prefers-reduced-motion: no-preference)";
 /**
  * Master period, in seconds, of the whole rise-and-scatter performance.
  *
@@ -194,6 +204,10 @@ const ASH = [
  * The whole thing is decorative and inert: the wrapper is `aria-hidden` and the
  * stylesheet pins it into the empty margin beside the 1400px content column,
  * hiding it entirely below 1680px, under `prefers-reduced-motion`, and in print.
+ * The component additionally refuses to render at all until {@link PROC_QUERY}
+ * matches, so on a narrow viewport or with reduced motion asked for there is no
+ * animation or filter to build in the first place; the match is re-evaluated on
+ * every media-query change, so resizing across 1680px mounts or unmounts it.
  *
  * Two instances mount at once, which drives most of the parameters. Every SVG
  * `<defs>` id is namespaced with `id` because filter/gradient/mask ids are
@@ -205,9 +219,24 @@ const ASH = [
  * @param {string} id - Unique prefix for this instance's SVG def ids; must differ per mounted column.
  * @param {"left"|"right"} side - Which gutter this column occupies; also selects `POSES.riser` vs `POSES.mourner`.
  * @param {number} [phase=0] - Seconds to offset the loop by. Applied as a negative SMIL `begin`, so the animation starts already this far in rather than waiting, letting the second column run out of step with the first.
- * @returns {JSX.Element} The fixed-position decorative column.
+ * @returns {JSX.Element|null} The fixed-position decorative column, or `null` while {@link PROC_QUERY} does not match.
  */
 function Procession({ id, side, phase = 0 }) {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return undefined;
+    const query = window.matchMedia(PROC_QUERY);
+    /**
+     * Copies the media query's current state into `visible`, mounting or unmounting the column.
+     *
+     * @returns {void}
+     */
+    const sync = () => setVisible(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+  if (!visible) return null;
   const pose = side === "left" ? POSES.riser : POSES.mourner;
   const veil = `${id}-veil`;
   const ink = `${id}-ink`;

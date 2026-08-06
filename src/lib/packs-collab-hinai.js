@@ -1,4 +1,7 @@
 import { MIRROR } from './mirror-collab-hinai.js';
+import { getJson } from './http-collab-hinai.js';
+
+const UPSTREAM_LABEL = 'mirror';
 
 export const PP_MAX = 2000;
 export const PP_STEP = 25;
@@ -106,29 +109,6 @@ export function packsQuery({ type, mode, search, cursor, ppRange }) {
 }
 
 /**
- * Shared JSON fetch helper for every mirror call in this module.
- *
- * The body is read as text and parsed by hand rather than via `res.json()` so that an HTML
- * error page slipping through with a 200 (a proxy interstitial, a Cloudflare challenge) fails
- * with a legible "non-JSON response" instead of a raw `SyntaxError` in the console.
- *
- * @param {string} url - Absolute URL to request.
- * @param {AbortSignal} [signal] - Optional abort signal; rejects with `AbortError` when fired.
- * @returns {Promise<any>} The parsed JSON body.
- * @throws {Error} On a non-2xx status, or when the body is not valid JSON.
- */
-async function getJson(url, signal) {
-    const res = await fetch(url, { signal, headers: { accept: 'application/json' } });
-    if (!res.ok) throw new Error(`request failed: ${res.status}`);
-    const body = await res.text();
-    try {
-        return JSON.parse(body);
-    } catch {
-        throw new Error('mirror returned a non-JSON response');
-    }
-}
-
-/**
  * Requests one page of beatmap packs from the mirror.
  *
  * @param {string} query - Encoded querystring, normally straight from `packsQuery`.
@@ -136,7 +116,7 @@ async function getJson(url, signal) {
  * @returns {Promise<{beatmap_packs?: object[], total?: number, cursor_string?: string}>} The pack page; `cursor_string` is absent on the last page.
  */
 export function fetchPacks(query, signal) {
-    return getJson(`${MIRROR}/v3/osu/packs?${query}`, signal);
+    return getJson(`${MIRROR}/v3/osu/packs?${query}`, UPSTREAM_LABEL, signal);
 }
 
 /**
@@ -146,7 +126,7 @@ export function fetchPacks(query, signal) {
  * @returns {Promise<object>} Corpus-wide pack statistics (totals, per-mode breakdown).
  */
 export function fetchPackStats(signal) {
-    return getJson(`${MIRROR}/v3/osu/packs/stats`, signal);
+    return getJson(`${MIRROR}/v3/osu/packs/stats`, UPSTREAM_LABEL, signal);
 }
 
 const detailCache = new Map();
@@ -183,7 +163,7 @@ export function fetchPackDetail(tag) {
     const pending = detailInFlight.get(tag);
     if (pending) return pending;
 
-    const request = getJson(`${MIRROR}/v3/osu/packs/${encodeURIComponent(tag)}`)
+    const request = getJson(`${MIRROR}/v3/osu/packs/${encodeURIComponent(tag)}`, UPSTREAM_LABEL)
         .then(data => {
             detailCache.set(tag, data);
             detailInFlight.delete(tag);
@@ -243,15 +223,20 @@ export function packTypeLabel(pack) {
  *
  * Buckets are green under 150, gold under 300, orange under 500, pink above. A missing value
  * gets the neutral grey rather than the lowest tier, so "not calculated" never reads as "easy".
+ * The value is coerced and `Number.isFinite`-guarded before the tier comparisons for the same
+ * reason: an unparseable string would otherwise fail every `<` test and fall through to the
+ * top tier, painting garbage as the hardest possible map.
  *
- * @param {number|null|undefined} pp - PP value, typically a map's peak or nomod PP.
+ * @param {number|string|null|undefined} pp - PP value, typically a map's peak or nomod PP.
  * @returns {string} Hex colour string.
  */
 export function ppColor(pp) {
     if (pp === null || pp === undefined) return '#636378';
-    if (pp < 150) return '#88da20';
-    if (pp < 300) return '#ffd700';
-    if (pp < 500) return '#ff7043';
+    const value = Number(pp);
+    if (!Number.isFinite(value)) return '#636378';
+    if (value < 150) return '#88da20';
+    if (value < 300) return '#ffd700';
+    if (value < 500) return '#ff7043';
     return '#ff66ab';
 }
 

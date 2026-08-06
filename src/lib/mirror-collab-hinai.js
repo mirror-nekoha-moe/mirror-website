@@ -56,11 +56,12 @@ let healthInFlight = null;
 /**
  * Fetches `/health` from the mirror once per page load and memoises the result.
  *
- * Three-state on purpose. A payload is only cached when it carries a `service` field, so a
- * shaped-but-wrong body (an error page, an HTML interstitial) resolves to `null` and is NOT
- * cached, letting a later caller retry. Network/JSON failures likewise resolve `null` instead
- * of rejecting, because every caller renders this as an optional status badge and must never
- * be able to break the page. Concurrent callers share the single in-flight promise.
+ * Three-state on purpose. The body is only read on a 2xx, and a payload is only cached when it
+ * carries a `service` field, so a non-ok response or a shaped-but-wrong body (an error page, an
+ * HTML interstitial) resolves to `null` and is NOT cached, letting a later caller retry.
+ * Network/JSON failures likewise resolve `null` instead of rejecting, because every caller
+ * renders this as an optional status badge and must never be able to break the page.
+ * Concurrent callers share the single in-flight promise.
  *
  * @returns {Promise<object|null>} The health payload, or `null` if unavailable/unrecognised.
  */
@@ -69,7 +70,7 @@ export function fetchMirrorHealth() {
     if (healthInFlight) return healthInFlight;
 
     healthInFlight = fetch(`${MIRROR}/health`, { headers: { accept: 'application/json' } })
-        .then(res => res.json())
+        .then(res => (res.ok ? res.json() : null))
         .then(payload => {
             healthCache = payload && payload.service ? payload : null;
             healthInFlight = null;

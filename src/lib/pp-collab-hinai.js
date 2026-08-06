@@ -212,13 +212,15 @@ function backoffMs(res) {
  * Performs a single batch request, capped at TIMEOUT_MS by an AbortController.
  * It never throws: a network failure, an abort or malformed JSON all come back
  * as a retryable outcome, 429 and 5xx come back as a cooldown, and any other
- * non-ok status is a silent give-up (no retry, no cooldown) since retrying a
- * 4xx would just repeat the same rejection.
+ * non-ok status comes back flagged `fatal` since retrying a 4xx would just
+ * repeat the same rejection.
  *
  * @param {string} url - Fully built batch URL.
- * @returns {Promise<{rows?: Object, missing?: Array|null, retry: boolean, cool: number}>}
+ * @returns {Promise<{rows?: Object, missing?: Array|null, retry: boolean, cool: number, fatal?: boolean}>}
  *   `rows` is present only on success and is `{}` when the payload had no results;
- *   `retry` asks the caller to try again; `cool` is the cooldown to apply in ms.
+ *   `retry` asks the caller to try again; `cool` is the cooldown to apply in ms;
+ *   `fatal` marks a rejection no retry can fix, which the caller must pin so the
+ *   same doomed batch is not re-sent on the next tick.
  */
 async function attemptChunk(url) {
     const ctrl = new AbortController();
@@ -229,7 +231,7 @@ async function attemptChunk(url) {
             signal: ctrl.signal,
         });
         if (res.status === 429 || res.status >= 500) return { retry: false, cool: backoffMs(res) };
-        if (!res.ok) return { retry: false, cool: 0 };
+        if (!res.ok) return { retry: false, cool: 0, fatal: true };
 
         const data = await res.json();
         return {
@@ -250,14 +252,17 @@ async function attemptChunk(url) {
  * mods=NM. It allows 1 + RETRY_DELAYS.length attempts and bails out early when
  * the failure is not retryable or when a cooldown started while it was retrying.
  * Any cooldown is folded into the module-wide coolUntil so every caller backs
- * off together. The finally block always clears the inflight entries for these
- * ids, otherwise a failed batch would leave those keys permanently wedged behind
- * a promise that will never be retried.
+ * off together. A fatal response (a 4xx no retry can fix) pins every id in the
+ * batch as a miss on the way out, because a cooldown is deliberately not applied
+ * to it and without a pin ppRetryAt would report "now" and re-send the same
+ * doomed batch on the caller's very next tick. The finally block always clears
+ * the inflight entries for these ids, otherwise a failed batch would leave those
+ * keys permanently wedged behind a promise that will never be retried.
  *
  * @param {number|string} mode - osu! mode int for this batch.
  * @param {Array<number|string>} ids - Beatmap ids to resolve, already capped at BATCH_MAX.
  * @returns {Promise<boolean>} True when a response was applied to the cache, false when
- *   the batch gave up without settling anything.
+ *   the batch gave up without settling any pp value, pinned misses included.
  */
 async function requestChunk(mode, ids) {
     const url = `${MIRROR}/v3/osu/pp/batch?ids=${ids.join(',')}&mode=${mode}&mods=NM`;
@@ -268,6 +273,11 @@ async function requestChunk(mode, ids) {
             if (out.rows) {
                 settleChunk(mode, ids, out.rows, out.missing);
                 return true;
+            }
+
+            if (out.fatal) {
+                settleChunk(mode, ids, {}, null);
+                return false;
             }
 
             if (out.cool > 0) coolUntil = Math.max(coolUntil, Date.now() + out.cool);

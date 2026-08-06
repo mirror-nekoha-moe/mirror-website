@@ -159,6 +159,7 @@ export default function BeatmapSet() {
     const descRef = useRef(null);
 
     useEffect(() => {
+        let active = true;
         /**
          * Fetch the beatmapset named by the current route id into component state.
          *
@@ -166,7 +167,14 @@ export default function BeatmapSet() {
          * straight off the URL. Difficulties are sorted descending by star rating, which makes
          * the hardest diff both the first row of the picker and the initial selection.
          *
-         * @returns {Promise<void>} Resolves once loading state has settled.
+         * Every state write that happens after the await is gated on the effect-scoped `active`
+         * flag, which the effect cleanup clears. Navigating between two beatmapset routes can
+         * otherwise let the older request resolve last and paint the previous set under the new
+         * URL.
+         *
+         * @returns {Promise<void>} Resolves once the request has settled. Loading state is only
+         * cleared when this run is still the active one; a superseded run deliberately leaves it
+         * set, so the newer request owns the spinner.
          */
         const fetchBeatmapset = async () => {
             setLoading(true);
@@ -174,16 +182,18 @@ export default function BeatmapSet() {
             try {
                 if (!/^\d+$/.test(id)) { setError('Invalid beatmapset ID'); return; }
                 const res = await axios.get(`/api/beatmapset/${id}`);
+                if (!active) return;
                 const beatmaps = res.data.beatmaps.slice().sort((a, b) => b.difficulty_rating - a.difficulty_rating);
                 setData({ ...res.data, beatmaps });
                 setSelectedDiff(beatmaps[0]);
             } catch {
-                setError('Failed to load beatmapset');
+                if (active) setError('Failed to load beatmapset');
             } finally {
-                setLoading(false);
+                if (active) setLoading(false);
             }
         };
         fetchBeatmapset();
+        return () => { active = false; };
     }, [id]);
 
     useEffect(() => {
@@ -264,7 +274,7 @@ export default function BeatmapSet() {
 
                     <div className="d-flex flex-wrap align-items-center gap-2 mt-2">
                         <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${data.id}`}>
-                            <FaDownload /> Download {(data.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB
+                            <FaDownload /> Download {((data.mirror?.file_size ?? 0) / (1024 ** 2)).toFixed(2)} MB
                         </a>
                         {data.video && (
                             <a className="btn btn-sm btn-outline-success d-flex align-items-center gap-2" href={`/api/download/${data.id}?noVideo=1`} title="Download without video">
@@ -371,7 +381,7 @@ export default function BeatmapSet() {
                                     <span className="text-secondary">Difficulties</span><span>{data.mirror?.beatmap_count}</span>
                                 </div>
                                 <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">File Size</span><span>{(data.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB</span>
+                                    <span className="text-secondary">File Size</span><span>{((data.mirror?.file_size ?? 0) / (1024 ** 2)).toFixed(2)} MB</span>
                                 </div>
                                 {data.bpm && (
                                     <div className="d-flex justify-content-between">

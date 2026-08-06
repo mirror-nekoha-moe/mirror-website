@@ -9,6 +9,17 @@ const FIGURE = '/assets/collab-hinai/packs-hero-figure-collab-hinai.webp';
 const LOOP_POSTER = '/assets/collab-hinai/packs-hero-loop-poster-collab-hinai.webp';
 const LOOP_GIF = '/assets/collab-hinai/packs-hero-loop-collab-hinai.gif';
 
+/**
+ * Viewport query deciding whether the animated character loop is worth downloading.
+ *
+ * This is the exact complement of the `.pkh__ch--loop { display: none }` rule inside the
+ * `@media (max-width: 1200px)` block of `src/scss/_packs-hero-collab-hinai.scss`, and the two
+ * MUST be changed together: raise the SCSS breakpoint alone and the GIF is fetched for a figure
+ * that is never painted; raise this alone and the loop stays frozen on its poster at a width
+ * where the layout still shows it.
+ *
+ * @type {string}
+ */
 const LOOP_MIN_WIDTH = '(min-width: 1201px)';
 
 const FEATHERS = [

@@ -32,6 +32,8 @@ const STATUS_LABELS = {
 
 const MODE_LABELS = { osu: 'osu!', taiko: 'Taiko', fruits: 'Catch', mania: 'Mania' };
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), iframe, [tabindex]:not([tabindex="-1"])';
+
 /**
  * Format a timestamp as `D Mon YYYY` for the modal's date strip.
  *
@@ -74,6 +76,8 @@ function sortDiffs(list) {
  * caller already had, so the dialog paints immediately and the fetched payload is merged over
  * it when it lands. Mounting locks body scroll, focuses the close button, records a view and
  * then reads engagement counts, in that order so the view is reflected in the numbers shown.
+ * Tab is contained: it cycles between the first and last focusable control instead of walking
+ * out into the page behind the backdrop.
  * Escape closes; Left/Right step difficulty but are ignored while a form control has focus.
  * The difficulty tabs list easiest first, yet the default selection is the LAST entry, i.e.
  * the hardest diff, which is the one people come to look at.
@@ -93,6 +97,7 @@ export default function HinaiInfoModal({ seed, onClose }) {
     const [artworkBusy, setArtworkBusy] = useState(null);
     const [bgPreviewOk, setBgPreviewOk] = useState(true);
     const closeRef = useRef(null);
+    const dialogRef = useRef(null);
 
     /**
      * Dismiss the dialog. Wrapped in `useCallback` so the Escape-key effect below keeps a
@@ -101,6 +106,33 @@ export default function HinaiInfoModal({ seed, onClose }) {
      * @returns {void}
      */
     const handleClose = useCallback(() => onClose(), [onClose]);
+
+    /**
+     * Keep Tab inside the dialog by wrapping focus from the last control back to the first,
+     * and from the first back to the last on Shift+Tab.
+     *
+     * The focusable list is re-read on every press rather than cached, because the dialog's
+     * contents change under the user: the artwork buttons go `disabled` mid-download and the
+     * josu and advanced sections mount and unmount as they are expanded. Anything other than
+     * the two edge cases is left alone so normal tabbing inside the dialog is untouched.
+     *
+     * @param {React.KeyboardEvent} e - Keydown event bubbling from inside the dialog.
+     * @returns {void}
+     */
+    const trapTab = useCallback(e => {
+        if (e.key !== 'Tab' || !dialogRef.current) return;
+        const focusable = dialogRef.current.querySelectorAll(FOCUSABLE);
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+        }
+    }, []);
 
     useEffect(() => {
         /**
@@ -226,7 +258,14 @@ export default function HinaiInfoModal({ seed, onClose }) {
 
     return (
         <div className="hinf" onMouseDown={e => { if (e.target === e.currentTarget) handleClose(); }}>
-            <div className="hinf__dialog cbg-dark rounded-3" role="dialog" aria-modal="true" aria-label={set.title}>
+            <div
+                className="hinf__dialog cbg-dark rounded-3"
+                role="dialog"
+                aria-modal="true"
+                aria-label={set.title}
+                ref={dialogRef}
+                onKeyDown={trapTab}
+            >
                 <div
                     className="hinf__head"
                     style={{ backgroundImage: `url('${coverArt(set.id, 'cover')}')` }}
@@ -464,6 +503,7 @@ export default function HinaiInfoModal({ seed, onClose }) {
                                             src={josuUrl(active.id)}
                                             title="josu beatmap viewer"
                                             allow="autoplay; screen-wake-lock"
+                                            sandbox="allow-scripts allow-same-origin"
                                             loading="lazy"
                                         />
                                         <div className="hinf__josufoot">
@@ -583,7 +623,7 @@ export default function HinaiInfoModal({ seed, onClose }) {
                                 type="button"
                                 className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
                                 onClick={() =>
-                                    window.open(josuUrl(active.id), 'josu-viewer', 'width=1280,height=800,menubar=no,toolbar=no,location=no,status=no')
+                                    window.open(josuUrl(active.id), 'josu-viewer', 'width=1280,height=800,menubar=no,toolbar=no,location=no,status=no,noopener')
                                 }
                                 title="Pop this difficulty out into the josu viewer"
                             >
