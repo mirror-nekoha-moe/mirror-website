@@ -11,7 +11,7 @@ import {
     isFavorited,
     previewFallback,
     setFavorite,
-    toggleBeatmapLike,
+    toggleArtLike,
     toggleStoryboardLike,
 } from '../lib/hinai-collab-hinai.js';
 
@@ -28,19 +28,19 @@ const KINDS = {
         titleOn: 'Remove from hinai music favourites',
         titleOff: 'Favourite this song on mirror.hinamizawa.ai',
     },
-    map: {
-        label: 'Like map',
-        onLabel: 'Liked map',
+    art: {
+        label: 'Like Art',
+        onLabel: 'Liked Art',
         read: async setId => {
             const e = await getBeatmapEngagement(setId);
             return e ? { favorited: e.liked, count: e.likes } : null;
         },
         write: async setId => {
-            const r = await toggleBeatmapLike(setId);
+            const r = await toggleArtLike(setId);
             return { favorited: r.liked, count: r.count };
         },
-        titleOn: 'Remove your like on mirror.hinamizawa.ai',
-        titleOff: 'Like this beatmap on mirror.hinamizawa.ai',
+        titleOn: 'Remove your art like on mirror.hinamizawa.ai',
+        titleOff: 'Like this beatmap\u2019s artwork on mirror.hinamizawa.ai',
     },
     storyboard: {
         label: 'Like storyboard',

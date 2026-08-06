@@ -185,30 +185,8 @@ export default function HinaiInfoModal({ seed, onClose }) {
                         {set.language && set.language.name && <span className="hinf__pillmeta">{set.language.name}</span>}
                     </div>
 
-                    <div className="hinf__engage">
-                        <FavoriteButton setId={set.id} kind="map" />
-                        {set.storyboard && <FavoriteButton setId={set.id} kind="storyboard" />}
-                        {engagement && (
-                            <span className="hinf__engagestats">
-                                <span className="hinf__stat">
-                                    <b>{compact(engagement.views)}</b>
-                                    <span className="hinf__statk">views</span>
-                                </span>
-                                <span className="hinf__stat">
-                                    <b>{compact(engagement.uniqueViewers)}</b>
-                                    <span className="hinf__statk">visitors</span>
-                                </span>
-                            </span>
-                        )}
-                    </div>
-
                     <section className="hinf__section">
-                        <h3 className="hinf__sectiontitle">
-                            Artwork
-                            <span className="hinf__sectionnote">
-                                straight from mirror.hinamizawa.ai, never from osu
-                            </span>
-                        </h3>
+                        <h3 className="hinf__sectiontitle">Artwork</h3>
 
                         <div className="hinf__artgrid">
                             <div className="hinf__arttile">
@@ -279,6 +257,23 @@ export default function HinaiInfoModal({ seed, onClose }) {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="hinf__engage">
+                            <FavoriteButton setId={set.id} kind="art" />
+                            {set.storyboard && <FavoriteButton setId={set.id} kind="storyboard" />}
+                            {engagement && (
+                                <span className="hinf__engagestats">
+                                    <span className="hinf__stat">
+                                        <b>{compact(engagement.views)}</b>
+                                        <span className="hinf__statk">views</span>
+                                    </span>
+                                    <span className="hinf__stat">
+                                        <b>{compact(engagement.uniqueViewers)}</b>
+                                        <span className="hinf__statk">visitors</span>
+                                    </span>
+                                </span>
+                            )}
                         </div>
 
                         {artwork && (
