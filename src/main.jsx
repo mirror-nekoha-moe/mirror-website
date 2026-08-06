@@ -6,10 +6,13 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 // Components
 import Navbar from './components/navbar.jsx'
 import Footer from './components/footer.jsx'
+import Snowfall, { SnowfallFront } from './components/Snowfall-collab-hinai.jsx'
 
 // Pages
 import Index from './pages/index.jsx'
 import Search from './pages/search.jsx'
+import Packs from './pages/packs-collab-hinai.jsx'
+import Graveyard from './pages/graveyard-collab-hinai.jsx'
 // import Monitor from './pages/monitor.jsx'
 import Error from './pages/error.jsx'
 import BeatmapSet from './pages/beatmapset.jsx';
@@ -26,10 +29,13 @@ import './scss/theme.scss'
 createRoot(document.getElementById('root')).render(
     <StrictMode>
         <BrowserRouter>
+            <Snowfall />
             <Navbar />
             <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/search" element={<Search />} />
+                <Route path="/packs" element={<Packs />} />
+                <Route path="/graveyard" element={<Graveyard />} />
                 {/* <Route path="/monitor" element={<Monitor />} /> */}
                 <Route path="/beatmapset/:id" element={<BeatmapSet />} />
                 <Route path="/request" element={<Request />} />
@@ -38,6 +44,7 @@ createRoot(document.getElementById('root')).render(
                 <Route path="*" element={<Error />} />
             </Routes>
             <Footer />
+            <SnowfallFront />
         </BrowserRouter>
     </StrictMode>,
 )

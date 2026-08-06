@@ -1,0 +1,185 @@
+.nksnow {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    overflow: hidden;
+    contain: strict;
+}
+
+.nksnow--front {
+    z-index: 5;
+}
+
+.nksnow--front .nksnow__sheet--near {
+    opacity: 0.72;
+}
+
+.nksnow--front .nksnow__sheet--mid {
+    opacity: 0.5;
+}
+
+.nksnow__wash {
+    position: absolute;
+    inset: -14%;
+    background:
+        radial-gradient(40% 34% at 18% 14%, rgba(0, 206, 255, 0.16) 0%, transparent 68%),
+        radial-gradient(46% 40% at 82% 24%, rgba(124, 224, 211, 0.11) 0%, transparent 70%),
+        radial-gradient(52% 46% at 60% 88%, rgba(74, 159, 216, 0.13) 0%, transparent 72%),
+        radial-gradient(38% 32% at 8% 74%, rgba(207, 230, 255, 0.07) 0%, transparent 70%);
+    will-change: opacity;
+    animation: nksnow-wash 38s ease-in-out infinite;
+}
+
+.nksnow__horizon {
+    position: absolute;
+    inset: auto 0 0;
+    height: 42vh;
+    background: linear-gradient(0deg, rgba(0, 206, 255, 0.06) 0%, rgba(124, 224, 211, 0.02) 42%, transparent 100%);
+}
+
+.nksnow__sheet {
+    position: absolute;
+    top: calc(-10% - var(--tile));
+    right: calc(-4% - var(--slack-r, 0px));
+    bottom: -10%;
+    left: calc(-4% - var(--slack-l, 0px));
+    will-change: transform, translate;
+    transform: translate3d(0, 0, 0);
+    translate: 0 0;
+}
+
+.nksnow__sheet--far {
+    --tile: 340px;
+    --slack-l: 360px;
+
+    background-image:
+        radial-gradient(1px 1px at 28px 44px, rgba(244, 249, 255, 0.55), transparent),
+        radial-gradient(1px 1px at 132px 108px, rgba(207, 230, 255, 0.45), transparent),
+        radial-gradient(1px 1px at 214px 32px, rgba(244, 249, 255, 0.5), transparent),
+        radial-gradient(1px 1px at 296px 152px, rgba(142, 211, 255, 0.42), transparent),
+        radial-gradient(1px 1px at 74px 208px, rgba(244, 249, 255, 0.46), transparent),
+        radial-gradient(1px 1px at 178px 262px, rgba(207, 230, 255, 0.4), transparent),
+        radial-gradient(1px 1px at 328px 226px, rgba(244, 249, 255, 0.48), transparent),
+        radial-gradient(1px 1px at 12px 296px, rgba(142, 211, 255, 0.38), transparent);
+    background-size: 360px 340px;
+    animation:
+        nksnow-far-y 62s linear infinite,
+        nksnow-far-x 485s linear infinite;
+}
+
+.nksnow__sheet--mid {
+    --tile: 320px;
+    --slack-r: 300px;
+
+    background-image:
+        radial-gradient(1.6px 1.6px at 54px 68px, rgba(244, 249, 255, 0.72), transparent),
+        radial-gradient(1.6px 1.6px at 196px 26px, rgba(207, 230, 255, 0.62), transparent),
+        radial-gradient(1.6px 1.6px at 122px 186px, rgba(244, 249, 255, 0.66), transparent),
+        radial-gradient(1.6px 1.6px at 262px 132px, rgba(142, 211, 255, 0.58), transparent),
+        radial-gradient(1.6px 1.6px at 24px 244px, rgba(244, 249, 255, 0.62), transparent),
+        radial-gradient(1.6px 1.6px at 224px 276px, rgba(207, 230, 255, 0.54), transparent);
+    background-size: 300px 320px;
+    animation:
+        nksnow-mid-y 41s linear infinite,
+        nksnow-mid-x 198s linear infinite;
+}
+
+.nksnow__sheet--near {
+    --tile: 270px;
+    --slack-l: 250px;
+
+    background-image:
+        radial-gradient(2.4px 2.4px at 82px 52px, rgba(244, 249, 255, 0.9), transparent),
+        radial-gradient(2.4px 2.4px at 212px 146px, rgba(207, 230, 255, 0.78), transparent),
+        radial-gradient(2.4px 2.4px at 40px 202px, rgba(244, 249, 255, 0.84), transparent),
+        radial-gradient(2.4px 2.4px at 166px 244px, rgba(142, 211, 255, 0.72), transparent);
+    background-size: 250px 270px;
+    animation:
+        nksnow-near-y 26s linear infinite,
+        nksnow-near-x 74s linear infinite;
+}
+
+.nksnow__feather {
+    position: absolute;
+    top: -14vh;
+    left: var(--fx);
+    width: var(--fs);
+    animation: nksnow-fall var(--fd) linear infinite;
+    animation-delay: var(--fdl);
+    will-change: transform;
+}
+
+.nksnow__feather-in {
+    display: block;
+    animation:
+        nksnow-sway calc(var(--fd) / 4.5) ease-in-out infinite,
+        nksnow-spin var(--fr) linear infinite;
+    animation-delay: var(--fdl), var(--fdl);
+
+    svg {
+        display: block;
+        width: 100%;
+        height: auto;
+        opacity: 0.9;
+        filter: drop-shadow(0 0 5px rgba(207, 230, 255, 0.45));
+    }
+}
+
+@keyframes nksnow-wash {
+    0%, 100% { opacity: 0.72; }
+    50%      { opacity: 1; }
+}
+
+@keyframes nksnow-far-y  { to { transform: translate3d(0, 340px, 0); } }
+@keyframes nksnow-mid-y  { to { transform: translate3d(0, 320px, 0); } }
+@keyframes nksnow-near-y { to { transform: translate3d(0, 270px, 0); } }
+
+@keyframes nksnow-far-x  { to { translate: 360px 0; } }
+@keyframes nksnow-mid-x  { to { translate: -300px 0; } }
+@keyframes nksnow-near-x { to { translate: 250px 0; } }
+
+@keyframes nksnow-fall {
+    0%   { opacity: 0; transform: translate3d(0, 0, 0); }
+    6%   { opacity: 1; }
+    92%  { opacity: 0.85; }
+    100% { opacity: 0; transform: translate3d(var(--fdrift), 128vh, 0); }
+}
+
+@keyframes nksnow-sway {
+    0%, 100% { translate: 0 0; }
+    50%      { translate: var(--fsw) 0; }
+}
+
+@keyframes nksnow-spin {
+    from { rotate: var(--fr0); }
+    to   { rotate: calc(var(--fr0) + var(--fdir) * 360deg); }
+}
+
+@media (max-width: 820px) {
+    .nksnow__feather:nth-of-type(n + 7) {
+        display: none;
+    }
+
+    .nksnow__sheet--near {
+        opacity: 0.6;
+    }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nksnow__wash,
+    .nksnow__sheet {
+        animation: none;
+    }
+
+    .nksnow__feather {
+        display: none;
+    }
+}
+
+@media print {
+    .nksnow {
+        display: none;
+    }
+}

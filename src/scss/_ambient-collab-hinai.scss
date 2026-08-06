@@ -1,0 +1,184 @@
+.gv-mist {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: var(--mist-blend, normal);
+
+  &__tint {
+    flood-color: var(--gv-fog);
+    flood-opacity: 1;
+  }
+
+  &__sheet {
+    position: absolute;
+    top: 0;
+    left: -30%;
+    width: 160%;
+    height: 100%;
+    animation: gv-mist-drift var(--dur) ease-in-out infinite alternate;
+    will-change: transform;
+  }
+}
+
+@keyframes gv-mist-drift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(calc(var(--dir) * 14%), -3%, 0); }
+}
+
+.gv-mist--hero {
+  z-index: 2;
+  opacity: 0.62;
+
+  @media (max-width: 760px) { opacity: 0.32; }
+}
+
+.gv-ground {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
+  height: 34vh;
+  z-index: 1;
+  opacity: 0.26;
+
+  .gv-mist__sheet {
+    top: -6%;
+    height: 112%;
+  }
+
+  @media (max-width: 760px) {
+    height: 22vh;
+    opacity: 0.18;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gv-mist__sheet { animation: none; }
+}
+
+.gv-revenant {
+  display: block;
+  overflow: visible;
+  pointer-events: none;
+
+  &__crown { stop-color: var(--gv-bone); stop-opacity: 0.82; }
+  &__cheek { stop-color: var(--gv-fog);  stop-opacity: 0.72; }
+  &__jaw   { stop-color: var(--gv-fog);  stop-opacity: 0.30; }
+
+  &__still { display: none; }
+
+  &--ambient { opacity: 0.6; }
+  &--emblem  { opacity: 0.92; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gv-revenant--ambient { display: none; }
+
+  .gv-revenant--emblem {
+    .gv-revenant__live { display: none; }
+    .gv-revenant__still { display: block; opacity: 0.5; }
+  }
+}
+
+.gv-proc {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: calc((100vw - 1400px) / 2);
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+  user-select: none;
+
+  &--left { left: 0; }
+  &--right { right: 0; }
+
+  &__fog {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    top: -30%;
+    height: 160%;
+    opacity: 0.62;
+    animation: gv-proc-eddy 67s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+
+  &__tint {
+    flood-color: var(--gv-fog);
+    flood-opacity: 1;
+  }
+
+  &__ash {
+    position: absolute;
+    inset: 0;
+  }
+
+  &__mote {
+    position: absolute;
+    left: var(--ax);
+    bottom: -8px;
+    width: var(--asz);
+    height: var(--asz);
+    border-radius: 50%;
+    background: radial-gradient(circle, var(--gv-fog) 0%, transparent 72%);
+    opacity: 0;
+    animation: gv-proc-updraft var(--adur) linear infinite;
+    animation-delay: var(--adelay);
+    will-change: transform, opacity;
+  }
+
+  &__mote--tide {
+    background: radial-gradient(circle, var(--gv-tide) 0%, transparent 72%);
+  }
+
+  &__wraith {
+    position: absolute;
+    top: 0;
+    width: 78%;
+    height: 100%;
+    max-width: 360px;
+    overflow: visible;
+    opacity: 0.78;
+  }
+
+  &--left &__wraith { left: 4%; }
+  &--right &__wraith { right: 4%; }
+
+  &__crown { stop-color: var(--gv-bone); stop-opacity: 0.88; }
+  &__bone  { stop-color: var(--gv-fog);  stop-opacity: 0.78; }
+  &__silt  { stop-color: var(--gv-fog);  stop-opacity: 0.3; }
+  &__gone  { stop-color: var(--gv-fog);  stop-opacity: 0; }
+
+  &__ember-hot { stop-color: var(--gv-tide); stop-opacity: 1; }
+  &__ember-mid { stop-color: var(--gv-tide); stop-opacity: 0.4; }
+  &__ember-out { stop-color: var(--gv-tide); stop-opacity: 0; }
+
+  &__flake-core { stop-color: var(--gv-bone); stop-opacity: 0.85; }
+  &__flake-edge { stop-color: var(--gv-fog);  stop-opacity: 0; }
+}
+
+@keyframes gv-proc-eddy {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, -14%, 0); }
+}
+
+@keyframes gv-proc-updraft {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  14%  { opacity: 0.55; }
+  74%  { opacity: 0.4; }
+  100% { transform: translate3d(var(--asway), -104vh, 0); opacity: 0; }
+}
+
+@media (max-width: 1679px) {
+  .gv-proc { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gv-proc { display: none; }
+}
+
+@media print {
+  .gv-proc { display: none; }
+}
