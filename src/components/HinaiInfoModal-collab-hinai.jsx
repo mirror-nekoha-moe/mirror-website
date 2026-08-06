@@ -182,27 +182,124 @@ export default function HinaiInfoModal({ seed, onClose }) {
                         {set.language && set.language.name && <span className="hinf__pillmeta">{set.language.name}</span>}
                     </div>
 
-                    <div className="hinf__engage">
-                        <FavoriteButton setId={set.id} kind="map" />
-                        {set.storyboard && <FavoriteButton setId={set.id} kind="storyboard" />}
-                        {engagement && (
-                            <span className="hinf__engagestats">
-                                <span><b>{compact(engagement.views)}</b> views</span>
-                                <span className="hinf__engagesep" aria-hidden="true" />
-                                <span><b>{compact(engagement.uniqueViewers)}</b> visitors</span>
-                                {engagement.artDownloads > 0 && (
-                                    <>
-                                        <span className="hinf__engagesep" aria-hidden="true" />
-                                        <span
-                                            title={`Cover ${engagement.coverDownloads} / Background ${engagement.bgDownloads}`}
-                                        >
-                                            <b>{compact(engagement.artDownloads)}</b> art downloads
-                                        </span>
-                                    </>
-                                )}
+                    <section className="hinf__section">
+                        <h3 className="hinf__sectiontitle">
+                            Artwork
+                            <span className="hinf__sectionnote">
+                                straight from mirror.hinamizawa.ai, never from osu
                             </span>
+                        </h3>
+
+                        <div className="hinf__artgrid">
+                            <div className="hinf__arttile">
+                                <span
+                                    className="hinf__artthumb"
+                                    style={{ backgroundImage: `url('${coverArt(set.id, 'cover')}')` }}
+                                    aria-hidden="true"
+                                />
+                                <div className="hinf__artbody">
+                                    <span className="hinf__artname">Cover</span>
+                                    <span className="hinf__artsub">The banner art, proxied so osu never sees you</span>
+                                    <div className="hinf__artrow">
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-hinai d-flex align-items-center gap-2"
+                                            onClick={() => grabArtwork('cover', coverUrl(set.id), `cover-${set.id}.jpg`)}
+                                            disabled={artworkBusy === 'cover'}
+                                        >
+                                            <FaImage size={11} />
+                                            <span>{artworkBusy === 'cover' ? 'Getting...' : 'Download'}</span>
+                                        </button>
+                                        {engagement && (
+                                            <span className="hinf__artcount">
+                                                <b>{compact(engagement.coverDownloads)}</b> taken
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="hinf__arttile">
+                                <span className="hinf__artthumb hinf__artthumb--none" aria-hidden="true">
+                                    <FaImage size={22} />
+                                </span>
+                                <div className="hinf__artbody">
+                                    <span className="hinf__artname">Background</span>
+                                    <span className="hinf__artsub">Full size, pulled out of the .osz itself</span>
+                                    <div className="hinf__artrow">
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-hinai d-flex align-items-center gap-2"
+                                            onClick={() => grabArtwork('bg', backgroundUrl(set.id), `bg-${set.id}.jpg`)}
+                                            disabled={artworkBusy === 'bg'}
+                                        >
+                                            <FaImage size={11} />
+                                            <span>{artworkBusy === 'bg' ? 'Getting...' : 'Download'}</span>
+                                        </button>
+                                        {engagement && (
+                                            <span className="hinf__artcount">
+                                                <b>{compact(engagement.bgDownloads)}</b> taken
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {artwork && (
+                            <div className={`hinf__artnote hinf__artnote--${artwork.kind}`} role="status">
+                                <span className="hinf__artnote-text">
+                                    {artwork.kind === 'none'
+                                        ? 'This beatmap ships no background image.'
+                                        : artwork.message}
+                                    {artwork.kind === 'unavailable' && artwork.retryAfter
+                                        ? ` Try again in ${artwork.retryAfter}s.`
+                                        : ''}
+                                </span>
+                                {artwork.kind === 'none' && (
+                                    <button
+                                        type="button"
+                                        className="hinf__artnote-link"
+                                        onClick={() => grabArtwork('cover', coverUrl(set.id), `cover-${set.id}.jpg`)}
+                                    >
+                                        Use the cover instead
+                                    </button>
+                                )}
+                                {artwork.forensics && (
+                                    <a
+                                        className="hinf__artnote-link hinf__artnote-link--why"
+                                        href={artwork.forensics}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title="Every hinai response carries its own request id: this opens the forensics record for THIS attempt"
+                                    >
+                                        Why?
+                                    </a>
+                                )}
+                            </div>
                         )}
-                    </div>
+
+                        <div className="hinf__engage">
+                            <FavoriteButton setId={set.id} kind="map" />
+                            {set.storyboard && <FavoriteButton setId={set.id} kind="storyboard" />}
+                            {engagement && (
+                                <span className="hinf__engagestats">
+                                    <span className="hinf__stat">
+                                        <b>{compact(engagement.views)}</b>
+                                        <span className="hinf__statk">views</span>
+                                    </span>
+                                    <span className="hinf__stat">
+                                        <b>{compact(engagement.uniqueViewers)}</b>
+                                        <span className="hinf__statk">visitors</span>
+                                    </span>
+                                    <span className="hinf__stat">
+                                        <b>{compact(engagement.artDownloads)}</b>
+                                        <span className="hinf__statk">art saved</span>
+                                    </span>
+                                </span>
+                            )}
+                        </div>
+                    </section>
 
                     {diffs.length > 0 && (
                         <div className="hinf__diffs" role="tablist" aria-label="Difficulties">
@@ -389,26 +486,6 @@ export default function HinaiInfoModal({ seed, onClose }) {
                             <span>osu!direct</span>
                             <FaDownload size={11} color="black" />
                         </a>
-                        <button
-                            type="button"
-                            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
-                            onClick={() => grabArtwork('bg', backgroundUrl(set.id), `bg-${set.id}.jpg`)}
-                            disabled={artworkBusy === 'bg'}
-                            title="The real in-game background, extracted from the .osz by mirror.hinamizawa.ai"
-                        >
-                            <FaImage size={11} />
-                            <span>{artworkBusy === 'bg' ? 'Getting...' : 'Background'}</span>
-                        </button>
-                        <button
-                            type="button"
-                            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2"
-                            onClick={() => grabArtwork('cover', coverUrl(set.id), `cover-${set.id}.jpg`)}
-                            disabled={artworkBusy === 'cover'}
-                            title="Cover art, proxied through mirror.hinamizawa.ai"
-                        >
-                            <FaImage size={11} />
-                            <span>{artworkBusy === 'cover' ? 'Getting...' : 'Cover'}</span>
-                        </button>
                         {active && (
                             <button
                                 type="button"
@@ -435,39 +512,6 @@ export default function HinaiInfoModal({ seed, onClose }) {
                             </a>
                         )}
                     </div>
-
-                    {artwork && (
-                        <div className={`hinf__artnote hinf__artnote--${artwork.kind}`} role="status">
-                            <span className="hinf__artnote-text">
-                                {artwork.kind === 'none'
-                                    ? 'This beatmap ships no background image.'
-                                    : artwork.message}
-                                {artwork.kind === 'unavailable' && artwork.retryAfter
-                                    ? ` Try again in ${artwork.retryAfter}s.`
-                                    : ''}
-                            </span>
-                            {artwork.kind === 'none' && (
-                                <button
-                                    type="button"
-                                    className="hinf__artnote-link"
-                                    onClick={() => grabArtwork('cover', coverUrl(set.id), `cover-${set.id}.jpg`)}
-                                >
-                                    Use the cover instead
-                                </button>
-                            )}
-                            {artwork.forensics && (
-                                <a
-                                    className="hinf__artnote-link hinf__artnote-link--why"
-                                    href={artwork.forensics}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    title="Every hinai response carries its own request id: this opens the forensics record for THIS attempt"
-                                >
-                                    Why?
-                                </a>
-                            )}
-                        </div>
-                    )}
 
                 </div>
             </div>
