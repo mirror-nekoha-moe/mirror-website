@@ -6,6 +6,34 @@ import DownloadChart from '../components/DownloadChart.jsx';
 import ApiCallChart from '../components/ApiCallChart.jsx';
 import { GithubMark, NEKOHA_URL } from '../components/CollabMark-collab-hinai.jsx';
 
+/**
+ * The mirror's landing page: hero blurb, primary call-to-action buttons, and
+ * the live corpus dashboard.
+ *
+ * On mount it fires three independent requests. `/api/stats` is the only one
+ * that drives the `loading` / `error` states, so a failure there replaces the
+ * whole dashboard with an alert. `/api/download-stats?days=30` and
+ * `/api/api-call-stats` swallow their rejections and simply leave their state
+ * empty, which is why their cards render conditionally: a chart backend being
+ * down degrades to a missing panel rather than taking the page with it.
+ *
+ * The dashboard renders four headline counters, then three full-width status
+ * breakdowns ("Missing Beatmapsets by Status", "Beatmapsets by Status", "Size
+ * by Status"), and finally one card per game mode (osu / taiko / catch / mania)
+ * carrying that same seven-status breakdown over `{mode}_bm_*` keys. All of
+ * them are driven by inline tables mapping API keys to labels and colour
+ * classes, some Bootstrap (`bg-info`, `bg-success`) and some project-local
+ * (`cbg-pink-2`, `cbg-dark-grey`).
+ *
+ * Two of the breakdowns are derived rather than read straight off the payload:
+ * "Beatmapsets by Status" subtracts the matching `missing_*` count from each
+ * total so it reports what is genuinely downloadable, and "Size by Status"
+ * converts raw bytes to GiB (`1024 ** 3`, labelled GB). Every breakdown cell is
+ * gated on its key being present, so a payload missing a field drops that tile;
+ * the four headline counters instead fall back to a displayed 0.
+ *
+ * @returns {JSX.Element} The landing page, including its `<title>`.
+ */
 function Index() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);

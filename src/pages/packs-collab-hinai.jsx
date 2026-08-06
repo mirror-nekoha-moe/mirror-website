@@ -19,6 +19,20 @@ import {
 const SEARCH_CAP = 200;
 const SKELETONS = 8;
 
+/**
+ * Beatmap pack browser page: filter bar (search, mode, category, PP range) over an
+ * infinitely scrolled grid of packs served by the hinai mirror.
+ *
+ * The paging protocol rides on refs rather than state, on purpose. `genRef` stamps every filter
+ * change with a generation number so a slow in-flight response from an older filter set cannot
+ * overwrite the current results, `cursorRef` holds the opaque cursor the previous page handed
+ * back, and `busyRef` is read synchronously by the IntersectionObserver callback (a state flag
+ * would be one render stale and fire duplicate page requests). `filtersRef` mirrors the current
+ * filter state so `loadMore` can stay a dependency-free `useCallback`, which the observer
+ * reaches through `loadMoreRef` so it never has to be torn down and re-created.
+ *
+ * @returns {JSX.Element} The packs page, plus the detail modal when a pack is selected.
+ */
 export default function Packs() {
     const [query, setQuery] = useState('');
     const [type, setType] = useState('all');
@@ -94,6 +108,17 @@ export default function Packs() {
         filtersRef.current = { type, mode, search: debouncedQuery, ppRange: [ppLo, ppHi] };
     }, [type, mode, debouncedQuery, ppLo, ppHi]);
 
+    /**
+     * Appends the next cursor page to the current grid, driven by the scroll sentinel and by the
+     * Retry button shown when a previous page request failed.
+     *
+     * Bails out when a request is already in flight or no cursor remains, reads the filters
+     * from `filtersRef` so the callback can keep an empty dependency array (the observer is
+     * registered once and reaches it through `loadMoreRef`), and drops the response if the
+     * generation stamp moved while the request was in flight.
+     *
+     * @returns {void}
+     */
     const loadMore = useCallback(() => {
         if (busyRef.current || !cursorRef.current) return;
         const gen = genRef.current;
@@ -132,6 +157,13 @@ export default function Packs() {
         return () => observer.disconnect();
     }, []);
 
+    /**
+     * Returns every filter control to its default (empty search, all modes, all categories,
+     * full PP span). Only the filter state is touched; the results reload through the fetch
+     * effect that watches those values, so no request is issued from here.
+     *
+     * @returns {void}
+     */
     const resetFilters = () => {
         setQuery('');
         setType('all');

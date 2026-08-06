@@ -26,17 +26,55 @@ const SKELETON = [0, 1, 2, 3, 4, 5];
 
 const SNOW = ['far', 'mid', 'near'];
 
+/**
+ * Formats an ISO timestamp as a compact `5 Aug 2026` date in the viewer's local time zone.
+ *
+ * The month is pinned to `en-US` short form while the day and year come from the raw Date, so
+ * the label reads the same everywhere instead of flipping to a locale-specific ordering.
+ *
+ * @param {string} iso - ISO 8601 timestamp; falsy values yield an empty string.
+ * @returns {string} The formatted date, or `''` when no timestamp was given.
+ */
 function dayLabel(iso) {
     if (!iso) return '';
     const d = new Date(iso);
     return `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
 }
 
+/**
+ * Formats an ISO timestamp as a local wall-clock time, hours and minutes only, both 2-digit.
+ *
+ * Passes an empty locale array so the browser's own locale decides the presentation (24h, or
+ * 12h with a meridiem suffix), which is the right call for a "ranked at" pip that only ever
+ * sits next to maps from the viewer's own day.
+ *
+ * @param {string} iso - ISO 8601 timestamp; falsy values yield an empty string.
+ * @returns {string} The formatted time, or `''` when no timestamp was given.
+ */
 function timeLabel(iso) {
     if (!iso) return '';
     return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
+/**
+ * One beatmapset tile in the hero's scrolling track.
+ *
+ * The three CSS custom properties are derived from `index` purely to de-synchronise the ambient
+ * bob: `--bd` alternates the duration between 7s and 8.3s on even/odd slots (`index * 13 % 26`
+ * only ever yields 0 or 13), `--bl` gives each slot a growing negative delay so the animation
+ * starts mid-cycle instead of every card rising together, and `--ba` cycles the amplitude
+ * through 3, 4 and 5px. Because the track is rendered twice for a seamless loop, the second
+ * copy is passed `dupe` and is stripped from both the accessibility tree and the tab order so
+ * screen readers and keyboard users see each map once.
+ *
+ * @param {object} props - Component props.
+ * @param {{id: number, title: string, artist: string, creator: string, art: string,
+ *   stars: number, today: boolean, rankedAt: string,
+ *   modes: Array<{key: string, count: number}>}} props.item - Shaped ranked-today entry.
+ * @param {number} props.index - Position within the doubled track; drives the animation offsets.
+ * @param {boolean} props.dupe - True for the cloned half of the track.
+ * @returns {JSX.Element} The card slot.
+ */
 function Card({ item, index, dupe }) {
     const tier = starTier(item.stars);
     return (
@@ -85,6 +123,21 @@ function Card({ item, index, dupe }) {
     );
 }
 
+/**
+ * The hero band above the search page: a marquee of recently ranked beatmapsets over the
+ * collab backdrop, plus a provenance strip with archive size and engine version.
+ *
+ * State is seeded synchronously from the module-level `peekRankedToday()` cache so a warm
+ * client-side navigation paints real cards instead of flashing the skeleton. All three fetches
+ * are fired once on mount and guarded by an `alive` flag so a fast unmount cannot set state on a
+ * dead component. Headline copy switches between "Ranked today" and "Recently ranked" from the
+ * payload's own `mode`, which the data layer decides based on how many sets landed today.
+ *
+ * Renders the skeleton track while `data` is still null, and renders nothing at all once the
+ * fetch resolves to an empty list rather than leaving an empty band on the page.
+ *
+ * @returns {JSX.Element|null} The hero section, or `null` when there is nothing to show.
+ */
 export default function SearchHero() {
     const [data, setData] = useState(() => peekRankedToday());
     const [index, setIndex] = useState(null);

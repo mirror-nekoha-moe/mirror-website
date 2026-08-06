@@ -1,3 +1,11 @@
+/**
+ * Mask-gradient presets keyed by the `fade` prop.
+ *
+ * `band` is a vertical linear fade that holds the middle of the sheet solid and dissolves the top
+ * and bottom edges; `up` is a radial fade anchored at the bottom centre, so the fog is dense at
+ * ground level and thins as it climbs. The stop values are luminance for an SVG mask, not visible
+ * paint: `#fff` keeps the pixel, `#000` cuts it, `#666` is a partial cut.
+ */
 const FADES = {
   band: {
     kind: "linear",
@@ -18,11 +26,44 @@ const FADES = {
     ]
   }
 };
+/**
+ * The three stackable fog layers, ordered coarsest first, since `GraveMist` takes them from the
+ * front. Each entry tunes one turbulence sheet: `freq` is the `baseFrequency` pair (x is lower than
+ * y on every layer, which stretches the noise horizontally into fog banks rather than clouds),
+ * `seed` decorrelates a layer from its siblings so they never line up, `blur` is the final
+ * `stdDeviation`, and `cut` is subtracted from the alpha channel by the colour matrix, so a higher
+ * value means sparser fog. `opacity` and `dur` set the layer weight and drift period, and `dir`
+ * (+1 / -1) flips the drift direction so the layers slide past each other instead of moving as one
+ * slab. The durations are mutually non-harmonic (53s / 71s / 37s) so the stack does not visibly
+ * repeat.
+ */
 const SHEETS = [
   { freq: "0.004 0.011", seed: 3, blur: 3, cut: 0.14, opacity: 0.6, dur: "53s", dir: 1 },
   { freq: "0.009 0.020", seed: 11, blur: 1.8, cut: 0.2, opacity: 0.38, dur: "71s", dir: -1 },
   { freq: "0.021 0.036", seed: 29, blur: 1, cut: 0.3, opacity: 0.2, dur: "37s", dir: 1 }
 ];
+/**
+ * Procedural fog: a stack of animated fractal-noise sheets, each masked to a soft edge.
+ *
+ * Every sheet is one full-bleed rect run through its own filter chain: `feTurbulence` makes the
+ * noise, `feColorMatrix` turns it into an alpha mask (all colour channels forced to white, alpha
+ * taken from the average of RGB minus `cut`), `feFlood` paints the theme fog colour, `feComposite`
+ * keeps only where the mask allows, and `feGaussianBlur` softens the result. A second, separate mask
+ * built from {@link FADES} then dissolves the sheet's edges, so the fog never shows a rectangular
+ * border. The drift is CSS (`gv-mist-drift`, fed by the `--dur` and `--dir` custom properties)
+ * rather than SMIL, which is what lets the stylesheet stop it under `prefers-reduced-motion`.
+ *
+ * Every generated def id is namespaced with `id` plus the sheet index, because SVG defs share one
+ * document-wide namespace and two mist instances on a page would otherwise resolve to each other's
+ * filters.
+ *
+ * @param {object} props
+ * @param {string} props.id - Unique instance id, seeding the filter, gradient and mask ids.
+ * @param {string} [props.className] - Extra class appended to the wrapper div, used to position the fog.
+ * @param {number} [props.sheets=2] - How many of the three {@link SHEETS} presets to render, taken from the front, so the default drops the finest and cheapest-to-omit layer.
+ * @param {'band'|'up'} [props.fade='band'] - Which {@link FADES} preset masks the sheets. There is no fallback: an unknown key throws.
+ * @returns {JSX.Element} An `aria-hidden`, pointer-events-none fog wrapper.
+ */
 function GraveMist({ id, className, sheets = 2, fade = "band" }) {
   return <div className={`gv-mist ${className ?? ""}`.trim()} aria-hidden="true">
       {SHEETS.slice(0, sheets).map((s, i) => {

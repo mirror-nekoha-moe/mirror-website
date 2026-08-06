@@ -39,6 +39,18 @@ const SORT_OPTIONS = [
   { value: 'difficulty', label: 'Diff Count' },
 ];
 
+/**
+ * Builds a fresh filter object for the search form: every selection empty, sort at its default.
+ *
+ * It is a factory rather than a shared constant because the value is handed to `useState`, kept
+ * in a ref and passed straight to `fetchPage` on reset; minting a new object each time keeps one
+ * reset's `status`/`mode` arrays from ever aliasing another's. Every filter scalar starts as `''`
+ * (not `null`) so the inputs stay controlled and `buildParams` can drop unset ones with a single
+ * truthiness test. `sort` and `order` are the deliberate exceptions, seeded to the `updated`/`desc`
+ * default rather than left blank.
+ *
+ * @returns {object} A new filter state with empty selections and the default `updated`/`desc` sort.
+ */
 const emptyFilters = () => ({
   status: [], mode: [],
   set_id: '', map_id: '',
@@ -53,6 +65,23 @@ const emptyFilters = () => ({
   sort: 'updated', order: 'desc',
 });
 
+/**
+ * A labelled min/max pair of number inputs bound to two keys of the shared filter object.
+ *
+ * The row is deliberately generic over key names instead of holding its own state: it writes
+ * straight back through `setFilters` with a functional update, so several rows editing the same
+ * object in the same tick cannot clobber each other.
+ *
+ * @param {object} props - Component props.
+ * @param {string} props.label - Caption shown above the pair (e.g. `Star Rating`).
+ * @param {string} props.keyMin - Filter key holding the lower bound.
+ * @param {string} props.keyMax - Filter key holding the upper bound.
+ * @param {object} props.filters - Current filter state, read for both input values.
+ * @param {React.Dispatch<React.SetStateAction<object>>} props.setFilters - Filter state setter.
+ * @param {string} [props.step='0.1'] - `step` attribute for both inputs; pass `'1'` for whole
+ *   numbers such as BPM or length in seconds.
+ * @returns {JSX.Element} A grid column holding the min and max inputs.
+ */
 function RangeRow({ label, keyMin, keyMax, filters, setFilters, step = '0.1' }) {
   return (
     <div className="col-6 col-md-4 col-lg-3">
@@ -69,6 +98,20 @@ function RangeRow({ label, keyMin, keyMax, filters, setFilters, step = '0.1' }) 
   );
 }
 
+/**
+ * The beatmapset search page: query box, collapsible filter panel, and an infinitely scrolling
+ * grid of result cards enriched with PP for each set's hardest difficulty.
+ *
+ * Three things make this component fiddlier than a plain list. First, the IntersectionObserver
+ * that drives infinite scroll is installed once and would otherwise capture stale state, so the
+ * live query, filters, page number, loading flag and has-more flag are all mirrored into refs
+ * that its callback reads. Second, a generation counter (`genRef`) is bumped on every new search
+ * or reset and re-checked once each response lands, so an append that was already in flight
+ * cannot splice old rows onto a fresh result set. Third, PP is not part of the search payload: it is
+ * polled separately from the hinamizawa mirror on a backoff ladder whenever `results` changes.
+ *
+ * @returns {JSX.Element} The full search page.
+ */
 export default function BeatmapsetSearch() {
   const [query, setQuery]      = useState('');
   const [filters, setFilters]  = useState(emptyFilters());
@@ -90,6 +133,21 @@ export default function BeatmapsetSearch() {
   // Increment on every new search/reset to discard stale in-flight appends
   const genRef     = useRef(0);
 
+  /**
+   * Flattens the filter state into the query object sent to `/api/search`.
+   *
+   * `q` and `page` are always written; every filter field is copied only when truthy, so blank
+   * inputs and empty multi-selects never reach the API. That keeps the URL short and, more
+   * importantly, keeps unset ranges from being sent as `''` and interpreted as a real bound. An
+   * empty `q` does land in the returned object and is dropped by the caller's own `v !== ''` pass
+   * before the query string is built. Array filters (`status`, `mode`) are comma-joined, and the
+   * `set_id` filter is renamed to the API's `id` parameter.
+   *
+   * @param {number} pageNum - 1-based page to request.
+   * @param {string} q - Free-text query.
+   * @param {object} f - Filter state as produced by `emptyFilters`.
+   * @returns {Object<string, string|number>} Query parameters, omitting anything unset.
+   */
   const buildParams = (pageNum, q, f) => {
     const p = { q, page: pageNum };
     if (f.set_id)         p.id         = f.set_id;
@@ -116,6 +174,25 @@ export default function BeatmapsetSearch() {
     return p;
   };
 
+    /**
+     * Fetches one page of search results and either replaces or appends to the grid.
+     *
+     * Concurrency is handled with two separate mechanisms because they solve different problems:
+     * `loadingRef` is a synchronous mutex that stops the scroll observer from firing the same
+     * page twice before React has re-rendered, while the `genRef` snapshot taken at entry is
+     * re-checked after the await so a response that outlived its search is dropped instead of
+     * being merged into newer results. `hasMore` is inferred from the page being full (>= 100
+     * rows), so it goes false on the first short page rather than after a wasted empty request.
+     *
+     * Note that `pageRef` is only advanced on success, so a failed page is retried rather than
+     * skipped the next time the sentinel comes into view.
+     *
+     * @param {number} pageNum - 1-based page to load.
+     * @param {string} q - Free-text query for this request.
+     * @param {object} f - Filter state for this request.
+     * @param {boolean} [replace=false] - Replace the grid instead of appending to it.
+     * @returns {Promise<void>} Resolves once state has been updated (or the response discarded).
+     */
     const fetchPage = useCallback(async (pageNum, q, f, replace = false) => {
         if (loadingRef.current) return;
         const gen = genRef.current;
@@ -159,6 +236,20 @@ export default function BeatmapsetSearch() {
     return () => observer.disconnect();
   }, [fetchPage]);
 
+  /**
+   * Runs a new search from the current query and filter state.
+   *
+   * Bumps the generation counter first so any append still in flight is invalidated before the
+   * grid is cleared, then pushes the live query/filters into the refs the scroll observer reads
+   * and rewinds the page cursor to 0 (page 1 is requested here; the observer picks up from
+   * whatever the successful fetch writes back).
+   *
+   * Doubles as both the form's `onSubmit` and the filter panel's "Apply Filters" click handler,
+   * which is why it defends with `preventDefault`.
+   *
+   * @param {React.SyntheticEvent} e - Submit or click event.
+   * @returns {void}
+   */
   const handleSearch = (e) => {
     e.preventDefault();
     genRef.current    += 1;   // invalidate any in-flight appends
@@ -171,6 +262,16 @@ export default function BeatmapsetSearch() {
     fetchPage(1, query, filters, true);
   };
 
+  /**
+   * Clears the query and every filter, then reloads the unfiltered first page.
+   *
+   * The blank filter object is built once and written to both state and `filtersRef`, and the
+   * same object is passed straight to `fetchPage` — the fetch cannot wait for the state update,
+   * so it has to be handed the new filters explicitly. Like `handleSearch`, it bumps the
+   * generation counter so in-flight appends from the old query are discarded.
+   *
+   * @returns {void}
+   */
   const handleReset = () => {
     const f = emptyFilters();
     genRef.current    += 1;   // invalidate any in-flight appends
@@ -185,7 +286,23 @@ export default function BeatmapsetSearch() {
     fetchPage(1, '', f, true);
   };
 
+  /**
+   * Adds or removes one ranked-status key from the `status` multi-select.
+   *
+   * Only stages the change: nothing is refetched until Search or Apply Filters is pressed.
+   *
+   * @param {string} s - Status key from `STATUSES` (e.g. `'ranked'`, `'graveyard'`).
+   * @returns {void}
+   */
   const toggleStatus = s => setFilters(f => ({ ...f, status: f.status.includes(s) ? f.status.filter(x => x !== s) : [...f.status, s] }));
+  /**
+   * Adds or removes one game mode from the `mode` multi-select.
+   *
+   * Only stages the change: nothing is refetched until Search or Apply Filters is pressed.
+   *
+   * @param {string} m - Mode key from `MODES` (`'osu'`, `'taiko'`, `'fruits'`, `'mania'`).
+   * @returns {void}
+   */
   const toggleMode   = m => setFilters(f => ({ ...f, mode:   f.mode.includes(m)   ? f.mode.filter(x => x !== m)   : [...f.mode,   m] }));
 
   // Keep refs in sync when state changes (for observer callback)
@@ -208,12 +325,32 @@ export default function BeatmapsetSearch() {
     let lastRun = 0;
     let timer = null;
 
+    /**
+     * Cancels any pending poll and clears the handle.
+     *
+     * Nulling `timer` matters: it is the effect's only record of whether a poll is armed, so a
+     * stale handle would let cleanup or a re-schedule believe one is still queued.
+     *
+     * @returns {void}
+     */
     function stopTimer() {
       if (timer === null) return;
       clearTimeout(timer);
       timer = null;
     }
 
+    /**
+     * Arms the next PP poll, or stops polling when there is nothing left to wait for.
+     *
+     * `ppRetryAt` reports the earliest moment any still-unresolved target is worth asking about,
+     * returning 0 once every visible difficulty has a cached value. A time in the future means
+     * the PP layer is cooling down (rate limit or negative-cache TTL), so this waits it out plus
+     * a small pad and resets the fast ladder — but only `PP_DEFER_ROUNDS` times, so a map the
+     * mirror never computes cannot keep the page polling forever. Otherwise it walks the fixed
+     * `PP_RETRY_MS` ladder one rung per call and gives up at the end of it.
+     *
+     * @returns {void}
+     */
     function schedule() {
       if (!alive) return;
 
@@ -236,6 +373,18 @@ export default function BeatmapsetSearch() {
       step += 1;
     }
 
+    /**
+     * Performs one batched PP fetch for every visible hardest-difficulty target, then re-arms.
+     *
+     * `fetchPp` resolves to null rather than a snapshot whenever it made no progress at all, which
+     * is either the global cooldown being active or every batch failing to settle; hence the
+     * truthiness guard before publishing, since any other outcome is a Map safe to render. The
+     * `alive` check inside the `.then` is what keeps an unmounted or superseded effect from writing
+     * state, and `lastRun` is stamped up front so the wake throttle measures from the request going
+     * out rather than from it coming back.
+     *
+     * @returns {void}
+     */
     function run() {
       stopTimer();
       lastRun = Date.now();
@@ -246,6 +395,19 @@ export default function BeatmapsetSearch() {
       });
     }
 
+    /**
+     * Restarts polling when the tab is brought back to the foreground or the network returns.
+     *
+     * A backgrounded tab has its timers throttled, so the ladder will usually have run itself
+     * out by the time the user comes back; this gives the page a second chance at the PP that
+     * never arrived. It is deliberately defensive, because `visibilitychange` and `online` can
+     * fire in bursts: hidden tabs are ignored, nothing happens when every target already
+     * resolved, and `PP_WAKE_MIN_MS` since the last request is enforced so tab-flipping cannot
+     * be turned into a request flood against the mirror. Both counters reset so a genuine wake
+     * gets a full fresh ladder rather than resuming a spent one.
+     *
+     * @returns {void}
+     */
     function wake() {
       if (!alive) return;
       if (document.visibilityState === 'hidden') return;

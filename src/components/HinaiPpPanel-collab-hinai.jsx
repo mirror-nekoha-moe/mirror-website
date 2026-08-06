@@ -15,6 +15,17 @@ import { formatPP, ppColor } from '../lib/graveyard-collab-hinai.js';
 const ACC_PRESETS = [100, 99, 98, 95];
 const DEBOUNCE_MS = 380;
 
+/**
+ * Renders a mod combination as a pill of individually tinted two-letter segments.
+ *
+ * `splitMods` chops the key into pairs ('HDDT' -> ['HD','DT'], 'NM' stays whole), and each
+ * segment publishes its own colour through the `--seg` custom property so the stylesheet owns
+ * the paint. Unknown segments fall back to a neutral grey rather than rendering untinted.
+ *
+ * @param {object} props
+ * @param {string} props.combo - Mod key such as 'NM', 'HD' or 'HDHRDT'.
+ * @returns {JSX.Element} The pill span containing one span per mod segment.
+ */
 function ModPill({ combo }) {
     return (
         <span className="hpp__pill">
@@ -27,6 +38,25 @@ function ModPill({ combo }) {
     );
 }
 
+/**
+ * Two-zone performance panel for a single difficulty, backed by the hinai mirror.
+ *
+ * Zone one is the precomputed reference table (`fetchPpAll`) listing every mod combination at
+ * SS; the highest-PP row is tagged `max` and any row can be clicked or keyboard-activated to
+ * load its mods into zone two. Zone two is the what-if calculator: mod toggles plus accuracy,
+ * combo and misses, re-queried through `fetchPpCalc` on a {@link DEBOUNCE_MS} debounce with an
+ * AbortController so a fast slider drag cannot let an older response overwrite a newer one.
+ *
+ * Both zones reset whenever the difficulty or ruleset changes, because PP values and the mod
+ * table are meaningless across maps.
+ *
+ * @param {object} props
+ * @param {number|string} props.beatmapId - Difficulty id passed straight to the mirror endpoints.
+ * @param {number} props.mode - osu! ruleset id (0 standard, 1 taiko, 2 catch, 3 mania).
+ * @param {number} props.maxCombo - Difficulty max combo; clamps the combo input and the value
+ *   sent to the calculator. Zero or absent means "unknown", in which case nothing is clamped.
+ * @returns {JSX.Element} The reference table and calculator zones.
+ */
 export default function HinaiPpPanel({ beatmapId, mode, maxCombo }) {
     const [table, setTable] = useState(null);
     const [tableLoading, setTableLoading] = useState(true);
@@ -43,6 +73,16 @@ export default function HinaiPpPanel({ beatmapId, mode, maxCombo }) {
 
     const modsStr = useMemo(() => modsToWire(active), [active]);
 
+    /**
+     * Flips one mod in the active set, enforcing the mutually exclusive pairs.
+     *
+     * Turning a mod ON also deletes its {@link EXCLUSIVE} partner (HR/EZ, DT/HT), so an
+     * impossible combination can never reach the calculator endpoint. Always builds a fresh Set
+     * instead of mutating, otherwise React would not see the state change.
+     *
+     * @param {string} key - Two-letter mod acronym from `TOGGLE_MODS`.
+     * @returns {void}
+     */
     const toggle = key =>
         setActive(prev => {
             const next = new Set(prev);
@@ -56,6 +96,17 @@ export default function HinaiPpPanel({ beatmapId, mode, maxCombo }) {
             return next;
         });
 
+    /**
+     * Replaces the whole active mod set with the mods of a clicked reference row.
+     *
+     * 'NM' clears everything. Otherwise the row key is split into segments and only segments the
+     * button row can actually represent (`TOGGLE_MODS`) are kept, so a table key carrying a mod
+     * with no toggle could never leave the user stuck with a mod they cannot switch off. Uses no
+     * props or state, hence the empty dependency list.
+     *
+     * @param {string} key - Mod key from the reference table, e.g. 'NM', 'HD', 'HDHRDT'.
+     * @returns {void}
+     */
     const applyRow = useCallback(key => {
         if (key === 'NM') {
             setActive(new Set());

@@ -1,9 +1,43 @@
 import { NavLink } from "react-router-dom";
 import { GithubMark, NEKOHA_URL } from "./CollabMark-collab-hinai.jsx";
 
+/**
+ * Public path to the Nekoha brand mark shown beside the wordmark.
+ *
+ * Served from `public/` rather than imported, so it is referenced by URL and is
+ * not fingerprinted by the bundler.
+ * @type {string}
+ */
 const NEKOHA_MARK = "/assets/collab-hinai/nekoha-mark-collab-hinai.webp";
 
+/**
+ * The site-wide top navigation bar, mounted once above the router.
+ *
+ * Renders the Bootstrap navbar (brand, collapse toggle, the Home / Beatmaps /
+ * Packs / Graveyard PP links, a Request dropdown, and an external Docs link)
+ * plus a permanently `d-none` maintenance banner underneath, kept in the markup
+ * so the notice can be switched on by dropping that one class.
+ *
+ * Navigation never goes through the router: the menu links are plain `<a>`
+ * elements routed through {@link handleLinkClick}, and the brand anchor is a
+ * bare `<a href="/">` with no handler at all, so every one of them performs a
+ * full document load rather than a client-side transition.
+ * @returns {JSX.Element} The navbar and its maintenance banner slot.
+ */
 const Navbar = () => {
+  /**
+   * Turns an in-site nav click into a full document load instead of a
+   * client-side route change.
+   *
+   * Cancels the anchor's own navigation and then assigns `window.location.href`
+   * from a zero-delay timeout, which yields to the current event loop turn so
+   * the click handler unwinds (and Bootstrap's collapse/dropdown handlers get
+   * to run) before the document is torn down.
+   *
+   * @param {import('react').MouseEvent<HTMLAnchorElement>} e - The click event, whose default is suppressed.
+   * @param {string} url - Destination path to load, e.g. `"/search"`.
+   * @returns {void}
+   */
   const handleLinkClick = (e, url) => {
     // Prevent default behavior to control the page reload
     e.preventDefault();

@@ -74,6 +74,20 @@ const LANGUAGE_LABELS = {
     14: 'Other'
 };
 
+/**
+ * Horizontal meter for a single difficulty attribute (CS / AR / OD / HP / SR).
+ *
+ * The fill width is clamped to 100%, so a value above `max` renders as a full bar instead of
+ * overflowing the track. Every call site passes `max={10}`, and star ratings routinely exceed
+ * that, so the SR bar in particular pins at full. The numeric readout is NOT clamped and still
+ * prints the real value to one decimal.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} props.label - Short attribute name rendered to the left of the bar.
+ * @param {number|string} props.value - Attribute value; parsed with `parseFloat` for both fill and readout.
+ * @param {number} [props.max=10] - Value that corresponds to a completely filled bar.
+ * @returns {JSX.Element} The labelled stat row.
+ */
 function StatBar({ label, value, max = 10 }) {
     const pct = Math.min(100, (parseFloat(value) / max) * 100);
     return (
@@ -87,18 +101,54 @@ function StatBar({ label, value, max = 10 }) {
     );
 }
 
+/**
+ * Format a whole-second duration as `m:ss`.
+ *
+ * Minutes are never padded and never roll over into hours, so a hypothetical 90 minute map
+ * reads `90:00`, not `1:30:00`. That is fine for beatmap lengths and drain times, which are
+ * the only things this is used for.
+ *
+ * @param {number} seconds - Duration in seconds.
+ * @returns {string} The `m:ss` representation.
+ */
 function fmtTime(seconds) {
     const m = Math.floor(seconds / 60);
     const s = seconds % 60;
     return `${m}:${String(s).padStart(2, '0')}`;
 }
 
+/**
+ * Format an API timestamp as `D Mon YYYY` in the viewer's local timezone.
+ *
+ * Only a falsy input is guarded; an unparseable string still flows through `Date` and would
+ * render as `NaN Invalid Date NaN`, so callers should pass values that came from the mirror API.
+ *
+ * @param {string|null|undefined} str - Timestamp accepted by the `Date` constructor.
+ * @returns {string} The formatted date, or 'N/A' when nothing was supplied.
+ */
 function fmtDate(str) {
     if (!str) return 'N/A';
     const d = new Date(str);
     return `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
 }
 
+/**
+ * Beatmapset detail page for the `/beatmapset/:id` route.
+ *
+ * Loads the set from the local mirror API, renders the hero (cover, status, mapper, audio
+ * preview, download buttons), the BBCode description, the difficulty picker and a stat panel
+ * for whichever difficulty is selected. The `hinai data` button opens {@link HinaiInfoModal}.
+ *
+ * A second effect post-processes the description HTML after each data change, because that
+ * markup is injected via `dangerouslySetInnerHTML` and React never owns those nodes: ppy.sh
+ * images are rewritten through the hinai image proxy so osu never sees the visitor, and
+ * spoilerbox links get a toggle handler. Both passes mark what they touched (the
+ * `mirrorProxied` dataset key, i.e. a `data-mirror-proxied` attribute, and a `_spoilerBound`
+ * expando on the link) so a re-run never proxies twice or double-binds.
+ *
+ * @returns {JSX.Element|null} The page, a loading bar while fetching, an error alert on
+ * failure, or null when no data is present.
+ */
 export default function BeatmapSet() {
     const { id } = useParams();
     const [data, setData] = useState(null);
@@ -109,6 +159,15 @@ export default function BeatmapSet() {
     const descRef = useRef(null);
 
     useEffect(() => {
+        /**
+         * Fetch the beatmapset named by the current route id into component state.
+         *
+         * Rejects a non-numeric id locally before spending a request, since the value comes
+         * straight off the URL. Difficulties are sorted descending by star rating, which makes
+         * the hardest diff both the first row of the picker and the initial selection.
+         *
+         * @returns {Promise<void>} Resolves once loading state has settled.
+         */
         const fetchBeatmapset = async () => {
             setLoading(true);
             setError('');

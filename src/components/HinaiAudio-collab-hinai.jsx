@@ -26,10 +26,28 @@ const VOL_STEP = 0.05;
 const volSubs = new Set();
 let volState = null;
 
+/**
+ * Clamps a raw volume figure into the 0..1 range and snaps it to two decimals.
+ * The rounding is deliberate: pointer drags produce long floats, and quantising
+ * to whole percent keeps the persisted value and the rendered `width: %` stable
+ * instead of jittering by fractions of a pixel on every pointermove.
+ *
+ * @param {number} n - Unclamped volume, typically a fraction derived from a pointer position.
+ * @returns {number} A value in [0, 1] rounded to the nearest 0.01.
+ */
 function clamp01(n) {
     return Math.round(Math.min(1, Math.max(0, n)) * 100) / 100;
 }
 
+/**
+ * Returns the shared volume state, hydrating it from localStorage on first call.
+ * The result is memoised in the module-level `volState` singleton so that every
+ * player mounted on the page starts at the same level and only one storage read
+ * ever happens. Any failure (SSR, disabled storage, corrupt JSON) falls back to
+ * full volume and unmuted rather than propagating.
+ *
+ * @returns {{volume: number, muted: boolean}} The shared, mutable-by-replacement volume state.
+ */
 function readVolume() {
     if (volState) return volState;
 
@@ -49,6 +67,15 @@ function readVolume() {
     return volState;
 }
 
+/**
+ * Serialises the volume state to localStorage under `VOL_KEY`, swallowing the
+ * throw that private-browsing or a full quota produces so a failed write can
+ * never break playback. The boolean is informational; the in-memory state is
+ * updated by the caller regardless of whether persistence succeeded.
+ *
+ * @param {{volume: number, muted: boolean}} next - The state to store.
+ * @returns {boolean} True when the write landed, false when storage rejected it.
+ */
 function persistVolume(next) {
     try {
         window.localStorage.setItem(VOL_KEY, JSON.stringify(next));
@@ -58,6 +85,17 @@ function persistVolume(next) {
     }
 }
 
+/**
+ * The single mutation point for volume across the whole page: clamps the level,
+ * replaces the shared state with a fresh object (so subscribed React setters see
+ * a new reference and re-render), persists it, then fans the new value out to
+ * every mounted player. Volume is global rather than per-player on purpose,
+ * since only one `<audio>` is ever unpaused at a time.
+ *
+ * @param {number} volume - Desired level, clamped into 0..1.
+ * @param {boolean} muted - Desired mute flag, stored independently of the level.
+ * @returns {void}
+ */
 function writeVolume(volume, muted) {
     const next = { volume: clamp01(volume), muted };
     volState = next;
@@ -65,6 +103,16 @@ function writeVolume(volume, muted) {
     volSubs.forEach(fn => fn(next));
 }
 
+/**
+ * Picks one of three speaker glyphs for the mute button. An explicit mute and a
+ * level of exactly zero render identically, so the button always looks silent
+ * when it sounds silent regardless of which of the two states produced it.
+ *
+ * @param {object} props - Component props.
+ * @param {number} props.volume - Current level in 0..1.
+ * @param {boolean} props.muted - Whether output is muted independently of the level.
+ * @returns {JSX.Element} A 12px react-icons speaker glyph.
+ */
 function VolumeIcon({ volume, muted }) {
     if (muted || volume === 0) return <FaVolumeMute size={12} />;
     if (volume < 0.5) return <FaVolumeDown size={12} />;
@@ -109,6 +157,25 @@ const KINDS = {
     },
 };
 
+/**
+ * A heart toggle that drives one of three different engagement counters on the
+ * hinai mirror, selected by `kind` through the `KINDS` spec table. The state is
+ * optimistic: the heart flips immediately, then reconciles against whatever the
+ * mirror returns, and reverts if the request fails.
+ *
+ * For `music` the mount effect seeds the heart synchronously from the local
+ * favourite list, so it settles without waiting on the network; the state itself
+ * still starts off, because that seed runs in an effect rather than in the
+ * `useState` initialiser. The network read then reconciles it. The art and
+ * storyboard kinds have no local mirror of that state and so stay off until
+ * their own read resolves.
+ *
+ * @param {object} props - Component props.
+ * @param {number|string} props.setId - The beatmap set id the engagement is recorded against.
+ * @param {'music'|'art'|'storyboard'} [props.kind='music'] - Which counter to drive; an unknown value falls back to the music spec.
+ * @param {boolean} [props.compactLabel=false] - When true the text label is dropped, leaving only the icon and count.
+ * @returns {JSX.Element} The toggle button.
+ */
 export function FavoriteButton({ setId, kind = 'music', compactLabel = false }) {
     const spec = KINDS[kind] || KINDS.music;
     const [on, setOn] = useState(false);
@@ -133,6 +200,20 @@ export function FavoriteButton({ setId, kind = 'music', compactLabel = false }) 
         };
     }, [setId, kind, spec]);
 
+    /**
+     * Toggles the engagement for the current set. Stops the event so the button
+     * can live inside a clickable card without also triggering it, flips the
+     * heart optimistically, then trusts the server response for both the state
+     * and the count. On failure the optimistic flip is undone and a short note
+     * replaces the tooltip, surfacing the rate limiter's retry window when the
+     * thrown error carries one.
+     *
+     * Kinds that declare a `write` use it; `music` has none and falls through to
+     * `setFavorite`, which is also what maintains the local favourite list.
+     *
+     * @param {import('react').MouseEvent<HTMLButtonElement>} e - The click event.
+     * @returns {Promise<void>} Resolves once the request settles and `busy` is cleared.
+     */
     const click = async e => {
         e.preventDefault();
         e.stopPropagation();
@@ -171,6 +252,24 @@ export function FavoriteButton({ setId, kind = 'music', compactLabel = false }) 
     );
 }
 
+/**
+ * The mirror's inline song player: transport, seek bar, quality badge, volume
+ * rail and a favourite button for one beatmap set.
+ *
+ * Three behaviours are worth knowing before editing it. Playback is exclusive
+ * page-wide through the module-level `nowPlaying` handle, so starting any player
+ * pauses whichever one was running. The source starts at the mirror's audio
+ * endpoint and falls back exactly once to osu!'s 30 second preview if the
+ * element errors, which is why `triedFallback` is a ref rather than state. And
+ * when the mirror is still extracting the full song, a bounded poll watches for
+ * the cache to fill and then offers an explicit upgrade button instead of
+ * swapping the source out from under a playing track.
+ *
+ * @param {object} props - Component props.
+ * @param {number|string} props.setId - Beatmap set id to stream.
+ * @param {boolean} [props.dense=false] - Compact variant for list rows; it skips the upfront audio-status probe entirely and only asks once the user actually presses play, which keeps a long list of cards from firing a request per row.
+ * @returns {JSX.Element} The player.
+ */
 export default function HinaiAudio({ setId, dense = false }) {
     const audioRef = useRef(null);
     const [src, setSrc] = useState(() => audioUrl(setId));
@@ -244,6 +343,16 @@ export default function HinaiAudio({ setId, dense = false }) {
         };
     }, [quality, fullReady, setId]);
 
+    /**
+     * Swaps the 30 second preview for the freshly cached full song. The `?full=1`
+     * query is what makes the browser treat this as a different resource and
+     * re-request it instead of reusing the cached preview response. Timeline
+     * state is reset because the new media is a different length, and playback is
+     * resumed on the next frame so React has committed the new `src` first;
+     * an autoplay rejection is intentionally ignored.
+     *
+     * @returns {void}
+     */
     const upgrade = () => {
         setSrc(`${audioUrl(setId)}?full=1`);
         setQuality('full');
@@ -256,6 +365,15 @@ export default function HinaiAudio({ setId, dense = false }) {
         });
     };
 
+    /**
+     * Plays or pauses the element. It deliberately does not touch `playing`,
+     * because the element's own `onPlay`/`onPause` handlers own that state and
+     * therefore stay correct even when playback is stopped by something else,
+     * such as another player claiming `nowPlaying`. A rejected `play()` (autoplay
+     * policy, or a source that never loaded) is swallowed.
+     *
+     * @returns {void}
+     */
     const toggle = () => {
         const a = audioRef.current;
         if (!a) return;
@@ -263,6 +381,18 @@ export default function HinaiAudio({ setId, dense = false }) {
         else a.pause();
     };
 
+    /**
+     * Seeks to the position a pointer is pointing at on the progress track. The
+     * fraction is measured against the track's live bounding rect so it stays
+     * correct while the page scrolls or the layout reflows mid-drag, and the
+     * displayed time is pushed immediately rather than waiting for the next
+     * `timeupdate`, which would otherwise make the thumb lag the cursor.
+     * No-ops until metadata has given us a duration.
+     *
+     * @param {number} clientX - Viewport x coordinate of the pointer.
+     * @param {HTMLElement} track - The progress track element the pointer is over.
+     * @returns {void}
+     */
     const seekAt = (clientX, track) => {
         const a = audioRef.current;
         if (!a || !dur) return;
@@ -272,6 +402,14 @@ export default function HinaiAudio({ setId, dense = false }) {
         setCur(a.currentTime);
     };
 
+    /**
+     * Absolute seek clamped to the loaded duration, used by the keyboard
+     * transport where an offset can easily run past either end of the track.
+     * No-ops until metadata has given us a duration.
+     *
+     * @param {number} t - Target position in seconds; values outside 0..duration are clamped.
+     * @returns {void}
+     */
     const seekTo = t => {
         const a = audioRef.current;
         if (!a || !dur) return;
@@ -280,6 +418,15 @@ export default function HinaiAudio({ setId, dense = false }) {
         setCur(clamped);
     };
 
+    /**
+     * Ends a seek drag, handling both pointerup and pointercancel. Capture is
+     * only released after checking we still hold it, because a cancel can arrive
+     * after the browser has already released capture implicitly and
+     * `releasePointerCapture` throws on an unheld pointer id.
+     *
+     * @param {import('react').PointerEvent<HTMLElement>} e - The terminating pointer event.
+     * @returns {void}
+     */
     const endDrag = e => {
         dragging.current = false;
         if (e.currentTarget.hasPointerCapture(e.pointerId)) {
@@ -287,18 +434,48 @@ export default function HinaiAudio({ setId, dense = false }) {
         }
     };
 
+    /**
+     * Sets the shared volume from a pointer position on the volume rail. Landing
+     * anywhere above zero force-unmutes, since dragging the rail is an unambiguous
+     * request to hear something; dragging all the way down to zero instead leaves
+     * the existing mute flag alone, so a muted player that gets scrubbed to
+     * silence does not quietly unmute itself.
+     *
+     * @param {number} clientX - Viewport x coordinate of the pointer.
+     * @param {HTMLElement} rail - The volume rail element the pointer is over.
+     * @returns {void}
+     */
     const setVolumeAt = (clientX, rail) => {
         const rect = rail.getBoundingClientRect();
         const next = clamp01((clientX - rect.left) / rect.width);
         writeVolume(next, next === 0 ? vol.muted : false);
     };
 
+    /**
+     * Steps the shared volume by one keyboard increment. A muted player is
+     * treated as sitting at zero rather than at its stored level, so the first
+     * press out of mute ramps up from silence instead of jumping back to the old
+     * level; conversely, stepping down to zero mutes, keeping the icon, the rail
+     * and the actual output in agreement.
+     *
+     * @param {number} delta - Signed step, normally plus or minus `VOL_STEP`.
+     * @returns {void}
+     */
     const nudgeVolume = delta => {
         const base = vol.muted ? 0 : vol.volume;
         const next = clamp01(base + delta);
         writeVolume(next, next === 0);
     };
 
+    /**
+     * Ends a volume-rail drag on pointerup or pointercancel, releasing capture
+     * only if it is still held for the same reason as `endDrag`. Kept separate
+     * from `endDrag` because the two rails track their drag state in different
+     * refs and can be dragged independently.
+     *
+     * @param {import('react').PointerEvent<HTMLElement>} e - The terminating pointer event.
+     * @returns {void}
+     */
     const endVolDrag = e => {
         volDragging.current = false;
         if (e.currentTarget.hasPointerCapture(e.pointerId)) {
@@ -306,6 +483,17 @@ export default function HinaiAudio({ setId, dense = false }) {
         }
     };
 
+    /**
+     * Keyboard control for the volume rail, which is an ARIA slider and so is
+     * expected to answer the arrow keys plus Home and End. Arrows step by
+     * `VOL_STEP`, Home mutes at zero, End goes to full and unmutes, and M toggles
+     * mute while preserving the stored level so it can be restored. Handled keys
+     * call `preventDefault` to stop the arrows scrolling the page underneath;
+     * anything else falls through untouched.
+     *
+     * @param {import('react').KeyboardEvent<HTMLElement>} e - The keydown event.
+     * @returns {void}
+     */
     const onVolKey = e => {
         switch (e.key) {
             case 'ArrowLeft':
@@ -336,6 +524,16 @@ export default function HinaiAudio({ setId, dense = false }) {
         }
     };
 
+    /**
+     * Keyboard transport for the seek track. Space and Enter toggle playback,
+     * the arrows scrub five seconds either way, Home rewinds and End jumps to the
+     * duration. Because the track is a focusable ARIA slider rather than a
+     * button, Space would otherwise scroll the page, so every handled key calls
+     * `preventDefault`. Seeks go through `seekTo`, which clamps them.
+     *
+     * @param {import('react').KeyboardEvent<HTMLElement>} e - The keydown event.
+     * @returns {void}
+     */
     const onKey = e => {
         switch (e.key) {
             case ' ':

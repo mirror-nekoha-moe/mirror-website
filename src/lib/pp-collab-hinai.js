@@ -13,10 +13,31 @@ const misses = new Map();
 const inflight = new Map();
 let coolUntil = 0;
 
+/**
+ * Builds the cache/lookup key for one difficulty under one game mode.
+ * The mode is part of the key because the same beatmap id carries a different
+ * pp value per mode, so keying on the id alone would cross-contaminate.
+ *
+ * @param {number|string} id - Beatmap (difficulty) id.
+ * @param {number|string} mode - osu! mode int (0 std, 1 taiko, 2 catch, 3 mania).
+ * @returns {string} Key in the form `mode:id`.
+ */
 export function ppKey(id, mode) {
     return `${mode}:${id}`;
 }
 
+/**
+ * Picks the one difficulty that represents a whole set on a card: the highest
+ * star rating, with ties broken toward the LOWEST beatmap id so repeated calls
+ * on the same set always choose the same difficulty and the rendered pp never
+ * flickers between two equally hard diffs. Entries whose id or star rating is
+ * not a finite number are skipped outright.
+ *
+ * @param {{beatmaps?: Array<Object>}} set - Beatmap set as returned by the mirror search API.
+ * @returns {{id: number, sr: number, mode: number, version: string}|null} The chosen
+ *   difficulty, with mode defaulting to 0 and version to '' when those source fields
+ *   are absent or malformed, or null when the set has no usable difficulty.
+ */
 export function hardestDiff(set) {
     const diffs = set && Array.isArray(set.beatmaps) ? set.beatmaps : [];
     let best = null;
@@ -40,20 +61,51 @@ export function hardestDiff(set) {
     return best;
 }
 
+/**
+ * Timer-backed delay used to space out retry attempts.
+ *
+ * @param {number} ms - Milliseconds to wait.
+ * @returns {Promise<void>} Resolves once the timer fires.
+ */
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+/**
+ * Pins a key as "no answer yet" for MISS_TTL_MS so the next fetch skips it
+ * instead of re-asking the mirror for a value it just failed to produce.
+ * The delete-before-set is deliberate: it moves the key to the end of the Map's
+ * insertion order, which is exactly what lets pruneMisses() evict oldest-first.
+ *
+ * @param {string} key - Key from ppKey().
+ * @returns {void}
+ */
 function markMiss(key) {
     misses.delete(key);
     misses.set(key, Date.now() + MISS_TTL_MS);
 }
 
+/**
+ * Records a final answer for a key and clears any miss pin, so from here on the
+ * cached value wins and the key is never re-requested.
+ *
+ * @param {string} key - Key from ppKey().
+ * @param {number|null} value - Resolved pp, or null when the mirror has confirmed
+ *   it will never have a value for this map.
+ * @returns {void}
+ */
 function settle(key, value) {
     misses.delete(key);
     cache.set(key, value);
 }
 
+/**
+ * Reports whether a key is still inside its miss cooldown. Expired pins are
+ * deleted on read, so this doubles as lazy cleanup between prune passes.
+ *
+ * @param {string} key - Key from ppKey().
+ * @returns {boolean} True while the miss is still pinned.
+ */
 function missPinned(key) {
     const until = misses.get(key);
     if (until === undefined) return false;
@@ -63,6 +115,13 @@ function missPinned(key) {
     return false;
 }
 
+/**
+ * Drops every expired miss pin, then evicts oldest-inserted pins until the table
+ * holds at most MISS_MAX entries. The hard cap matters because a long session
+ * scrolling a large graveyard would otherwise grow the miss table without bound.
+ *
+ * @returns {void}
+ */
 function pruneMisses() {
     const now = Date.now();
     for (const [key, until] of misses) {
@@ -76,6 +135,15 @@ function pruneMisses() {
     }
 }
 
+/**
+ * Builds the map handed back to React: every resolved value from the cache, plus
+ * a null for every still-pinned miss. Consumers therefore read a number for a
+ * known pp, null for "nothing to show right now", and undefined for "not looked
+ * up yet". A fresh copy is returned each time so the internal cache is never
+ * mutated by a caller and React sees a new reference.
+ *
+ * @returns {Map<string, number|null>} Snapshot keyed by ppKey().
+ */
 function snapshot() {
     const out = new Map(cache);
     const now = Date.now();
@@ -87,6 +155,22 @@ function snapshot() {
     return out;
 }
 
+/**
+ * Applies one batch response to the cache, classifying every requested id into
+ * one of three outcomes. A finite pp is cached outright. An id with no row at
+ * all, or that the server explicitly listed as missing (queued for calculation),
+ * is pinned as a retryable miss. An id that came back WITH a row but no usable
+ * pp and was not listed as missing is settled as a permanent null, because the
+ * server is telling us it answered and simply has no value.
+ *
+ * @param {number|string} mode - osu! mode int the batch was requested for.
+ * @param {Array<number|string>} ids - Beatmap ids that were requested.
+ * @param {Object<string, {pp?: number|string|null}>} rows - Server results keyed by id string.
+ * @param {Array<number|string>|null} missing - Ids the server reports as unresolved, or
+ *   null when the response carried no missing list, in which case every unresolved id
+ *   is treated as retryable rather than absent.
+ * @returns {void}
+ */
 function settleChunk(mode, ids, rows, missing) {
     const unresolved = missing ? new Set(missing.map(Number)) : null;
 
@@ -102,6 +186,15 @@ function settleChunk(mode, ids, rows, missing) {
     }
 }
 
+/**
+ * Derives a global cooldown from a throttled or failing response. Honours both
+ * forms of `retry-after` (delta seconds, or an HTTP date), clamped into
+ * [0, COOLDOWN_MAX_MS] so a wrong or hostile header cannot stall pp lookups for
+ * hours, and falls back to COOLDOWN_MS when the header is absent or unparseable.
+ *
+ * @param {Response} res - The fetch response that triggered the backoff.
+ * @returns {number} Milliseconds to stay cool for.
+ */
 function backoffMs(res) {
     const raw = res.headers.get('retry-after');
     if (!raw) return COOLDOWN_MS;
@@ -115,6 +208,18 @@ function backoffMs(res) {
     return COOLDOWN_MS;
 }
 
+/**
+ * Performs a single batch request, capped at TIMEOUT_MS by an AbortController.
+ * It never throws: a network failure, an abort or malformed JSON all come back
+ * as a retryable outcome, 429 and 5xx come back as a cooldown, and any other
+ * non-ok status is a silent give-up (no retry, no cooldown) since retrying a
+ * 4xx would just repeat the same rejection.
+ *
+ * @param {string} url - Fully built batch URL.
+ * @returns {Promise<{rows?: Object, missing?: Array|null, retry: boolean, cool: number}>}
+ *   `rows` is present only on success and is `{}` when the payload had no results;
+ *   `retry` asks the caller to try again; `cool` is the cooldown to apply in ms.
+ */
 async function attemptChunk(url) {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
@@ -140,6 +245,20 @@ async function attemptChunk(url) {
     }
 }
 
+/**
+ * Drives one batch of ids to completion against `/v3/osu/pp/batch`, always with
+ * mods=NM. It allows 1 + RETRY_DELAYS.length attempts and bails out early when
+ * the failure is not retryable or when a cooldown started while it was retrying.
+ * Any cooldown is folded into the module-wide coolUntil so every caller backs
+ * off together. The finally block always clears the inflight entries for these
+ * ids, otherwise a failed batch would leave those keys permanently wedged behind
+ * a promise that will never be retried.
+ *
+ * @param {number|string} mode - osu! mode int for this batch.
+ * @param {Array<number|string>} ids - Beatmap ids to resolve, already capped at BATCH_MAX.
+ * @returns {Promise<boolean>} True when a response was applied to the cache, false when
+ *   the batch gave up without settling anything.
+ */
 async function requestChunk(mode, ids) {
     const url = `${MIRROR}/v3/osu/pp/batch?ids=${ids.join(',')}&mode=${mode}&mods=NM`;
     try {
@@ -161,6 +280,15 @@ async function requestChunk(mode, ids) {
     }
 }
 
+/**
+ * Answers "when is it worth asking again?" for the targets currently on screen,
+ * so the page can arm a single timer instead of polling. Targets already in the
+ * cache are settled and ignored; a pinned miss contributes its expiry; anything
+ * else contributes now. The global cooldown acts as a floor on the result.
+ *
+ * @param {Iterable<{id: number|string, mode: number|string}|null>} targets - Difficulties in view.
+ * @returns {number} Epoch ms of the earliest useful retry, or 0 when nothing is pending.
+ */
 export function ppRetryAt(targets) {
     const now = Date.now();
     let at = 0;
@@ -179,6 +307,21 @@ export function ppRetryAt(targets) {
     return coolUntil > at ? coolUntil : at;
 }
 
+/**
+ * Resolves pp for the given difficulties and returns a fresh snapshot to render.
+ * Work is de-duplicated three ways before any request goes out: already-cached
+ * keys, pinned misses, and keys another caller already has in flight (whose
+ * promise is simply awaited). What remains is bucketed by mode and sliced into
+ * BATCH_MAX-sized requests.
+ *
+ * Returning null rather than a snapshot is the signal for the caller to keep
+ * showing the map it already has; it happens when the global cooldown is active,
+ * or when every batch failed to settle anything.
+ *
+ * @param {Iterable<{id: number|string, mode: number|string}|null>} targets - Difficulties to resolve.
+ * @returns {Promise<Map<string, number|null>|null>} Snapshot keyed by ppKey(), or null
+ *   when no progress was made.
+ */
 export async function fetchPp(targets) {
     if (Date.now() < coolUntil) return null;
 

@@ -17,6 +17,16 @@ import {
     triggerDownload,
 } from '../lib/packs-collab-hinai.js';
 
+/**
+ * Orders a beatmapset's difficulties from lowest to highest PP on a copy of the array.
+ *
+ * Difficulties with no PP value are coerced to `Infinity` so they sink to the bottom of the
+ * list instead of being treated as 0 pp and leading it, and `slice()` keeps the cached detail
+ * payload from being mutated in place.
+ *
+ * @param {{beatmaps_pp?: Array<{pp: ?number}>}} set - Beatmapset from the pack detail payload.
+ * @returns {Array<Object>} A new array of difficulties sorted by ascending PP, unrated last.
+ */
 function sortedDiffs(set) {
     const diffs = set.beatmaps_pp || [];
     return diffs.slice().sort((a, b) => {
@@ -26,6 +36,21 @@ function sortedDiffs(set) {
     });
 }
 
+/**
+ * Modal listing every beatmapset in a pack, each row expandable into its per-difficulty
+ * star rating and PP, with whole-pack and per-set download buttons.
+ *
+ * The detail payload is seeded synchronously from the shared module cache (`peekPackDetail`)
+ * so a pack already prefetched by its card paints with no loading bar at all. A failed load
+ * is not fatal: the header and the .zip button stay usable and only the listing is replaced
+ * by a retry prompt. The two busy flags are optimistic UI only, cleared by timers, because a
+ * download is handed to the browser through a synthetic anchor and never reports completion.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.pack - Pack summary row from the grid (tag, name, author, date, pp_summary).
+ * @param {() => void} props.onClose - Invoked on Escape, the close button, or a backdrop mousedown.
+ * @returns {JSX.Element} The modal overlay and dialog.
+ */
 export default function PackDetailModal({ pack, onClose }) {
     const cached = peekPackDetail(pack.tag);
     const [detail, setDetail] = useState(cached);
@@ -59,6 +84,12 @@ export default function PackDetailModal({ pack, onClose }) {
         return () => { active = false; };
     }, [pack.tag, retryKey]);
 
+    /**
+     * Stable close handler shared by the backdrop, the close button and the Escape key
+     * listener, so the keydown effect only re-subscribes when the parent's callback changes.
+     *
+     * @returns {void}
+     */
     const handleClose = useCallback(() => onClose(), [onClose]);
 
     useEffect(() => {
@@ -86,11 +117,28 @@ export default function PackDetailModal({ pack, onClose }) {
         return () => clearTimeout(timer);
     }, [zipBusy]);
 
+    /**
+     * Starts the whole-pack .zip download and disables the button.
+     *
+     * The busy flag is purely cosmetic feedback, cleared by a 3s timer elsewhere in the
+     * component, since the download is delegated to the browser and gives no progress signal.
+     *
+     * @returns {void}
+     */
     const downloadZip = () => {
         setZipBusy(true);
         triggerDownload(packZipUrl(pack.tag));
     };
 
+    /**
+     * Starts a single beatmapset download through the mirror and marks that row busy.
+     *
+     * The id is appended only when absent so a repeated click cannot stack duplicates in the
+     * busy list; the whole list is flushed by a 2s timer that restarts on every addition.
+     *
+     * @param {number|string} id - Beatmapset id to download.
+     * @returns {void}
+     */
     const downloadSet = id => {
         setBusySets(prev => (prev.includes(id) ? prev : prev.concat(id)));
         triggerDownload(setDownloadUrl(id));

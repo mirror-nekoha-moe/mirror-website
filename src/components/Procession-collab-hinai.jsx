@@ -1,12 +1,57 @@
 import { SKULL } from "./Revenant-collab-hinai.jsx";
+/**
+ * Master period, in seconds, of the whole rise-and-scatter performance.
+ *
+ * Every SMIL `<animate>` / `<animateTransform>` in this file uses this as its
+ * `dur`, which is what keeps the lift, the bone fade-in, the eye glow and the
+ * dust burst phase-locked to one another: their `keyTimes` are fractions of
+ * this single number, so retiming the sequence means editing only this value.
+ * @type {number}
+ */
 const CYCLE = 30;
+/**
+ * Uniform scale applied to the imported {@link SKULL} path.
+ *
+ * `SKULL` is authored against Revenant's 200x200 viewBox, while this wraith is
+ * drawn on a much taller `0 -150 200 650` canvas whose skeleton runs from the
+ * crown down to the foot of the legs at y=402. Shrinking the skull to 0.43 is
+ * what lands it on the spine, which starts at y=119.
+ * @type {number}
+ */
 const SKULL_K = 0.43;
+/**
+ * X translation, in wraith user units, applied to the scaled skull path.
+ * @type {number}
+ */
 const SKULL_TX = 57;
+/**
+ * Y translation, in wraith user units, applied to the scaled skull path.
+ * @type {number}
+ */
 const SKULL_TY = 40;
+/**
+ * Centres of the two ember eye glows, in wraith user units.
+ *
+ * The raw numbers (70.7 / 129.3, 92.9) are the socket centres in the skull's
+ * OWN coordinate space, pushed through the exact same `translate` + `scale`
+ * the skull path gets. Deriving them instead of hard-coding is deliberate:
+ * retuning `SKULL_K`/`SKULL_TX`/`SKULL_TY` moves the glows with the sockets
+ * instead of leaving them floating off the face.
+ * @type {{x: number, y: number}[]}
+ */
 const SOCKETS = [
   { x: SKULL_TX + 70.7 * SKULL_K, y: SKULL_TY + 92.9 * SKULL_K },
   { x: SKULL_TX + 129.3 * SKULL_K, y: SKULL_TY + 92.9 * SKULL_K }
 ];
+/**
+ * The rib cage, top rib first.
+ *
+ * Each entry is rendered as one quadratic arc centred on the x=100 spine:
+ * `y` is the baseline the rib springs from, `hw` its half-width (so the arc
+ * runs from `100 - hw` to `100 + hw`), and `dip` how far below `y` the control
+ * point sits, which is what gives the rib its downward sag.
+ * @type {{y: number, hw: number, dip: number}[]}
+ */
 const RIBS = [
   { y: 158, hw: 30, dip: 7 },
   { y: 172, hw: 36, dip: 9 },
@@ -16,18 +61,52 @@ const RIBS = [
   { y: 228, hw: 34, dip: 13 },
   { y: 242, hw: 28, dip: 12 }
 ];
+/**
+ * Y positions of the four lumbar vertebrae, drawn as filled dots on the x=100 spine.
+ * @type {number[]}
+ */
 const LUMBAR = [256, 268, 280, 292];
+/**
+ * The four strokes that make up the pelvic cradle.
+ *
+ * `d` is the SVG path data and `w` the stroke width (5 for the top span and the
+ * bottom V, 6 for the two curved wings); the entries are also keyed by `d` when
+ * rendered, so no two paths here may be identical.
+ * @type {{d: string, w: number}[]}
+ */
 const PELVIS = [
   { d: "M70 300 Q100 291 130 300", w: 5 },
   { d: "M70 300 C65 316 71 333 84 339", w: 6 },
   { d: "M130 300 C135 316 129 333 116 339", w: 6 },
   { d: "M84 339 L100 345 L116 339", w: 5 }
 ];
+/**
+ * Centres of the two hip joint balls, drawn as filled circles where the legs meet the pelvis.
+ * @type {{x: number, y: number}[]}
+ */
 const HIPS = [
   { x: 78, y: 330 },
   { x: 122, y: 330 }
 ];
+/**
+ * The two leg strokes, hanging from the hip joints and splaying slightly outward.
+ * @type {string[]}
+ */
 const LEGS = ["M78 332 L73 402", "M122 332 L127 402"];
+/**
+ * The two silhouettes a procession column can wear, selected by `side`.
+ *
+ * `riser` (left) throws its arms overhead and tips the skull back; `mourner`
+ * (right) lets them hang and bows the skull forward. Only the head tilt, the
+ * arms and the hands differ; the skull, spine, ribs, pelvis and legs are all
+ * module-level constants shared by both, so the two gutters read as one crowd
+ * rather than a mirrored pair.
+ *
+ * `tilt` is degrees of skull rotation about (100, 121), `arms` the two arm
+ * strokes, and `hands` the finger splays whose start points must coincide with
+ * the matching arm's endpoint.
+ * @type {Object<string, {tilt: number, arms: string[], hands: string[]}>}
+ */
 const POSES = {
   riser: {
 
@@ -48,7 +127,23 @@ const POSES = {
     ]
   }
 };
+/**
+ * Origin the ash burst expands away from, roughly the wraith's sternum.
+ *
+ * SVG `scale()` always grows about the user-space origin, so the burst group
+ * is wrapped in `translate(BURST)` / `translate(-BURST)` around the scaling
+ * `<g>` to move the centre of expansion onto the chest.
+ * @type {{x: number, y: number}}
+ */
 const BURST = { x: 100, y: 200 };
+/**
+ * Seed positions and radii of the ash flakes thrown off when the wraith comes apart.
+ *
+ * They are scattered from skull height down past the rib cage rather than ringed
+ * around `BURST`, so the scale-up reads as a skeleton coming apart instead of a
+ * symmetric explosion. The rendered radius is `r * 1.7`, not `r`.
+ * @type {{x: number, y: number, r: number}[]}
+ */
 const DUST = [
   { x: 100, y: 200, r: 3.2 },
   { x: 72, y: 158, r: 2.6 },
@@ -67,6 +162,19 @@ const DUST = [
   { x: 120, y: 96, r: 1.5 },
   { x: 74, y: 286, r: 1.9 }
 ];
+/**
+ * The slow motes that drift up the gutter continuously, independent of the wraith cycle.
+ *
+ * These are plain DOM spans animated by CSS (`gv-proc-updraft`), not SMIL. The
+ * five numeric fields are forwarded as custom properties: `x` the column
+ * position in percent, `sz` the diameter in px, `dur` the rise duration in
+ * seconds, `delay` how many seconds to rewind the animation by so the field
+ * starts already in motion rather than all launching together, and `sway` the
+ * horizontal px drift accumulated over one rise. The optional `tide` flag is
+ * not a custom property but a modifier class, swapping the mote's gradient to
+ * the pale `--gv-tide` green so a few specks pick up the water colour.
+ * @type {{x: number, sz: number, dur: number, delay: number, sway: number, tide?: boolean}[]}
+ */
 const ASH = [
   { x: 18, sz: 2, dur: 19, delay: 0, sway: 14 },
   { x: 34, sz: 1.4, dur: 26, delay: 7, sway: -10 },
@@ -78,6 +186,27 @@ const ASH = [
   { x: 27, sz: 1.8, dur: 24, delay: 9, sway: -8, tide: true },
   { x: 92, sz: 1.5, dur: 18, delay: 16, sway: 11 }
 ];
+/**
+ * One ambient gutter column for the graveyard page: drifting fog, rising ash,
+ * and a skeletal wraith that lifts out of the floor, opens its eyes, then
+ * scatters into flakes on a loop.
+ *
+ * The whole thing is decorative and inert: the wrapper is `aria-hidden` and the
+ * stylesheet pins it into the empty margin beside the 1400px content column,
+ * hiding it entirely below 1680px, under `prefers-reduced-motion`, and in print.
+ *
+ * Two instances mount at once, which drives most of the parameters. Every SVG
+ * `<defs>` id is namespaced with `id` because filter/gradient/mask ids are
+ * document-global and the second column would otherwise silently reuse the
+ * first's filters. `side` picks the pose, flips the fog fade so the bank is
+ * densest at the outer screen edge, and swaps the `feTurbulence` seeds so the
+ * two fog fields are visibly different noise rather than the same cloud twice.
+ *
+ * @param {string} id - Unique prefix for this instance's SVG def ids; must differ per mounted column.
+ * @param {"left"|"right"} side - Which gutter this column occupies; also selects `POSES.riser` vs `POSES.mourner`.
+ * @param {number} [phase=0] - Seconds to offset the loop by. Applied as a negative SMIL `begin`, so the animation starts already this far in rather than waiting, letting the second column run out of step with the first.
+ * @returns {JSX.Element} The fixed-position decorative column.
+ */
 function Procession({ id, side, phase = 0 }) {
   const pose = side === "left" ? POSES.riser : POSES.mourner;
   const veil = `${id}-veil`;

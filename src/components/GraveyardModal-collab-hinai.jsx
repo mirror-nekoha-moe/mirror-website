@@ -15,12 +15,51 @@ import {
     formatCount,
 } from '../lib/graveyard-collab-hinai.js';
 
+/**
+ * Renders a byte count as megabytes with two decimals.
+ *
+ * Divides by `1024 ** 2`, so the figure is mebibytes even though the label reads "MB", which is the
+ * usual convention for a download size.
+ *
+ * @param {number|string} bytes - Raw size from the collab API, coerced with `Number`.
+ * @returns {string|null} A string such as `"4.21 MB"`, or `null` when the value is not a finite
+ *   positive number. The modal's only call site guards on `set.file_size` being truthy rather than
+ *   on this `null`, so a truthy but unparseable size would still reach the label as `"null"`.
+ */
 function formatBytes(bytes) {
     const value = Number(bytes);
     if (!Number.isFinite(value) || value <= 0) return null;
     return `${(value / (1024 ** 2)).toFixed(2)} MB`;
 }
 
+/**
+ * Full-set detail overlay for a graveyard card: difficulty tabs, the selected difficulty's
+ * attributes, and its complete per-mod PP table.
+ *
+ * The header, the `.osz` download and the osu!direct link are all rendered from `seed`, the row the
+ * user just clicked, so the modal is useful the instant it opens and stays useful when the set
+ * fetch fails; that is why the error banner says the download still works instead of offering only
+ * a retry. `retryKey` sits in the fetch effect's dependency list purely so the Retry button can
+ * re-run the identical request.
+ *
+ * Difficulties are sorted ascending by star rating and the PP rows descending by PP, both on copies
+ * (`slice()`) because the fetched payload is shared state. `selectedMd5` is seeded from the clicked
+ * row, so selection resolves to that difficulty once the set lands, and falls back to the first
+ * difficulty if that md5 is absent from the payload. Before the fetch resolves there are no
+ * difficulties at all, so `selected` is `null` and the tabs and attribute grid do not render.
+ *
+ * While mounted the modal locks `document.body` scroll (restoring the exact previous value, not
+ * hardcoding `''`), focuses the close button, and closes on Escape. Backdrop dismissal listens for
+ * `mousedown` with `e.target === e.currentTarget`, so the press must both start and be on the
+ * backdrop itself: a text selection dragged out of the dialog and released on the backdrop does not
+ * close it.
+ *
+ * @param {object} props
+ * @param {object} props.seed - The clicked search row, supplying `beatmapset_id`, `beatmap_md5`, `title`, `artist`, `creator`, `status`, `mode` and `cover` before the fetch resolves.
+ * @param {string} props.activeMod - The page's mod lens; the matching row of the PP table is highlighted and tinted.
+ * @param {() => void} props.onClose - Dismisses the modal.
+ * @returns {JSX.Element} The modal overlay and dialog.
+ */
 export default function GraveyardModal({ seed, activeMod, onClose }) {
     const [set, setSet] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -46,9 +85,22 @@ export default function GraveyardModal({ seed, activeMod, onClose }) {
         return () => controller.abort();
     }, [seed.beatmapset_id, retryKey]);
 
+    /**
+     * Stable wrapper around the `onClose` prop. Memoised so the Escape-key effect below, which
+     * depends on it, does not detach and reattach its document listener on every render.
+     *
+     * @returns {void}
+     */
     const handleClose = useCallback(() => onClose(), [onClose]);
 
     useEffect(() => {
+        /**
+         * Document-level keydown handler that closes the modal on Escape. Bound to `document`
+         * rather than the dialog so it fires no matter where focus currently sits.
+         *
+         * @param {KeyboardEvent} e - The keydown event.
+         * @returns {void}
+         */
         const onKeyDown = e => { if (e.key === 'Escape') handleClose(); };
         document.addEventListener('keydown', onKeyDown);
         return () => document.removeEventListener('keydown', onKeyDown);

@@ -30,6 +30,15 @@ const WATER_SPARKS = [
     { sx: '38%', sy: '88%', ss: '9px', sd: '5.8s', sdl: '-1.1s' },
 ];
 
+/**
+ * Renders a mirror sync timestamp as a short `D Mon YYYY` label in the viewer's local time.
+ *
+ * The value arrives as UNIX seconds, hence the multiply by 1000 for the `Date` constructor.
+ * A missing or zero timestamp is reported as "unknown" rather than an epoch date.
+ *
+ * @param {?number} ts - Last sync time in seconds since the UNIX epoch.
+ * @returns {string} Formatted date, or "unknown" when no timestamp was supplied.
+ */
 function syncLabel(ts) {
     if (!ts) return 'unknown';
     const d = new Date(ts * 1000);
@@ -42,6 +51,24 @@ const GLINTS = [
     { gx: '46%', gy: '66%', gs: '13px', gd: '-4.1s' },
 ];
 
+/**
+ * Decorative hero for the packs page: layered artwork (aurora and snow washes styled purely in
+ * CSS, plus feathers, sparks and glints placed through inline CSS custom properties), the
+ * headline copy, a catalogue stat strip, and a provenance footer crediting both the Nekoha
+ * index and the hinai mirror.
+ *
+ * The animated character loop is opt-in and swapped in for the poster only once the GIF has
+ * finished loading, so it never paints a half-loaded frame. It is skipped entirely on narrow
+ * viewports, under `prefers-reduced-motion`, and when the connection reports Save-Data, since
+ * the loop is pure decoration and by far the largest asset here. Mirror health is fetched here
+ * on its own rather than arriving alongside `stats`, because it feeds only optional provenance
+ * detail (the rosu-pp engine chip and the hinai version tag) and must never block the strip.
+ *
+ * @param {Object} props - Component props.
+ * @param {?Object} props.stats - Pack catalogue stats (totals, PP coverage, per-mode counts,
+ *   index size, last sync); `null` while loading, which renders the skeleton strip instead.
+ * @returns {JSX.Element} The hero section.
+ */
 export default function PacksHero({ stats }) {
     const [loopLive, setLoopLive] = useState(false);
     const [health, setHealth] = useState(null);

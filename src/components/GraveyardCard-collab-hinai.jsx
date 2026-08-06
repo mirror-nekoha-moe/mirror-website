@@ -14,6 +14,21 @@ import {
     graveyardDownloadUrl,
 } from '../lib/graveyard-collab-hinai.js';
 
+/**
+ * One difficulty in the graveyard result grid: cover band, mapper line, the PP readout for the mod
+ * the row was scored under, and the details / download actions.
+ *
+ * A row is one beatmap under one mod, not a whole set, so `map.mod` and `map.pp` already carry the
+ * lens the page searched with and are rendered as-is rather than recomputed here. The cover is
+ * routed through the hinai mirror's image proxy instead of hotlinked, and `coverFailed` latches on
+ * the img's `onError` so a dead cover falls back to the "no cover" plate permanently, rather than
+ * re-requesting a known-broken URL on every re-render.
+ *
+ * @param {object} props
+ * @param {object} props.map - A collab search row: `cover`, `mod`, `pp`, `stars`, `status`, `mode`, `artist`, `title`, `version`, `creator`, `bpm`, `total_length`, `max_combo`, `beatmapset_id`.
+ * @param {() => void} props.onOpen - Opens the detail modal for this row; wired to both the cover button and the "View details" button.
+ * @returns {JSX.Element} The card.
+ */
 export default function GraveyardCard({ map, onOpen }) {
     const [coverFailed, setCoverFailed] = useState(false);
     const showCover = Boolean(map.cover) && !coverFailed;

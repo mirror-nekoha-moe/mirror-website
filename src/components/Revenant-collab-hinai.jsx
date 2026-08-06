@@ -1,3 +1,15 @@
+/**
+ * The single `d` attribute for the revenant skull: eight sub-paths, spelled out across eleven array
+ * entries joined by spaces, since the cranium and jaw outline alone spans the first four entries.
+ * The shapes are that outline, the two eye sockets, the nasal cavity, and four teeth.
+ *
+ * It is one path rather than several elements so that `fill-rule="evenodd"` can carve the sockets,
+ * nose and tooth gaps straight out of the outline. Painting them as separate shapes would require a
+ * background colour to fake the holes, which would break the moment the skull is composited over
+ * the fog.
+ *
+ * @type {string}
+ */
 const SKULL = [
   "M100 14 C61 14 32 44 32 84 C32 104 40 120 53 129 C60 134 64 139 65 147",
   "C66 154 68 158 72 160 L72 172 C72 178 76 182 82 182 L118 182",
@@ -11,6 +23,27 @@ const SKULL = [
   "M106 158 h3.2 v24 h-3.2 z",
   "M117 158 h3.2 v24 h-3.2 z"
 ].join(" ");
+/**
+ * Decorative skull that smears in and out of the graveyard fog.
+ *
+ * Renders {@link SKULL} twice. The `.gv-revenant__live` group is pushed through a turbulence plus
+ * displacement filter whose `scale` is animated 150 -> ~20 -> 150 over 26s, so the skull starts as
+ * unrecognisable noise, resolves into a face, then dissolves again; a matching 26s opacity animation
+ * on the same group fades it so the resolve lands while it is most visible. The `.gv-revenant__still`
+ * group is the same path with no filter, kept `display: none` by CSS until
+ * `prefers-reduced-motion: reduce`, where the emblem variant swaps to it and the ambient variant is
+ * hidden outright. That is why both groups are always in the DOM: the reduced-motion swap is done in
+ * CSS, not here.
+ *
+ * The gradient and filter ids are namespaced with `id` because SVG defs live in one document-wide
+ * namespace, so two instances on the same page sharing an id would resolve to the same filter.
+ *
+ * @param {object} props
+ * @param {string} props.id - Unique instance id, seeding the `${id}-ink` gradient and `${id}-veil` filter ids.
+ * @param {string} [props.className] - Extra class appended to the root svg.
+ * @param {'ambient'|'emblem'} [props.variant='ambient'] - Selects the `gv-revenant--*` modifier, which sets opacity and decides the reduced-motion behaviour.
+ * @returns {JSX.Element} An `aria-hidden` svg carrying no semantic content.
+ */
 function Revenant({ id, className, variant = "ambient" }) {
   const veil = `${id}-veil`;
   const ink = `${id}-ink`;

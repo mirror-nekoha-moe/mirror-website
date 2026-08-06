@@ -32,6 +32,16 @@ const STATUS_LABELS = {
 
 const MODE_LABELS = { osu: 'osu!', taiko: 'Taiko', fruits: 'Catch', mania: 'Mania' };
 
+/**
+ * Format a timestamp as `D Mon YYYY` for the modal's date strip.
+ *
+ * Returns null for both a missing and an unparseable value rather than a placeholder string,
+ * which is what lets each caller drop its whole line with `dayLabel(x) && <span>...</span>`
+ * instead of printing `Invalid Date`.
+ *
+ * @param {string|number|Date|null|undefined} value - Anything the `Date` constructor accepts.
+ * @returns {string|null} The formatted date, or null when there is nothing valid to show.
+ */
 function dayLabel(value) {
     if (!value) return null;
     const d = new Date(value);
@@ -39,12 +49,40 @@ function dayLabel(value) {
     return `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
 }
 
+/**
+ * Copy a set's difficulty list and sort it ascending by star rating.
+ *
+ * Falls back to an empty array when the field is missing or not an array, because the seed
+ * object handed to the modal may be a lightweight search row rather than a full set payload.
+ * The `slice()` is load-bearing: the set object can come from the shared details cache, and
+ * an in-place `sort` would reorder it for every other consumer.
+ *
+ * @param {Array<Object>|any} list - Candidate difficulty array, possibly absent.
+ * @returns {Array<Object>} A new array ordered easiest to hardest.
+ */
 function sortDiffs(list) {
     return (Array.isArray(list) ? list : [])
         .slice()
         .sort((a, b) => Number(a.difficulty_rating) - Number(b.difficulty_rating));
 }
 
+/**
+ * Overlay dialog that enriches a beatmapset with hinai mirror data: artwork downloads,
+ * engagement counters, per-mod PP, the josu web viewer and an advanced difficulty table.
+ *
+ * State is seeded from the details cache (`peekSetDetails`) or, failing that, from the row the
+ * caller already had, so the dialog paints immediately and the fetched payload is merged over
+ * it when it lands. Mounting locks body scroll, focuses the close button, records a view and
+ * then reads engagement counts, in that order so the view is reflected in the numbers shown.
+ * Escape closes; Left/Right step difficulty but are ignored while a form control has focus.
+ * The difficulty tabs list easiest first, yet the default selection is the LAST entry, i.e.
+ * the hardest diff, which is the one people come to look at.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.seed - Beatmapset to display; only `id` is strictly required, the rest is refined by the fetch.
+ * @param {Function} props.onClose - Invoked when the dialog should be dismissed.
+ * @returns {JSX.Element} The backdrop plus dialog.
+ */
 export default function HinaiInfoModal({ seed, onClose }) {
     const [set, setSet] = useState(() => peekSetDetails(seed.id) || seed);
     const [activeId, setActiveId] = useState(null);
@@ -56,9 +94,21 @@ export default function HinaiInfoModal({ seed, onClose }) {
     const [bgPreviewOk, setBgPreviewOk] = useState(true);
     const closeRef = useRef(null);
 
+    /**
+     * Dismiss the dialog. Wrapped in `useCallback` so the Escape-key effect below keeps a
+     * stable dependency and does not tear down and rebind its document listener each render.
+     *
+     * @returns {void}
+     */
     const handleClose = useCallback(() => onClose(), [onClose]);
 
     useEffect(() => {
+        /**
+         * Close the dialog when Escape is pressed anywhere in the document.
+         *
+         * @param {KeyboardEvent} e - The document keydown event.
+         * @returns {void}
+         */
         const onKeyDown = e => {
             if (e.key === 'Escape') handleClose();
         };
@@ -98,6 +148,21 @@ export default function HinaiInfoModal({ seed, onClose }) {
 
     const active = diffs.find(d => d.id === activeId) || diffs[diffs.length - 1] || null;
 
+    /**
+     * Download one artwork variant (the cover or the extracted background) and surface any failure.
+     *
+     * Re-entry is ignored while a download is in flight, because both tiles share the single
+     * `artworkBusy` flag and a second click would otherwise leave it pointing at the wrong tile.
+     * A successful download clears the notice; anything else stores the outcome object so the
+     * note can offer the "use the cover instead" fallback on a 404 (`kind: 'none'`), a retry
+     * delay on any other failure that came back with a `Retry-After` header, and the
+     * per-request forensics link when the mirror returned one.
+     *
+     * @param {string} which - Which tile is busy: 'cover' or 'bg'.
+     * @param {string} url - Mirror artwork URL to fetch.
+     * @param {string} filename - Name to save the downloaded blob under.
+     * @returns {Promise<void>} Resolves once the busy flag has been cleared.
+     */
     const grabArtwork = async (which, url, filename) => {
         if (artworkBusy) return;
         setArtworkBusy(which);
@@ -107,6 +172,15 @@ export default function HinaiInfoModal({ seed, onClose }) {
         setArtwork(outcome.kind === 'ok' ? null : outcome);
     };
 
+    /**
+     * Move the selection `dir` positions through the star-sorted difficulty list.
+     *
+     * Clamps at both ends instead of wrapping, so holding an arrow key parks on the easiest or
+     * hardest diff rather than cycling, and no-ops on sets with fewer than two difficulties.
+     *
+     * @param {number} dir - -1 for the easier neighbour, 1 for the harder one.
+     * @returns {void}
+     */
     const arrowDiff = useCallback(
         dir => {
             if (!active || diffs.length < 2) return;
@@ -118,6 +192,15 @@ export default function HinaiInfoModal({ seed, onClose }) {
     );
 
     useEffect(() => {
+        /**
+         * Route Left/Right arrow presses to the difficulty stepper.
+         *
+         * Bails out when the event originated in a form control so arrow keys still move the
+         * caret inside the PP panel's inputs instead of silently changing difficulty.
+         *
+         * @param {KeyboardEvent} e - The document keydown event.
+         * @returns {void}
+         */
         const onKeyDown = e => {
             if (e.target && /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
             if (e.key === 'ArrowLeft') arrowDiff(-1);

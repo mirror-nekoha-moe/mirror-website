@@ -25,8 +25,23 @@ import {
     formatCount,
 } from '../lib/graveyard-collab-hinai.js';
 
+/**
+ * How many placeholder cards to render while the first page of a search is in flight. Twelve fills
+ * exactly four rows of the three-column xl grid, so the skeleton block is the same rectangle the
+ * results will occupy and the page does not jump when they land.
+ */
 const SKELETONS = 12;
 
+/**
+ * Hand-placed dust motes drifting over the hero. Each entry becomes one `.gv-mote` span whose CSS
+ * custom properties drive the animation: `x` is the horizontal position in percent (and doubles as
+ * the React key, so the values must stay unique), `sz` the diameter in px, `dur` the float period in
+ * seconds, and `sway` the horizontal drift amplitude in px, with the sign choosing the direction.
+ *
+ * `delay` is deliberately NEGATIVE: a negative `animation-delay` starts the animation already that
+ * far into its cycle, so every mote is mid-flight on first paint instead of the whole field
+ * launching in unison. The durations and offsets are mutually irregular for the same reason.
+ */
 const MOTES = [
     { x: 12, sz: 3, dur: 15, delay: -2, sway: 16 },
     { x: 27, sz: 2, dur: 19, delay: -7, sway: -12 },
@@ -36,6 +51,34 @@ const MOTES = [
     { x: 88, sz: 2, dur: 23, delay: -9, sway: -20 },
 ];
 
+/**
+ * The Graveyard PP Lookup page, the Nekoha x Hinai collab surface: pick a mod lens and browse every
+ * never-ranked beatmapset scored under it, so a private-server nominator can see what an abandoned
+ * map is actually worth.
+ *
+ * All filter state (mod lens, search term, mode, status, sort, PP band, meme mode) feeds one effect
+ * that resets to page 1 and refetches. The term and the PP band go through `useDebounced` at 400ms
+ * and 250ms respectively, so typing or dragging a slider does not fire a request per keystroke or
+ * per pixel. Two refs keep overlapping requests honest: `genRef` is a monotonic generation counter
+ * checked in every `then`/`catch`, so a slow response belonging to a superseded filter set is
+ * dropped instead of overwriting fresh results, and `busyRef` blocks the infinite-scroll loader
+ * while any request is outstanding. A payload with `ready === false` means the collab collection is
+ * still being built upstream and is surfaced through the error banner rather than as "no results",
+ * because an empty grid would read as a real answer.
+ *
+ * Paging is an `IntersectionObserver` on a 1px sentinel with a 400px `rootMargin`, so the next page
+ * starts loading before the user reaches the bottom. The observer is installed once on mount and
+ * calls through `loadMoreRef` rather than closing over `loadMore` directly, so the callback could be
+ * replaced without tearing down and re-creating the observer. In practice it never is: `loadMore` is
+ * memoised with an empty dependency list, so the effect that writes `loadMoreRef.current` runs once
+ * and the indirection stays a safety net.
+ *
+ * `filtersRef` mirrors the same filter values into a ref so `loadMore` can read them without
+ * becoming a new function identity whenever a filter changes. That, not a swapped callback, is how
+ * a page-2 request picks up the current filters.
+ *
+ * @returns {JSX.Element} The full page: hero, provenance strip, filter controls, result grid and modal.
+ */
 export default function Graveyard() {
     const [activeMod, setActiveMod] = useState('NM');
     const [showAllMods, setShowAllMods] = useState(false);
@@ -125,6 +168,22 @@ export default function Graveyard() {
         return () => controller.abort();
     }, [activeMod, status, sort, mode, debouncedTerm, ppLo, ppHi, memeMode, retryKey]);
 
+    /**
+     * Fetches the next page of results and appends it to the list, driven by the scroll sentinel.
+     *
+     * Reads the current filters out of `filtersRef` rather than from state so it can be declared
+     * with an empty dependency list and keep a stable identity. It bails out when a request is
+     * already in flight (`busyRef`) or before the first filter snapshot exists, and discards the
+     * response if `genRef` moved on while it was waiting, which means the filters changed and a
+     * fresh page-1 search already owns the list.
+     *
+     * `hasMore` is recomputed inside the `setMaps` updater because it depends on the merged length,
+     * which only exists there; it stays true only while the accumulated rows are short of the
+     * reported total AND the server actually returned something, so an empty page terminates
+     * paging even if the total is wrong.
+     *
+     * @returns {void}
+     */
     const loadMore = useCallback(() => {
         if (busyRef.current || !filtersRef.current) return;
         const gen = genRef.current;
@@ -164,6 +223,21 @@ export default function Graveyard() {
         return () => observer.disconnect();
     }, []);
 
+    /**
+     * Flips "meme" mode, the escape hatch for the broken aspire maps that score above `PP_CAP`.
+     *
+     * Turning it on pins the PP band to `[PP_CAP, PP_CAP]`, which `buildSearchQuery` reads as
+     * "min_pp = cap, no max_pp at all" and therefore as an open-ended tail above the cap rather
+     * than a zero-width band. Turning it off clamps the band back to at most `[PP_CAP - 10,
+     * PP_CAP]`, which leaves the slider on a usable non-degenerate range; note that it restores a
+     * clamp, not whatever band the user had before enabling meme mode, which was not retained.
+     *
+     * The `setPpRange` call is nested inside the `setMemeMode` updater so both writes agree on the
+     * same `next` value, and the range clamp is itself an updater because it needs the previous
+     * `[lo, hi]`.
+     *
+     * @returns {void}
+     */
     const toggleMeme = () => {
         setMemeMode(on => {
             const next = !on;
