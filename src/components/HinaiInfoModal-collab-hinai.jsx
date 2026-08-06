@@ -185,6 +185,23 @@ export default function HinaiInfoModal({ seed, onClose }) {
                         {set.language && set.language.name && <span className="hinf__pillmeta">{set.language.name}</span>}
                     </div>
 
+                    <div className="hinf__engage">
+                        <FavoriteButton setId={set.id} kind="map" />
+                        {set.storyboard && <FavoriteButton setId={set.id} kind="storyboard" />}
+                        {engagement && (
+                            <span className="hinf__engagestats">
+                                <span className="hinf__stat">
+                                    <b>{compact(engagement.views)}</b>
+                                    <span className="hinf__statk">views</span>
+                                </span>
+                                <span className="hinf__stat">
+                                    <b>{compact(engagement.uniqueViewers)}</b>
+                                    <span className="hinf__statk">visitors</span>
+                                </span>
+                            </span>
+                        )}
+                    </div>
+
                     <section className="hinf__section">
                         <h3 className="hinf__sectiontitle">
                             Artwork
@@ -296,27 +313,6 @@ export default function HinaiInfoModal({ seed, onClose }) {
                                 )}
                             </div>
                         )}
-
-                        <div className="hinf__engage">
-                            <FavoriteButton setId={set.id} kind="map" />
-                            {set.storyboard && <FavoriteButton setId={set.id} kind="storyboard" />}
-                            {engagement && (
-                                <span className="hinf__engagestats">
-                                    <span className="hinf__stat">
-                                        <b>{compact(engagement.views)}</b>
-                                        <span className="hinf__statk">views</span>
-                                    </span>
-                                    <span className="hinf__stat">
-                                        <b>{compact(engagement.uniqueViewers)}</b>
-                                        <span className="hinf__statk">visitors</span>
-                                    </span>
-                                    <span className="hinf__stat">
-                                        <b>{compact(engagement.artDownloads)}</b>
-                                        <span className="hinf__statk">art saved</span>
-                                    </span>
-                                </span>
-                            )}
-                        </div>
                     </section>
 
                     {diffs.length > 0 && (

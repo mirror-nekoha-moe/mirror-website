@@ -29,8 +29,8 @@ const KINDS = {
         titleOff: 'Favourite this song on mirror.hinamizawa.ai',
     },
     map: {
-        label: 'Like',
-        onLabel: 'Liked',
+        label: 'Like map',
+        onLabel: 'Liked map',
         read: async setId => {
             const e = await getBeatmapEngagement(setId);
             return e ? { favorited: e.liked, count: e.likes } : null;
@@ -43,8 +43,8 @@ const KINDS = {
         titleOff: 'Like this beatmap on mirror.hinamizawa.ai',
     },
     storyboard: {
-        label: 'Like',
-        onLabel: 'Liked',
+        label: 'Like storyboard',
+        onLabel: 'Liked storyboard',
         read: async setId => {
             const e = await getStoryboardEngagement(setId);
             return e ? { favorited: e.liked, count: e.likes } : null;
