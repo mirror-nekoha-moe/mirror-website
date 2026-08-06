@@ -1,4 +1,7 @@
 import { NavLink } from "react-router-dom";
+import { GithubMark, NEKOHA_URL } from "./CollabMark-collab-hinai.jsx";
+
+const NEKOHA_MARK = "/assets/collab-hinai/nekoha-mark-collab-hinai.webp";
 
 const Navbar = () => {
   const handleLinkClick = (e, url) => {
@@ -13,13 +16,18 @@ const Navbar = () => {
 
     return (
         <div class="top-container">
-            <nav class="navbar navbar-expand-md bg-card">
-                <div class="container-fluid">
-                    <a href="/" class="navbar-brand">mirror.nekoha.moe</a>
+            <nav class="navbar navbar-expand-md bg-card nk-nav">
+                <div class="container-fluid nk-nav__inner">
+                    <div class="nk-nav__lead">
+                        <a href="/" class="navbar-brand nk-nav__brand">
+                            <span class="nk-nav__brandname">mirror.nekoha.moe</span>
+                            <img class="nk-nav__logo" src={NEKOHA_MARK} alt="" width="26" height="26" />
+                        </a>
+                    </div>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-content" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation">
                         <span class="navbar-toggler-icon"></span>
                     </button>
-                        <div class="collapse navbar-collapse" id="navbar-content">
+                        <div class="collapse navbar-collapse nk-nav__menu" id="navbar-content">
                             <ul class="navbar-nav w-100">
                                 <li class="nav-item">
                                     <a href="/" class="nav-link" onClick={(e) => handleLinkClick(e, "/")}>Home</a>
@@ -43,6 +51,12 @@ const Navbar = () => {
                                             <a href="/requests" class="nav-link" onClick={(e) => handleLinkClick(e, "/requests")}>View Requests</a>
                                         </li>
                                     </ul>
+                                </li>
+                                <li class="nav-item">
+                                    <a href={NEKOHA_URL} class="nav-link nk-nav__docs" target="_blank" rel="noopener noreferrer" title="mirror-server API docs on GitHub">
+                                        <GithubMark className="nk-nav__gh" />
+                                        Docs
+                                    </a>
                                 </li>
                             </ul>
                     </div>

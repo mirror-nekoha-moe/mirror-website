@@ -104,3 +104,16 @@
         text-decoration-color: var(--nk-beam);
     }
 }
+
+.nk-gh {
+    flex: 0 0 auto;
+    fill: currentColor;
+    vertical-align: -0.15em;
+}
+
+.nk-ghlink {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+}

@@ -1,9 +1,10 @@
 import nekohaImage from '../img/nekoha.png';
 
 import { useState, useEffect } from 'react'
-import { FaDiscord, FaGithub } from 'react-icons/fa';
+import { FaDiscord } from 'react-icons/fa';
 import DownloadChart from '../components/DownloadChart.jsx';
 import ApiCallChart from '../components/ApiCallChart.jsx';
+import { GithubMark, NEKOHA_URL } from '../components/CollabMark-collab-hinai.jsx';
 
 function Index() {
   const [stats, setStats] = useState(null);
@@ -63,8 +64,8 @@ function Index() {
                 </a>
             </div>
             <div class="col-12 col-md-auto">
-              <a class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2" href="https://github.com/mirror-nekoha-moe/mirror-server/blob/master/README.MD" target="_blank" rel="noopener noreferrer">
-                <FaGithub />
+              <a class="btn btn-success w-100 d-flex align-items-center justify-content-center gap-2" href={NEKOHA_URL} target="_blank" rel="noopener noreferrer">
+                <GithubMark size={16} />
                 <span>API Documentation</span>
               </a>
             </div>
