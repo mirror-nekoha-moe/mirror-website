@@ -266,6 +266,12 @@
         background-size: cover;
         background-position: center;
 
+        &--img {
+            align-self: stretch;
+            min-height: 64px;
+            object-fit: cover;
+        }
+
         &--none {
             display: flex;
             align-items: center;

@@ -7,8 +7,9 @@ export const josuUrl = beatmapId => `${JOSU}/?b=${beatmapId}`;
 export const storyboardViewerUrl = setId => `${ESTATE}/osu/storyboards/${setId}/`;
 export const audioUrl = setId => `${MIRROR}/v3/osu/music/audio/${setId}`;
 export const previewFallback = setId => `https://b.ppy.sh/preview/${setId}.mp3`;
-export const backgroundUrl = setId => `${MIRROR}/v3/osu/beatmaps/bg/${setId}`;
-export const coverUrl = setId => `${MIRROR}/v3/osu/beatmaps/cover/${setId}`;
+export const backgroundUrl = setId => `${MIRROR}/v3/osu/beatmaps/bg/${setId}?download=1`;
+export const coverUrl = setId => `${MIRROR}/v3/osu/beatmaps/cover/${setId}?download=1`;
+export const backgroundPreviewUrl = setId => `${MIRROR}/v3/osu/beatmaps/bg/${setId}`;
 
 export const MOD_ORDER = [
     'NM', 'HD', 'HR', 'DT', 'FL', 'EZ',

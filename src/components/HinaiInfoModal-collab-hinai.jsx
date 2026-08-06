@@ -5,6 +5,7 @@ import HinaiAudio, { FavoriteButton } from './HinaiAudio-collab-hinai.jsx';
 import HinaiPpPanel from './HinaiPpPanel-collab-hinai.jsx';
 import { cover as coverArt } from '../lib/mirror-collab-hinai.js';
 import {
+    backgroundPreviewUrl,
     backgroundUrl,
     compact,
     downloadArtwork,
@@ -52,6 +53,7 @@ export default function HinaiInfoModal({ seed, onClose }) {
     const [engagement, setEngagement] = useState(null);
     const [artwork, setArtwork] = useState(null);
     const [artworkBusy, setArtworkBusy] = useState(null);
+    const [bgPreviewOk, setBgPreviewOk] = useState(true);
     const closeRef = useRef(null);
 
     const handleClose = useCallback(() => onClose(), [onClose]);
@@ -75,6 +77,7 @@ export default function HinaiInfoModal({ seed, onClose }) {
 
     useEffect(() => {
         let alive = true;
+        setBgPreviewOk(true);
         fetchSetDetails(seed.id).then(full => {
             if (alive && full) setSet(prev => ({ ...prev, ...full }));
         });
@@ -220,12 +223,27 @@ export default function HinaiInfoModal({ seed, onClose }) {
                             </div>
 
                             <div className="hinf__arttile">
-                                <span className="hinf__artthumb hinf__artthumb--none" aria-hidden="true">
-                                    <FaImage size={22} />
-                                </span>
+                                {bgPreviewOk ? (
+                                    <img
+                                        className="hinf__artthumb hinf__artthumb--img"
+                                        src={backgroundPreviewUrl(set.id)}
+                                        alt=""
+                                        loading="lazy"
+                                        decoding="async"
+                                        onError={() => setBgPreviewOk(false)}
+                                    />
+                                ) : (
+                                    <span className="hinf__artthumb hinf__artthumb--none" aria-hidden="true">
+                                        <FaImage size={22} />
+                                    </span>
+                                )}
                                 <div className="hinf__artbody">
                                     <span className="hinf__artname">Background</span>
-                                    <span className="hinf__artsub">Full size, pulled out of the .osz itself</span>
+                                    <span className="hinf__artsub">
+                                        {bgPreviewOk
+                                            ? 'Full size, pulled out of the .osz itself'
+                                            : 'This beatmap ships no background image'}
+                                    </span>
                                     <div className="hinf__artrow">
                                         <button
                                             type="button"
