@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@datadog/browser-rum": "^7.8.0",
+    "@datadog/browser-rum-react": "^7.8.0",
     "@forge42/seo-tools": "^1.4.5",
     "@fortawesome/fontawesome-free": "^7.1.0",
     "axios": "^1.13.1",
