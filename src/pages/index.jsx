@@ -6,41 +6,46 @@ import DownloadChart from '../components/DownloadChart.jsx';
 import ApiCallChart from '../components/ApiCallChart.jsx';
 
 function Index() {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [downloadStats, setDownloadStats] = useState([]);
-  const [apiCallStats, setApiCallStats] = useState(null);
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [downloadStats, setDownloadStats] = useState([]);
+    const [apiCallStats, setApiCallStats] = useState(null);
 
-  useEffect(() => {
-    fetch('/api/stats')
-      .then(response => {
-        if (!response.ok) throw new Error('Failed to fetch stats');
-        return response.json();
-      })
-      .then(data => { setStats(data); setLoading(false); })
-      .catch(err => { setError(err.message); setLoading(false); });
+    useEffect(() => {
+        fetch('/api/stats')
+            .then(response => {
+                if (!response.ok)
+                    throw new Error('Failed to fetch stats');
+                return response.json();
+            })
+            .then(data => {
+                setStats(data); setLoading(false);
+            })
+            .catch(err => {
+                setError(err.message); setLoading(false);
+            });
 
-    fetch('/api/download-stats?days=30')
-      .then(r => r.json())
-      .then(data => setDownloadStats(data))
-      .catch(() => {});
+        fetch('/api/download-stats?days=30')
+            .then(r => r.json())
+            .then(data => setDownloadStats(data))
+            .catch(() => {});
 
-    fetch('/api/api-call-stats')
-      .then(r => r.json())
-      .then(data => setApiCallStats(data))
-      .catch(() => {});
-  }, []);
+        fetch('/api/api-call-stats')
+            .then(r => r.json())
+            .then(data => setApiCallStats(data))
+            .catch(() => {});
+    }, []);
 
   return (
     <>
       <title>osu! Beatmap Mirror | Nekoha</title>
       <div class="container py-4 px-3 mx-auto">
-        <div className="row mb-4 d-flex justify-content-between">
-          <div className="col-12 col-lg-3 offset-lg-2 align-self-center">
-            <img src={nekohaImage} className="mx-auto d-block img-fluid" alt="nekoha" />
+        <div className="row mb-4 px-5 d-flex justify-content-center">
+          <div className="mb-4 mb-lg-0 col-5 col-lg-2 align-self-center">
+            <img src={nekohaImage} className="img-fluid" alt="nekoha" />
           </div>
-          <div className="col-12 col-lg-7 align-self-center text-center text-lg-start">
+          <div className="col-12 col-lg-6 align-self-center text-center text-lg-start">
             <h1 class="h3">osu! Beatmap Mirror</h1>
             <h2 class="h5">Nekoha</h2>
             <p>
