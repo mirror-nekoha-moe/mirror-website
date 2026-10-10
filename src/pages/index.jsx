@@ -4,6 +4,18 @@ import { useState, useEffect } from 'react'
 import { FaDiscord, FaGithub } from 'react-icons/fa';
 import DownloadChart from '../components/DownloadChart.jsx';
 import ApiCallChart from '../components/ApiCallChart.jsx';
+import ApiRequestChart from '../components/ApiRequestChart.jsx';
+
+function formatBytes(bytes) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    let value = bytes;
+    let unit = 0;
+    while (value >= 1024 && unit < units.length - 1) {
+        value = value / 1024;
+        unit++;
+    }
+    return `${value.toFixed(2)} ${units[unit]}`;
+}
 
 function Index() {
     const [stats, setStats] = useState(null);
@@ -11,6 +23,9 @@ function Index() {
     const [error, setError] = useState(null);
     const [downloadStats, setDownloadStats] = useState([]);
     const [apiCallStats, setApiCallStats] = useState(null);
+    const [apiRequestStats, setApiRequestStats] = useState([]);
+    const [dataServed, setDataServed] = useState(null);
+    const [requestsPerSecond, setRequestsPerSecond] = useState(null);
 
     useEffect(() => {
         fetch('/api/stats')
@@ -29,6 +44,21 @@ function Index() {
         fetch('/api/download-stats?days=30')
             .then(r => r.json())
             .then(data => setDownloadStats(data))
+            .catch(() => {});
+
+        fetch('/api/api-request-stats?days=30')
+            .then(r => r.json())
+            .then(data => setApiRequestStats(data))
+            .catch(() => {});
+
+        fetch('/api/data-served')
+            .then(r => r.json())
+            .then(data => setDataServed(data))
+            .catch(() => {});
+
+        fetch('/api/api-requests-per-second')
+            .then(r => r.json())
+            .then(data => setRequestsPerSecond(data.requests_per_second))
             .catch(() => {});
 
         fetch('/api/api-call-stats')
@@ -89,7 +119,7 @@ function Index() {
             </div>
           ) : stats && (
             <>
-              <div className="col-md-6 col-lg-3">
+              <div className="col-md-6 col-lg-4">
                 <div className="card h-100">
                   <div className="card-body">
                     <p className="h5 card-title">Total Beatmaps</p>
@@ -103,7 +133,7 @@ function Index() {
                 </div>
               </div>
 
-              <div className="col-md-6 col-lg-3">
+              <div className="col-md-6 col-lg-4">
                 <div className="card h-100">
                   <div className="card-body">
                     <p className="h5 card-title">Total Beatmapsets</p>
@@ -117,7 +147,7 @@ function Index() {
                 </div>
               </div>
 
-              <div className="col-md-6 col-lg-3">
+              <div className="col-md-6 col-lg-4">
                 <div className="card h-100">
                   <div className="card-body">
                     <p className="h5 card-title">Latest Set ID</p>
@@ -131,7 +161,7 @@ function Index() {
                 </div>
               </div>
 
-              <div className="col-md-6 col-lg-3">
+              <div className="col-md-6 col-lg-4">
                 <div className="card h-100">
                   <div className="card-body">
                     <p className="h5 card-title">Total Size</p>
@@ -149,6 +179,38 @@ function Index() {
                   </div>
                 </div>
               </div>
+
+              {dataServed && (
+                <div className="col-md-6 col-lg-4">
+                  <div className="card h-100">
+                    <div className="card-body">
+                      <p className="h5 card-title">Data Served</p>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                          <p className="h3 mb-0 text-secondary">{formatBytes(dataServed.total_bytes)}</p>
+                          <small className="text-muted">All time, downloads and API</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {requestsPerSecond !== null && (
+                <div className="col-md-6 col-lg-4">
+                  <div className="card h-100">
+                    <div className="card-body">
+                      <p className="h5 card-title">API Requests</p>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <div>
+                          <p className="h3 mb-0 text-secondary">{requestsPerSecond.toFixed(2)} /s</p>
+                          <small className="text-muted">Last 10 minutes, without downloads</small>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="col-12">
                 <div className="card h-100">
@@ -303,6 +365,15 @@ function Index() {
             <div className="card-body">
               <p className="h5 card-title">Downloads (last 30 days)</p>
               <DownloadChart data={downloadStats} />
+            </div>
+          </div>
+        )}
+
+        {apiRequestStats.length > 0 && (
+          <div className="card mt-2 mb-4">
+            <div className="card-body">
+              <p className="h5 card-title">API requests (last 30 days)</p>
+              <ApiRequestChart data={apiRequestStats} />
             </div>
           </div>
         )}
