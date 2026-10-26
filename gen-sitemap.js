@@ -2,7 +2,7 @@ import { mkdirSync, existsSync, createWriteStream } from 'fs';
 import { SitemapStream, streamToPromise } from 'sitemap';
 
 if (!existsSync('./public')) {
-  mkdirSync('./public', { recursive: true });
+    mkdirSync('./public', { recursive: true });
 }
 
 const sitemap = new SitemapStream({ hostname: 'https://mirror.nekoha.moe' });
@@ -15,5 +15,5 @@ sitemap.write({ url: '/request', changefreq: 'daily', priority: 0.5 });
 sitemap.end();
 
 streamToPromise(sitemap).then(data =>
-  createWriteStream('./public/sitemap.xml').end(data)
+    createWriteStream('./public/sitemap.xml').end(data)
 );
