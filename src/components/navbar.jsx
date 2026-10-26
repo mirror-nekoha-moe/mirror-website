@@ -25,17 +25,6 @@ const Navbar = () => {
                             <li class="nav-item">
                                 <a href="/search" class="nav-link" onClick={(e) => handleLinkClick(e, "/search")}>Beatmaps</a>
                             </li>
-                            <li class="nav-item dropdown">
-                                <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">Request</a>
-                                <ul class="dropdown-menu">
-                                    <li class="dropdown-item">
-                                        <a href="/request" class="nav-link" onClick={(e) => handleLinkClick(e, "/request")}>Request Beatmap</a>
-                                    </li>
-                                    <li class="dropdown-item">
-                                        <a href="/requests" class="nav-link" onClick={(e) => handleLinkClick(e, "/requests")}>View Requests</a>
-                                    </li>
-                                </ul>
-                            </li>
                         </ul>
                     </div>
                 </div>
