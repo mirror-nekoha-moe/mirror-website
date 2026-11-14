@@ -17,16 +17,18 @@ function groupByYear(archives) {
 
         let lastYear = years[years.length - 1];
         if (!lastYear || lastYear.year !== year) {
-            lastYear = { year, months: [] };
+            lastYear = { year, months: [], totals: { std: 0, taiko: 0, catch: 0, mania: 0 } };
             years.push(lastYear);
         }
+        lastYear.totals[archive.mode] += archive.beatmapset_count;
 
         let lastMonth = lastYear.months[lastYear.months.length - 1];
         if (!lastMonth || lastMonth.month !== archive.month) {
-            lastMonth = { month: archive.month };
+            lastMonth = { month: archive.month, counts: { std: 0, taiko: 0, catch: 0, mania: 0 } };
             lastYear.months.push(lastMonth);
         }
         lastMonth[archive.mode] = archive;
+        lastMonth.counts[archive.mode] = archive.beatmapset_count;
     }
     return years;
 }
@@ -93,11 +95,16 @@ function Archives() {
                             <tbody>
                                 {year.months.map((month) => (
                                     <tr className="d-flex flex-wrap d-md-table-row" key={month.month}>
-                                        <td className="col-12 col-md-4 fw-bold"><span className="d-md-none">{year.year} </span>{dayjs(`${month.month}-01`).format('MMMM')}</td>
+                                        <td className="col-12 col-md-4 fw-bold">
+                                            <span className="d-md-none">{year.year} </span>{dayjs(`${month.month}-01`).format('MMMM')}
+                                            <span className="d-md-none fw-normal float-end" title="Standard / Taiko / Catch / Mania">
+                                                {`${month.counts.std}/${month.counts.taiko}/${month.counts.catch}/${month.counts.mania}`}
+                                            </span>
+                                        </td>
                                         {MODES.map((mode) => (
                                             <td className="col-12 col-sm-6 col-md-2" key={mode.key}>
                                                 {month[mode.key] && (
-                                                    <a className="btn btn-sm btn-success d-flex w-100 justify-content-center align-items-center gap-2" href={month[mode.key].url} title={`${month[mode.key].beatmapset_count} beatmapsets`}>
+                                                    <a className="btn btn-sm btn-success d-flex w-100 justify-content-center align-items-center gap-2" href={month[mode.key].url} title={`${month[mode.key].beatmapset_count} Beatmapsets`}>
                                                         <span className="d-md-none">{mode.name}</span>
                                                         <span>{month[mode.key].size_gb} GB</span>
                                                         <FaDownload color="white" />
@@ -114,6 +121,16 @@ function Archives() {
                                     </tr>
                                 ))}
                             </tbody>
+                            <tfoot>
+                                <tr className="d-none d-md-table-row">
+                                    <td className="col-md-4 fw-bold">Total</td>
+                                    {MODES.map((mode) => (
+                                        <td className="col-md-2 text-center" key={mode.key}>
+                                            {year.totals[mode.key]} Beatmapsets
+                                        </td>
+                                    ))}
+                                </tr>
+                            </tfoot>
                         </table>
                     </div>
                 ))}
