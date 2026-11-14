@@ -80,7 +80,7 @@ function Archives() {
 
                 {years.map((year) => (
                     <div key={year.year}>
-                        <h2 className="h5 mt-4">{year.year}</h2>
+                        <h2 className="h5 mt-4 d-none d-md-block">{year.year}</h2>
                         <table className="table table-dark align-middle">
                             <thead>
                                 <tr className="d-none d-md-table-row">
@@ -93,7 +93,7 @@ function Archives() {
                             <tbody>
                                 {year.months.map((month) => (
                                     <tr className="d-flex flex-wrap d-md-table-row" key={month.month}>
-                                        <td className="col-12 col-md-4 fw-bold">{dayjs(`${month.month}-01`).format('MMMM')}</td>
+                                        <td className="col-12 col-md-4 fw-bold"><span className="d-md-none">{year.year} </span>{dayjs(`${month.month}-01`).format('MMMM')}</td>
                                         {MODES.map((mode) => (
                                             <td className="col-12 col-sm-6 col-md-2" key={mode.key}>
                                                 {month[mode.key] && (
