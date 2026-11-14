@@ -60,7 +60,7 @@ function Archives() {
             <link rel="canonical" href="https://mirror.nekoha.moe/archives" />
             <div className="container py-4">
                 <h1 className="h3">Archives</h1>
-                <p className="text-muted">Ranked, approved and loved beatmapsets by the month they got ranked (UTC), one zip per mode.</p>
+                <p className="text-muted">Ranked, approved and loved Beatmapsets by month and gamemode they got ranked.</p>
 
                 {!archives && !error && (
                     <div className="text-center">
