@@ -224,10 +224,12 @@ export default function BeatmapsetSearch() {
 
   return (
     <>
-      <title>Search</title>
+      <title>Search osu! Beatmaps | Nekoha</title>
+      <meta name="description" content="Search and download osu! beatmapsets." />
+      <link rel="canonical" href="https://mirror.nekoha.moe/search" />
       <audio ref={audioRef} />
       <div className="container mt-4">
-        <h2 className="mb-3">Beatmapset Search</h2>
+        <h1 className="h2 mb-3">Beatmapset Search</h1>
 
         <form className="mb-2" onSubmit={handleSearch}>
           <div className="input-group gap-1">

@@ -70,6 +70,8 @@ function Index() {
   return (
     <>
       <title>osu! Beatmap Mirror | Nekoha</title>
+      <meta name="description" content="Download osu! beatmaps through a fast mirror. Browse ranked, loved, pending and graveyard maps with no ratelimit." />
+      <link rel="canonical" href="https://mirror.nekoha.moe/" />
       <div class="container py-4 px-3 mx-auto">
         <div className="row mb-4 px-5 d-flex justify-content-center">
           <div className="mb-4 mb-lg-0 col-5 col-lg-2 align-self-center">

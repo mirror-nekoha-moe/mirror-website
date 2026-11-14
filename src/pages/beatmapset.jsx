@@ -163,7 +163,9 @@ export default function BeatmapSet() {
 
     return (
         <>
-            <title>{data.title} - Nekoha Mirror</title>
+            <title>{`${data.artist} - ${data.title} | Nekoha`}</title>
+            <meta name="description" content={`Download ${data.artist} - ${data.title} mapped by ${data.creator}`} />
+            <link rel="canonical" href={`https://mirror.nekoha.moe/beatmapset/${data.id}`} />
             {data.preview_url && (
                 <audio
                     ref={audioRef}
@@ -179,7 +181,7 @@ export default function BeatmapSet() {
                     <div className="d-flex gap-4 align-items-end flex-wrap">
                         <img
                             src={`https://assets.ppy.sh/beatmaps/${data.id}/covers/list.jpg`}
-                            alt="cover"
+                            alt={`${data.title} cover`}
                             className="rounded-2 flex-shrink-0 object-fit-cover"
                             style={{ width: 100, height: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.6)' }}
                         />
@@ -188,7 +190,7 @@ export default function BeatmapSet() {
                                 style={{ background: statusColor, color: '#000' }}>
                                 {STATUS_LABELS[data.status] ?? data.status}
                             </span>
-                            <h2 className="map-title mb-0 fw-bold lh-sm">{data.title}</h2>
+                            <h1 className="h2 map-title mb-0 fw-bold lh-sm">{data.title}</h1>
                             <div className="text-secondary small mb-1">{data.artist}</div>
                             <div className="small">
                                 mapped by{' '}

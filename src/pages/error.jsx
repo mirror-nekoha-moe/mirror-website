@@ -2,6 +2,7 @@ export default function Error() {
   return (
     <>
       <title>Error</title>
+      <meta name="robots" content="noindex" />
       <div class="container d-flex justify-content-center">
         <div class="card card-error mt-5">
           <div class="card-body">
