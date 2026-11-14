@@ -68,7 +68,7 @@ const LANGUAGE_LABELS = {
     14: 'Other'
 };
 
-function statBar({ label, value, max = 10 }) {
+function StatBar({ label, value, max = 10 }) {
     const pct = Math.min(100, (parseFloat(value) / max) * 100);
     return (
         <div className="d-flex align-items-center gap-2 mb-2">
@@ -200,10 +200,10 @@ export default function BeatmapSet() {
                                 </a>
                             </div>
                             <div className="d-flex align-items-center gap-3 mt-2">
-                                {data.mode_osu_count > 0 && <span title="osu!" className="d-flex align-items-center gap-1 small"><FaRegDotCircle />{data.mode_osu_count}</span>}
-                                {data.mode_taiko_count > 0  && <span title="Taiko" className="d-flex align-items-center gap-1 small"><FaDrum />{data.mode_taiko_count}</span>}
-                                {data.mode_fruits_count > 0 && <span title="Catch" className="d-flex align-items-center gap-1 small"><FaAppleWhole />{data.mode_fruits_count}</span>}
-                                {data.mode_mania_count > 0  && <span title="Mania" className="d-flex align-items-center gap-1 small"><MdPiano />{data.mode_mania_count}</span>}
+                                {data.mirror?.mode_osu_count > 0 && <span title="osu!" className="d-flex align-items-center gap-1 small"><FaRegDotCircle />{data.mirror?.mode_osu_count}</span>}
+                                {data.mirror?.mode_taiko_count > 0  && <span title="Taiko" className="d-flex align-items-center gap-1 small"><FaDrum />{data.mirror?.mode_taiko_count}</span>}
+                                {data.mirror?.mode_fruits_count > 0 && <span title="Catch" className="d-flex align-items-center gap-1 small"><FaAppleWhole />{data.mirror?.mode_fruits_count}</span>}
+                                {data.mirror?.mode_mania_count > 0  && <span title="Mania" className="d-flex align-items-center gap-1 small"><MdPiano />{data.mirror?.mode_mania_count}</span>}
                             </div>
                         </div>
                     </div>
@@ -241,12 +241,12 @@ export default function BeatmapSet() {
 
                         <div className="cbg-dark rounded-3 p-3 mb-3">
                             <div className="small fw-bold mb-2">Description</div>
-                            {data.description ? (
+                            {data.description?.description ? (
                                 <div
                                     ref={descRef}
                                     className="bbcode-content overflow-auto"
                                     style={{ maxHeight: 320 }}
-                                    dangerouslySetInnerHTML={{ __html: JSON.parse(data.description?.description).description }}
+                                    dangerouslySetInnerHTML={{ __html: data.description?.description }}
                                 />
                             ) : (
                                 <p className="text-muted small mb-0">No description provided.</p>
@@ -393,11 +393,11 @@ export default function BeatmapSet() {
                                     </div>
                                 </div>
 
-                                <statBar label="CS" value={selectedDiff.cs} max={10} />
-                                <statBar label="AR" value={selectedDiff.ar} max={10} />
-                                <statBar label="OD" value={selectedDiff.accuracy} max={10} />
-                                <statBar label="HP" value={selectedDiff.drain} max={10} />
-                                <statBar label="SR" value={selectedDiff.difficulty_rating} max={10} />
+                                <StatBar label="CS" value={selectedDiff.cs} max={10} />
+                                <StatBar label="AR" value={selectedDiff.ar} max={10} />
+                                <StatBar label="OD" value={selectedDiff.accuracy} max={10} />
+                                <StatBar label="HP" value={selectedDiff.drain} max={10} />
+                                <StatBar label="SR" value={selectedDiff.difficulty_rating} max={10} />
 
                                 <div className="border-top border-secondary mt-3 pt-3 d-flex flex-wrap gap-3 small">
                                     <div><span className="text-secondary">Circles </span>{parseInt(selectedDiff.count_circles)}</div>
