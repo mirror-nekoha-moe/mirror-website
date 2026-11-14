@@ -13,6 +13,7 @@ import Search from './pages/search.jsx'
 // import Monitor from './pages/monitor.jsx'
 import Error from './pages/error.jsx'
 import BeatmapSet from './pages/beatmapset.jsx';
+import Archives from './pages/archives.jsx';
 
 // Bootstrap
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -29,6 +30,7 @@ createRoot(document.getElementById('root')).render(
                 <Route path="/search" element={<Search />} />
                 {/* <Route path="/monitor" element={<Monitor />} /> */}
                 <Route path="/beatmapset/:id" element={<BeatmapSet />} />
+                <Route path="/archives" element={<Archives />} />
                 <Route path="*" element={<Error />} />
             </Routes>
             <Footer />
