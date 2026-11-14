@@ -1,19 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { FaDownload, FaRegDotCircle, FaDrum, FaHeart, FaClock, FaMusic, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
-import { SiOsu } from "react-icons/si";
+import { FaDownload, FaRegDotCircle, FaDrum, FaClock, FaMusic, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
 import { MdPiano } from 'react-icons/md';
-import { FaAppleWhole, FaCircleCheck } from 'react-icons/fa6';
+import { FaAppleWhole } from 'react-icons/fa6';
 
-const STATUS_COLORS = {
-    ranked: '#b3ff66',
-    approved: '#b3ff66',
-    qualified: '#66ccff',
-    loved: '#ff66ab',
-    pending: '#aaaaaa',
-    wip: '#aaaaaa',
-    graveyard: '#666666',
+const STATUS_CLASSES = {
+    ranked: 'bg-success',
+    approved: 'bg-success',
+    qualified: 'bg-secondary text-black',
+    loved: 'cbg-pink-2',
+    pending: 'cbg-grey',
+    wip: 'cbg-grey',
+    graveyard: 'cbg-dark-grey',
 };
 
 const STATUS_LABELS = {
@@ -69,16 +68,45 @@ const LANGUAGE_LABELS = {
 };
 
 function StatBar({ label, value, max = 10 }) {
-    const pct = Math.min(100, (parseFloat(value) / max) * 100);
+    const number = parseFloat(value);
+    let pct = (number / max) * 100;
+    if (pct > 100) {
+        pct = 100;
+    }
+
     return (
-        <div className="d-flex align-items-center gap-2 mb-2">
-            <div className="text-secondary small text-end flex-shrink-0" style={{ width: 32 }}>{label}</div>
-            <div className="flex-grow-1 rounded" style={{ height: 8, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-                <div className="rounded" style={{ width: `${pct}%`, height: '100%', background: 'rgb(0,206,255)', transition: 'width 0.3s ease' }} />
+        <div className="row g-2 align-items-center mb-2 small">
+            <div className="col-2 text-secondary text-end">{label}</div>
+            <div className="col">
+                <div className="progress cbg-dark-grey">
+                    <div className="progress-bar bg-secondary" style={{ width: `${pct}%` }} />
+                </div>
             </div>
-            <div className="small text-white flex-shrink-0" style={{ width: 36 }}>{parseFloat(value).toFixed(1)}</div>
+            <div className="col-2">{number.toFixed(1)}</div>
         </div>
     );
+}
+
+function InfoRow({ label, children }) {
+    return (
+        <div className="d-flex justify-content-between gap-3">
+            <span className="text-secondary flex-shrink-0">{label}</span>
+            <span className="text-end">{children}</span>
+        </div>
+    );
+}
+
+// blue for easy maps, goes to red around 8 stars
+function starColor(sr) {
+    let hue = 240 - sr * 30;
+    if (hue < 0) {
+        hue = 0;
+    }
+    return `hsl(${hue},90%,65%)`;
+}
+
+function toMb(bytes) {
+    return (bytes / (1024 ** 2)).toFixed(2);
 }
 
 function fmtTime(seconds) {
@@ -88,7 +116,9 @@ function fmtTime(seconds) {
 }
 
 function fmtDate(str) {
-    if (!str) return 'N/A';
+    if (!str) {
+        return 'N/A';
+    }
     const d = new Date(str);
     return `${d.getDate()} ${d.toLocaleString('en-US', { month: 'short' })} ${d.getFullYear()}`;
 }
@@ -109,8 +139,12 @@ export default function BeatmapSet() {
             setLoading(true);
             setError('');
             try {
-                if (!/^\d+$/.test(id)) { setError('Invalid beatmapset ID'); return; }
-                const res = await axios.get(`/api/beatmapset/${id}`);
+                const beatmapsetId = Number(id);
+                if (!Number.isInteger(beatmapsetId) || beatmapsetId <= 0) {
+                    setError('Invalid beatmapset ID');
+                    return;
+                }
+                const res = await axios.get(`/api/beatmapset/${beatmapsetId}`);
                 const beatmaps = res.data.beatmaps.slice().sort((a, b) => b.difficulty_rating - a.difficulty_rating);
                 setData({ ...res.data, beatmaps });
                 setSelectedDiff(beatmaps[0]);
@@ -124,7 +158,7 @@ export default function BeatmapSet() {
     }, [id]);
 
     useEffect(() => {
-        if (!descRef.current) 
+        if (!descRef.current)
             return;
         descRef.current.querySelectorAll('.js-spoilerbox__link').forEach(link => {
             if (link._spoilerBound)
@@ -139,27 +173,55 @@ export default function BeatmapSet() {
 
     const togglePreview = () => {
         const el = audioRef.current;
-        if (!el || !el.src) return;
-        if (playing) { el.pause(); setPlaying(false); }
-        else { el.play().catch(() => {}); setPlaying(true); }
+        if (!el || !el.src) {
+            return;
+        }
+        if (playing) {
+            el.pause();
+            setPlaying(false);
+        } else {
+            el.play().catch(() => {});
+            setPlaying(true);
+        }
     };
 
     const handleVolume = (v) => {
         const val = parseFloat(v);
         setVolume(val);
-        if (audioRef.current) audioRef.current.volume = val;
+        if (audioRef.current) {
+            audioRef.current.volume = val;
+        }
     };
 
-    if (loading) return (
-        <div className="search-loading-bar mt-0 rounded-0">
-            <div className="search-loading-bar-value" />
-        </div>
-    );
-    if (error) return <div className="mt-5 alert bg-danger">{error}</div>;
-    if (!data) return null;
+    const handleCanPlay = (e) => {
+        if (e.target) {
+            e.target.volume = 0.1;
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="search-loading-bar mt-0 rounded-0">
+                <div className="search-loading-bar-value" />
+            </div>
+        );
+    }
+    if (error) {
+        return <div className="mt-5 alert bg-danger">{error}</div>;
+    }
+    if (!data) {
+        return null;
+    }
+
+    let previewUrl = data.preview_url;
+    if (previewUrl && previewUrl.startsWith('//')) {
+        previewUrl = `https:${previewUrl}`;
+    }
 
     const coverUrl = `https://assets.ppy.sh/beatmaps/${data.id}/covers/cover.jpg`;
-    const statusColor = STATUS_COLORS[data.status] ?? '#aaa';
+    const headerBackground = `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.82)), url('${coverUrl}')`;
+    const statusClass = STATUS_CLASSES[data.status] ?? 'cbg-grey';
+    const fileSizeMb = toMb(data.mirror?.file_size);
 
     return (
         <>
@@ -169,25 +231,23 @@ export default function BeatmapSet() {
             {data.preview_url && (
                 <audio
                     ref={audioRef}
-                    src={data.preview_url.startsWith('//') ? `https:${data.preview_url}` : data.preview_url}
+                    src={previewUrl}
                     onEnded={() => setPlaying(false)}
-                    onCanPlay={el => { if (el.target) el.target.volume = 0.1; }}
+                    onCanPlay={handleCanPlay}
                 />
             )}
-
-            <div className="position-relative py-4"
-                style={{ background: `linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.82)), url('${coverUrl}') center/cover no-repeat`, minHeight: 220 }}>
+            <div className="beatmapset-card-bg py-5" style={{ backgroundImage: headerBackground }}>
                 <div className="container">
                     <div className="d-flex gap-4 align-items-end flex-wrap">
                         <img
                             src={`https://assets.ppy.sh/beatmaps/${data.id}/covers/list.jpg`}
                             alt={`${data.title} cover`}
-                            className="rounded-2 flex-shrink-0 object-fit-cover"
-                            style={{ width: 100, height: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.6)' }}
+                            width={100}
+                            height={100}
+                            className="rounded-2 flex-shrink-0 object-fit-cover shadow-lg"
                         />
                         <div className="flex-grow-1 overflow-hidden">
-                            <span className="badge rounded-pill mb-1 small fw-bold"
-                                style={{ background: statusColor, color: '#000' }}>
+                            <span className={`badge rounded-pill mb-1 small fw-bold ${statusClass}`}>
                                 {STATUS_LABELS[data.status] ?? data.status}
                             </span>
                             <h1 className="h2 map-title mb-0 fw-bold lh-sm">{data.title}</h1>
@@ -207,7 +267,6 @@ export default function BeatmapSet() {
                             </div>
                         </div>
                     </div>
-
                     <div className="d-flex flex-wrap align-items-center gap-2 mt-3">
                         {data.preview_url && (
                             <button className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2" onClick={togglePreview}>
@@ -216,7 +275,7 @@ export default function BeatmapSet() {
                             </button>
                         )}
                         <a className="btn btn-sm btn-success d-flex align-items-center gap-2" href={`/api/download/${data.id}`}>
-                            <FaDownload /> Download {(data.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB
+                            <FaDownload /> Download {fileSizeMb} MB
                         </a>
                         {data.video && (
                             <a className="btn btn-sm btn-outline-success d-flex align-items-center gap-2" href={`/api/download/${data.id}?noVideo=1`} title="Download without video">
@@ -224,7 +283,7 @@ export default function BeatmapSet() {
                             </a>
                         )}
                         <a className="btn btn-sm btn-secondary d-flex align-items-center gap-2" href={`osu://s/${data.id}`}>
-                            <FaDownload color="black" /> osu!direct
+                            <FaDownload className="text-black" /> osu!direct
                         </a>
                         <a className="btn btn-sm cbg-pink-2 d-flex align-items-center gap-2"
                             href={`https://osu.ppy.sh/beatmapsets/${data.id}`} target="_blank">
@@ -233,12 +292,9 @@ export default function BeatmapSet() {
                     </div>
                 </div>
             </div>
-
-            <div className="container mt-4">
+            <div className="container mt-4 mb-5">
                 <div className="row g-4">
-
                     <div className="col-12 col-lg-7">
-
                         <div className="cbg-dark rounded-3 p-3 mb-3">
                             <div className="small fw-bold mb-2">Description</div>
                             {data.description?.description ? (
@@ -252,26 +308,18 @@ export default function BeatmapSet() {
                                 <p className="text-muted small mb-0">No description provided.</p>
                             )}
                         </div>
-
                         <div className="cbg-dark rounded-3 p-3">
                             <div className="small fw-bold mb-2">Difficulties</div>
                             <div className="d-flex flex-column gap-1">
                                 {data.beatmaps.map(diff => {
-                                    const active = selectedDiff?.id === diff.id;
                                     const sr = parseFloat(diff.difficulty_rating);
-                                    const hue = Math.min(240, Math.max(0, 240 - sr * 30));
-                                    const starColor = `hsl(${hue},90%,65%)`;
+                                    let buttonClass = 'btn btn-dark-c1 d-flex align-items-center gap-2 text-start w-100 px-3 py-2';
+                                    if (selectedDiff?.id === diff.id) {
+                                        buttonClass += ' active';
+                                    }
                                     return (
-                                        <button key={diff.id}
-                                            onClick={() => setSelectedDiff(diff)}
-                                            className="d-flex align-items-center gap-2 text-start w-100 border-0 rounded-2 px-3 py-2 text-white"
-                                            style={{
-                                                background: active ? 'rgba(0,206,255,0.15)' : 'rgba(255,255,255,0.04)',
-                                                borderLeft: active ? '3px solid rgb(0,206,255)' : '3px solid transparent',
-                                                transition: 'background 0.15s',
-                                            }}
-                                        >
-                                            <span className="fw-bold flex-shrink-0" style={{ color: starColor, minWidth: 36 }}>★ {sr.toFixed(2)}</span>
+                                        <button key={diff.id} onClick={() => setSelectedDiff(diff)} className={buttonClass}>
+                                            <span className="fw-bold flex-shrink-0" style={{ color: starColor(sr) }}>★ {sr.toFixed(2)}</span>
                                             <span className="small flex-grow-1">{diff.version}</span>
                                             <span className="small text-secondary">{MODE_LABELS[diff.mode]}</span>
                                         </button>
@@ -282,75 +330,25 @@ export default function BeatmapSet() {
                     </div>
 
                     <div className="col-12 col-lg-5">
-
                         <div className="cbg-dark rounded-3 p-3 mb-3">
                             <div className="small fw-bold mb-2">Info</div>
                             <div className="d-flex flex-column gap-1 small">
-                                <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">Beatmapset ID</span><span>{data.id}</span>
-                                </div>
-                                <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">Submitted</span><span>{fmtDate(data.submitted_date)}</span>
-                                </div>
-                                <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">Last Updated</span><span>{fmtDate(data.last_updated)}</span>
-                                </div>
-                                {data.ranked_date && (
-                                    <div className="d-flex justify-content-between">
-                                        <span className="text-secondary">Ranked</span><span>{fmtDate(data.ranked_date)}</span>
-                                    </div>
-                                )}
-                                {data.deleted_at && (
-                                    <div className="d-flex justify-content-between">
-                                        <span className="text-secondary">Deleted</span><span>{fmtDate(data.deleted_at)}</span>
-                                    </div>
-                                )}
-                                <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">Favourites</span><span>{data.favourite_count?.toLocaleString() ?? '-'}</span>
-                                </div>
-                                <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">Play Count</span><span>{data.play_count?.toLocaleString() ?? '-'}</span>
-                                </div>
-                                <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">Difficulties</span><span>{data.mirror?.beatmap_count}</span>
-                                </div>
-                                <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">File Size</span><span>{(data.mirror?.file_size / (1024 ** 2)).toFixed(2)} MB</span>
-                                </div>
-                                {data.bpm && (
-                                    <div className="d-flex justify-content-between">
-                                        <span className="text-secondary">BPM</span><span>{data.bpm}</span>
-                                    </div>
-                                )}
-                                {data.genre_id != null && (
-                                    <div className="d-flex justify-content-between">
-                                        <span className="text-secondary">Genre</span><span>{GENRE_LABELS[data.genre_id] ?? data.genre_id}</span>
-                                    </div>
-                                )}
-                                {data.language_id != null && (
-                                    <div className="d-flex justify-content-between">
-                                        <span className="text-secondary">Language</span><span>{LANGUAGE_LABELS[data.language_id] ?? data.language_id}</span>
-                                    </div>
-                                )}
-                                <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">Has Video</span>
-                                    <span>{data.video ? 'Yes' : 'No'}</span>
-                                </div>
-                                <div className="d-flex justify-content-between">
-                                    <span className="text-secondary">Storyboard</span>
-                                    <span>{data.storyboard ? 'Yes' : 'No'}</span>
-                                </div>
-                                {data.nsfw && (
-                                    <div className="d-flex justify-content-between">
-                                        <span className="text-secondary">NSFW</span><span className="text-danger">Yes</span>
-                                    </div>
-                                )}
-                                {data.source && (
-                                    <div className="d-flex justify-content-between gap-3">
-                                        <span className="text-secondary flex-shrink-0">Source</span>
-                                        <span className="text-end">{data.source}</span>
-                                    </div>
-                                )}
+                                <InfoRow label="Beatmapset ID">{data.id}</InfoRow>
+                                <InfoRow label="Submitted">{fmtDate(data.submitted_date)}</InfoRow>
+                                <InfoRow label="Last Updated">{fmtDate(data.last_updated)}</InfoRow>
+                                {data.ranked_date && <InfoRow label="Ranked">{fmtDate(data.ranked_date)}</InfoRow>}
+                                {data.deleted_at && <InfoRow label="Deleted">{fmtDate(data.deleted_at)}</InfoRow>}
+                                <InfoRow label="Favourites">{data.favourite_count?.toLocaleString() ?? '-'}</InfoRow>
+                                <InfoRow label="Play Count">{data.play_count?.toLocaleString() ?? '-'}</InfoRow>
+                                <InfoRow label="Difficulties">{data.mirror?.beatmap_count}</InfoRow>
+                                <InfoRow label="File Size">{fileSizeMb} MB</InfoRow>
+                                {data.bpm && <InfoRow label="BPM">{data.bpm}</InfoRow>}
+                                {data.genre_id != null && <InfoRow label="Genre">{GENRE_LABELS[data.genre_id] ?? data.genre_id}</InfoRow>}
+                                {data.language_id != null && <InfoRow label="Language">{LANGUAGE_LABELS[data.language_id] ?? data.language_id}</InfoRow>}
+                                <InfoRow label="Has Video">{data.video ? 'Yes' : 'No'}</InfoRow>
+                                <InfoRow label="Storyboard">{data.storyboard ? 'Yes' : 'No'}</InfoRow>
+                                {data.nsfw && <InfoRow label="NSFW"><span className="text-danger">Yes</span></InfoRow>}
+                                {data.source && <InfoRow label="Source">{data.source}</InfoRow>}
                                 {data.tags && (
                                     <div className="mt-1">
                                         <div className="text-secondary mb-1">Tags</div>
@@ -409,33 +407,14 @@ export default function BeatmapSet() {
 
                                 <div className="border-top border-secondary mt-3 pt-3 d-flex flex-column gap-1 small">
                                     {selectedDiff.status && (
-                                        <div className="d-flex justify-content-between">
-                                            <span className="text-secondary">Status</span>
-                                            <span>{selectedDiff.status.charAt(0).toUpperCase() + selectedDiff.status.slice(1)}</span>
-                                        </div>
+                                        <InfoRow label="Status">{STATUS_LABELS[selectedDiff.status] ?? selectedDiff.status}</InfoRow>
                                     )}
-                                    {selectedDiff.last_updated && (
-                                        <div className="d-flex justify-content-between">
-                                            <span className="text-secondary">Last Updated</span>
-                                            <span>{fmtDate(selectedDiff.last_updated)}</span>
-                                        </div>
-                                    )}
+                                    {selectedDiff.last_updated && <InfoRow label="Last Updated">{fmtDate(selectedDiff.last_updated)}</InfoRow>}
                                     {selectedDiff.deleted_at && (
-                                        <div className="d-flex justify-content-between">
-                                            <span className="text-secondary">Deleted</span>
-                                            <span className="text-danger">{fmtDate(selectedDiff.deleted_at)}</span>
-                                        </div>
+                                        <InfoRow label="Deleted"><span className="text-danger">{fmtDate(selectedDiff.deleted_at)}</span></InfoRow>
                                     )}
-                                    <div className="d-flex justify-content-between">
-                                        <span className="text-secondary">Scoreable</span>
-                                        <span>{selectedDiff.is_scoreable ? 'Yes' : 'No'}</span>
-                                    </div>
-                                    {selectedDiff.convert && (
-                                        <div className="d-flex justify-content-between">
-                                            <span className="text-secondary">Convert</span>
-                                            <span>Yes</span>
-                                        </div>
-                                    )}
+                                    <InfoRow label="Scoreable">{selectedDiff.is_scoreable ? 'Yes' : 'No'}</InfoRow>
+                                    {selectedDiff.convert && <InfoRow label="Convert">Yes</InfoRow>}
                                     {selectedDiff.checksum && (
                                         <div className="mt-1">
                                             <div className="text-secondary mb-1">MD5</div>
@@ -448,10 +427,8 @@ export default function BeatmapSet() {
                             </div>
                         )}
                     </div>
-
                 </div>
             </div>
-            <div className="mb-5" />
 
             {playing && data?.preview_url && (
                 <div className="position-fixed bottom-0 start-0 end-0 bg-dark border-top border-secondary px-3 py-2 d-flex align-items-center gap-3" style={{ zIndex: 1050 }}>
