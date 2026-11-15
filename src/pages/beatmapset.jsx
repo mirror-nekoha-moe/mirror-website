@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { FaDownload, FaRegDotCircle, FaDrum, FaClock, FaMusic, FaPlay, FaPause, FaVolumeUp } from 'react-icons/fa';
+import { FaDownload, FaRegDotCircle, FaDrum, FaClock, FaMusic, FaPlay, FaPause, FaVolumeUp, FaTimes } from 'react-icons/fa';
 import { MdPiano } from 'react-icons/md';
 import { FaAppleWhole } from 'react-icons/fa6';
 
@@ -100,6 +100,7 @@ export default function BeatmapSet() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [playing, setPlaying] = useState(false);
+    const [playerOpen, setPlayerOpen] = useState(false);
     // osu! previews are loud
     const [volume, setVolume] = useState(0.1);
     const audioRef = useRef(null);
@@ -139,7 +140,14 @@ export default function BeatmapSet() {
             audio.volume = volume;
             audio.play().catch(() => {});
             setPlaying(true);
+            setPlayerOpen(true);
         }
+    };
+
+    const closePlayer = () => {
+        audioRef.current.pause();
+        setPlaying(false);
+        setPlayerOpen(false);
     };
 
     const handleVolume = (e) => {
@@ -452,10 +460,10 @@ export default function BeatmapSet() {
             {previewUrl && (
                 <audio ref={audioRef} src={previewUrl} preload="none" onEnded={() => setPlaying(false)} />
             )}
-            {playing && (
+            {playerOpen && (
                 <div className="position-fixed bottom-0 start-0 end-0 bg-dark border-top border-secondary px-3 py-2 d-flex align-items-center gap-3" style={{ zIndex: 1050 }}>
-                    <button className="btn btn-sm btn-outline-secondary flex-shrink-0 d-flex align-items-center" title="Pause preview" onClick={togglePreview}>
-                        <FaPause size={12} />
+                    <button className="btn btn-sm btn-outline-secondary flex-shrink-0 d-flex align-items-center" title="Play or pause preview" onClick={togglePreview}>
+                        {playing ? <FaPause size={12} /> : <FaPlay size={12} />}
                     </button>
                     <div className="flex-grow-1 small text-truncate">
                         <span className="text-white fw-semibold">{data.title}</span>
@@ -471,6 +479,9 @@ export default function BeatmapSet() {
                         title="Preview volume"
                     />
                     <span className="text-secondary small flex-shrink-0">{Math.round(volume * 100)}%</span>
+                    <button className="btn btn-sm btn-outline-secondary flex-shrink-0 d-flex align-items-center" title="Close player" onClick={closePlayer}>
+                        <FaTimes size={12} />
+                    </button>
                 </div>
             )}
         </>
