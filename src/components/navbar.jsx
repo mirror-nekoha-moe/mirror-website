@@ -29,7 +29,7 @@ const Navbar = () => {
                                 <a href="/archives" class="nav-link" onClick={(e) => handleLinkClick(e, "/archives")}>Archives</a>
                             </li>
                             <li class="nav-item">
-                                <a href="/datasette/" class="nav-link" onClick={(e) => handleLinkClick(e, "/datasette/")}>Database</a>
+                                <a href="https://db.mirror.nekoha.moe/#/base/2ef0a92c-12b4-46a3-b0b2-a9ef7da376f3" class="nav-link">Database</a>
                             </li>
                         </ul>
                     </div>
