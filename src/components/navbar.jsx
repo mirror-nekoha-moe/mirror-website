@@ -28,6 +28,9 @@ const Navbar = () => {
                             <li class="nav-item">
                                 <a href="/archives" class="nav-link" onClick={(e) => handleLinkClick(e, "/archives")}>Archives</a>
                             </li>
+                            <li class="nav-item">
+                                <a href="/datasette/" class="nav-link" onClick={(e) => handleLinkClick(e, "/datasette/")}>Database</a>
+                            </li>
                         </ul>
                     </div>
                 </div>
