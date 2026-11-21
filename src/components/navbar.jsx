@@ -25,8 +25,16 @@ const Navbar = () => {
                             <li class="nav-item">
                                 <a href="/search" class="nav-link" onClick={(e) => handleLinkClick(e, "/search")}>Beatmaps</a>
                             </li>
-                            <li class="nav-item">
-                                <a href="/archives" class="nav-link" onClick={(e) => handleLinkClick(e, "/archives")}>Archives</a>
+                            <li class="nav-item dropdown">
+                                <a href="/archives" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">Archives</a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a href="/archives/monthly" class="dropdown-item nav-link" onClick={(e) => handleLinkClick(e, "/archives/monthly")}>Monthly</a>
+                                    </li>
+                                    <li>
+                                        <a href="/archives/yearly" class="dropdown-item nav-link" onClick={(e) => handleLinkClick(e, "/archives/yearly")}>Yearly</a>
+                                    </li>
+                                </ul>
                             </li>
                             <li class="nav-item">
                                 <a href="https://db.mirror.nekoha.moe/#/base/2ef0a92c-12b4-46a3-b0b2-a9ef7da376f3" class="nav-link">Database</a>
