@@ -96,20 +96,15 @@ function YearlyArchives() {
                                     {MODES.map((mode) => (
                                         <td className="col-12 col-md-6 col-xl-2" key={mode.key}>
                                             {year[mode.key] && (
-                                                <div className="row g-1">
-                                                    <div className="col-12 col-sm-6">
-                                                        <a className="btn btn-sm btn-success d-flex w-100 justify-content-center align-items-center gap-2" href={year[mode.key].url} title={`${year[mode.key].beatmapset_count} Beatmapsets`}>
-                                                            <span className="d-xl-none">{mode.name}</span>
-                                                            <span>{formatSize(year[mode.key].size)}</span>
-                                                            <FaDownload color="white" />
-                                                        </a>
-                                                    </div>
-                                                    <div className="col-12 col-sm-6">
-                                                        <button type="button" className="btn btn-sm btn-secondary d-flex w-100 justify-content-center align-items-center gap-2" onClick={() => navigator.clipboard.writeText(year[mode.key].magnet)} disabled={!year[mode.key].magnet} title="Copy magnet link">
-                                                            <span>Magnet</span>
-                                                            <FaMagnet color="black" />
-                                                        </button>
-                                                    </div>
+                                                <div className="d-flex gap-1">
+                                                    <a className="btn btn-sm btn-success d-flex flex-grow-1 justify-content-center align-items-center gap-2" href={year[mode.key].url} title={`${year[mode.key].beatmapset_count} Beatmapsets`}>
+                                                        <span className="d-xl-none">{mode.name}</span>
+                                                        <span>{formatSize(year[mode.key].size)}</span>
+                                                        <FaDownload color="white" />
+                                                    </a>
+                                                    <button type="button" className="btn btn-sm btn-secondary d-flex align-items-center" onClick={() => navigator.clipboard.writeText(year[mode.key].magnet)} disabled={!year[mode.key].magnet} title="Copy magnet link">
+                                                        <FaMagnet color="black" />
+                                                    </button>
                                                 </div>
                                             )}
                                             {year[mode.key] && (
